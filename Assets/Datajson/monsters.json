@@ -1,0 +1,43 @@
+{
+  "monsters": [
+    {
+      "id": "M-001",
+      "name": "슬라임",
+      "contamination_level": 100,
+      "capture_difficulty": "Easy",
+      "speed": 1,
+      "drop_items": [
+        {
+          "item_id": "MI-101",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "M-002",
+      "name": "곰팡이",
+      "contamination_level": 100,
+      "capture_difficulty": "Normal",
+      "speed": 3,
+      "drop_items": [
+        {
+          "item_id": "MI-102",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "M-003",
+      "name": "불",
+      "contamination_level": 100,
+      "capture_difficulty": "Hard",
+      "speed": 2,
+      "drop_items": [
+        {
+          "item_id": "MI-201",
+          "count": 1
+        }
+      ]
+    }
+  ]
+}
