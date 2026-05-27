@@ -6,6 +6,8 @@
       "contamination_level": 100,
       "capture_difficulty": "Easy",
       "speed": 1,
+      "infection_type": "산성 감염",
+      "description": "실험실에서 유출된 화학 용액으로 인해 [산성 감염]을 일으킨 점액질 생명체입니다. 접촉하는 모든 시설을 부식시키므로, 알칼리성인 [중탄산나트륨 수용액]을 분사해 산도를 중화시켜야 정화할 수 있습니다.",
       "drop_items": [
         {
           "item_id": "MI-101",
@@ -19,6 +21,8 @@
       "contamination_level": 100,
       "capture_difficulty": "Normal",
       "speed": 3,
+      "infection_type": "독성 감염",
+      "description": "치명적인 바이오 화학 물질에 의해 [독성 감염]되어 자생적으로 증식하는 유기체입니다. 사방으로 지독한 포자를 퍼뜨려 생명체를 질식시키며, 강력한 산화 살균제인 [과산화수소 수용액]으로만 박멸이 가능합니다.",
       "drop_items": [
         {
           "item_id": "MI-102",
@@ -32,6 +36,8 @@
       "contamination_level": 100,
       "capture_difficulty": "Hard",
       "speed": 2,
+      "infection_type": "인화성 감염",
+      "description": "유출된 가스와 연료가 원인 불명의 에너지와 반응해 [인화성 감염]을 일으킨 화재성 괴물입니다. 일반적인 방법으로는 꺼지지 않으며, 산소를 완벽히 차단하는 특수 폼 약제인 [수성막포]를 사용해야만 진압됩니다.",
       "drop_items": [
         {
           "item_id": "MI-201",
