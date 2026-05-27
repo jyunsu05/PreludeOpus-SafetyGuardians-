@@ -2,7 +2,7 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!78 &1
 TagManager:
-  serializedVersion: 2
+  serializedVersion: 3
   tags: []
   layers:
   - Default
@@ -41,3 +41,18 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: CollisionTile
+    uniqueID: 2652340069
+    locked: 0
+  - name: Background
+    uniqueID: 459830161
+    locked: 0
+  - name: Player
+    uniqueID: 1333542467
+    locked: 0
+  - name: Obstacles
+    uniqueID: 304545193
+    locked: 0
+  m_RenderingLayers:
+  - Default
+  m_MigratedRenderPipelines: []
