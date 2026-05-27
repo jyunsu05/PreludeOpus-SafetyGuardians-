@@ -1078,6 +1078,7 @@ MonoBehaviour:
   searchButton: {fileID: 6064049701375546285}
   purifyButton: {fileID: 3967497233530173509}
   escapeButton: {fileID: 8509126455126889291}
+  acquisitionPopup: {fileID: 0}
 --- !u!1 &2467932571020726506
 GameObject:
   m_ObjectHideFlags: 0

@@ -11,6 +11,9 @@ public class UIButtonContainer : MonoBehaviour
     [SerializeField] private Button purifyButton;   // 정화 버튼
     [SerializeField] private Button escapeButton;   // 도망 버튼
 
+    [Header("--- 아이템 획득 팝업 ---")]
+    [SerializeField] private UIAquisitionPopup acquisitionPopup;
+
     private bool isScanned = false; // 탐색 완료 여부 판별
 
     void Start()
@@ -99,6 +102,14 @@ public class UIButtonContainer : MonoBehaviour
 
         Debug.Log("[UIButtonContainer] 정화 완료 - 모든 버튼 비활성화.");
 
-        // TODO: 아이템 획득창 띄우기
+        if (acquisitionPopup != null)
+        {
+            acquisitionPopup.gameObject.SetActive(true);
+            acquisitionPopup.SetupPopup("아이템 이름", 1); // TODO: 실제 아이템 데이터로 교체
+        }
+        else
+        {
+            Debug.LogWarning("[UIButtonContainer] acquisitionPopup이 연결되지 않았습니다!");
+        }
     }
 }
