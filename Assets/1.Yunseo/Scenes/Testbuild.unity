@@ -268,6 +268,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: UIInventory
       objectReference: {fileID: 0}
+    - target: {fileID: 3765347458450488039, guid: d1dabda33c6689b42987b9f0c25cd6de, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5191832510628354185, guid: d1dabda33c6689b42987b9f0c25cd6de, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -777,6 +781,63 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 12d28a816977bb7479ff3db1b10f915e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIAcquisitionPopup
+--- !u!1001 &1737483940
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1604986371281037963, guid: 438d90f48b866c24c8518ace47b74683, type: 3}
+      propertyPath: m_Name
+      value: GameManager
+      objectReference: {fileID: 0}
+    - target: {fileID: 7749337337835635184, guid: 438d90f48b866c24c8518ace47b74683, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7749337337835635184, guid: 438d90f48b866c24c8518ace47b74683, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7749337337835635184, guid: 438d90f48b866c24c8518ace47b74683, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7749337337835635184, guid: 438d90f48b866c24c8518ace47b74683, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7749337337835635184, guid: 438d90f48b866c24c8518ace47b74683, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7749337337835635184, guid: 438d90f48b866c24c8518ace47b74683, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7749337337835635184, guid: 438d90f48b866c24c8518ace47b74683, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7749337337835635184, guid: 438d90f48b866c24c8518ace47b74683, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7749337337835635184, guid: 438d90f48b866c24c8518ace47b74683, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7749337337835635184, guid: 438d90f48b866c24c8518ace47b74683, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 438d90f48b866c24c8518ace47b74683, type: 3}
 --- !u!1001 &2019998841
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -793,13 +854,17 @@ PrefabInstance:
       propertyPath: m_Name
       value: UIMainHUD
       objectReference: {fileID: 0}
-    - target: {fileID: 6641878437164338290, guid: 38e7b7db009f8c246829a106dd0a2c1c, type: 3}
-      propertyPath: m_AnchorMax.x
+    - target: {fileID: 6596074740413787986, guid: 38e7b7db009f8c246829a106dd0a2c1c, type: 3}
+      propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6641878437164338290, guid: 38e7b7db009f8c246829a106dd0a2c1c, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6641878437164338290, guid: 38e7b7db009f8c246829a106dd0a2c1c, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7160072124573993643, guid: 38e7b7db009f8c246829a106dd0a2c1c, type: 3}
       propertyPath: m_Pivot.x
@@ -982,6 +1047,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: UIAcquisitionPopup
       objectReference: {fileID: 0}
+    - target: {fileID: 3560980294193933452, guid: 01d70f8a66948dd4ab664ca39c58a5bb, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -995,3 +1064,4 @@ SceneRoots:
   - {fileID: 619394802}
   - {fileID: 1344943090}
   - {fileID: 1267986617}
+  - {fileID: 1737483940}
