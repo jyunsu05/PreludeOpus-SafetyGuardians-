@@ -18,7 +18,7 @@ public class UIButtonContainer : MonoBehaviour
 
     void Start()
     {
-        uiManager = FindObjectOfType<UIBattleManager>();
+        uiManager = FindAnyObjectByType<UIBattleManager>();
 
         if (uiManager == null)
         {
@@ -29,8 +29,13 @@ public class UIButtonContainer : MonoBehaviour
             uiManager.OnContaminationEmpty += OnContaminationCleared;
         }
 
-        // 배틀 시작 시 버튼 초기 상태 세팅
         ResetButtonsState();
+    }
+
+    void OnDestroy()
+    {
+        if (uiManager != null)
+            uiManager.OnContaminationEmpty -= OnContaminationCleared;
     }
 
     // 배틀 시작 시 버튼 상태를 초기화하는 함수
@@ -105,7 +110,7 @@ public class UIButtonContainer : MonoBehaviour
         if (acquisitionPopup != null)
         {
             acquisitionPopup.gameObject.SetActive(true);
-            acquisitionPopup.SetupPopup("아이템 이름", 1); // TODO: 실제 아이템 데이터로 교체
+            acquisitionPopup.SetupPopup("아이템 이름", "전투에서 획득한 아이템입니다.", "소모품", 1); // TODO: 실제 아이템 데이터로 교체
         }
         else
         {

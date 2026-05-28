@@ -312,6 +312,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIAcquisitionPopup
   rewardMessageText: {fileID: 8653975235594820707}
+  inventory: {fileID: 915269216227031219, guid: d1dabda33c6689b42987b9f0c25cd6de, type: 3}
 --- !u!1 &4537881736441696693
 GameObject:
   m_ObjectHideFlags: 0
