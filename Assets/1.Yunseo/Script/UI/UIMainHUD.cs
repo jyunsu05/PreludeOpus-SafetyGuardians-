@@ -7,8 +7,8 @@ public class UIMainHUD : MonoBehaviour
     [SerializeField] private Button bagButton;        // 가방 버튼 (UI_Bag_Button)
     [SerializeField] private Slider oxygenBarSlider;  // 산소 게이지 바 (UI_OxygenBar_Slider)
 
-    // [Header("--- [나중용] 인벤토리 UI 판넬 ---")]
-    // [SerializeField] private GameObject inventoryPanel; 
+    [Header("--- 인벤토리 ---")]
+    [SerializeField] private UIInventory inventory;
 
     void Start()
     {
@@ -43,12 +43,7 @@ public class UIMainHUD : MonoBehaviour
         // 아직 인벤토리창이 없으므로 콘솔 로그로 먼저 테스트!
         Debug.Log("<color=cyan>[UI_MainHUD]</color> HUD 내부의 가방 버튼이 클릭되었습니다! 인벤토리 개방 프로토콜 가동.");
 
-        // TODO: 나중에 인벤토리 UI 판넬이 완성되면 아래 주석을 해제합니다.
-        /*
-        if (inventoryPanel != null)
-        {
-            inventoryPanel.SetActive(true);
-        }
-        */
+        if (inventory != null)
+            inventory.Open();
     }
 }
