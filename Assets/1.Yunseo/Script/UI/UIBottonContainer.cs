@@ -29,8 +29,13 @@ public class UIButtonContainer : MonoBehaviour
             uiManager.OnContaminationEmpty += OnContaminationCleared;
         }
 
-        // 배틀 시작 시 버튼 초기 상태 세팅
         ResetButtonsState();
+    }
+
+    void OnDestroy()
+    {
+        if (uiManager != null)
+            uiManager.OnContaminationEmpty -= OnContaminationCleared;
     }
 
     // 배틀 시작 시 버튼 상태를 초기화하는 함수
