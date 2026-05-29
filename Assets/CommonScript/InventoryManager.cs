@@ -61,4 +61,10 @@ public class InventoryManager : MonoBehaviour
 
     // 현재 아이템 ID 리스트 반환 (읽기 전용)
     public IReadOnlyList<string> GetItemIds() => itemIds;
+
+    public void ResetAll()
+    {
+        itemIds.Clear();
+        OnInventoryChanged?.Invoke();
+    }
 }

@@ -46,4 +46,9 @@ public class GameManager : MonoBehaviour
         // 구독하고 있는 모든 매니저에게 알림
         OnBattleEnded?.Invoke();
     }
+
+    public void ResetToField()
+    {
+        CurrentState = GameState.Field;
+    }
 }
