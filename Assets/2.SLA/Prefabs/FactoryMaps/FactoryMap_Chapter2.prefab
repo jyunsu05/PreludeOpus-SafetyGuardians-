@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6583663272644787796}
   - component: {fileID: 3987446822957403397}
   m_Layer: 6
-  m_Name: NavMesh_Surface
+  m_Name: FactoryMap_Chapter2_NavMesh
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -62,7 +62,7 @@ MonoBehaviour:
   m_OverrideVoxelSize: 0
   m_VoxelSize: 0.16666667
   m_MinRegionArea: 2
-  m_NavMeshData: {fileID: 23800000, guid: c72674ae9367ddc4cbda4e952300da5c, type: 2}
+  m_NavMeshData: {fileID: 23800000, guid: 407f1da6b15945b438001a0fbd9e36fc, type: 2}
   m_BuildHeightMesh: 0
 --- !u!1 &4737620603296098596
 GameObject:
