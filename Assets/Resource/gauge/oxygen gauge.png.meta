@@ -125,10 +125,10 @@ TextureImporter:
       name: oxygen gauge_0
       rect:
         serializedVersion: 2
-        x: 166
-        y: 674
-        width: 1227
-        height: 140
+        x: 171
+        y: 698
+        width: 1194
+        height: 132
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -147,10 +147,10 @@ TextureImporter:
       name: oxygen gauge_1
       rect:
         serializedVersion: 2
-        x: 170
-        y: 453
-        width: 1242
-        height: 125
+        x: 172
+        y: 467
+        width: 1192
+        height: 126
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -169,10 +169,10 @@ TextureImporter:
       name: oxygen gauge_2
       rect:
         serializedVersion: 2
-        x: 170
-        y: 283
-        width: 1243
-        height: 122
+        x: 172
+        y: 287
+        width: 1192
+        height: 120
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -191,10 +191,10 @@ TextureImporter:
       name: oxygen gauge_3
       rect:
         serializedVersion: 2
-        x: 163
-        y: 54
-        width: 135
-        height: 199
+        x: 173
+        y: 66
+        width: 131
+        height: 194
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
