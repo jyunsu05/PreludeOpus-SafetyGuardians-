@@ -37,7 +37,10 @@ public class UIInventory : MonoBehaviour
     {
         if (InventoryManager.Instance == null || DataManager.Instance == null)
         {
-            Debug.LogError("[UIInventory] InventoryManager 또는 DataManager가 초기화되지 않았습니다!");
+            if (InventoryManager.Instance == null)
+                Debug.LogError("[UIInventory] InventoryManager가 씬에 없습니다. 캔버스 밖 빈 오브젝트에 InventoryManager 스크립트를 붙여주세요.");
+            if (DataManager.Instance == null)
+                Debug.LogError("[UIInventory] DataManager가 씬에 없습니다. 캔버스 밖 빈 오브젝트에 DataManager 스크립트를 붙이고 JSON 파일을 연결해주세요.");
             return;
         }
 
