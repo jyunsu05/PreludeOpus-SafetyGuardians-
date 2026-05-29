@@ -286,7 +286,7 @@ GameObject:
   - component: {fileID: 6982994476712005258}
   - component: {fileID: 3983313710744168839}
   m_Layer: 5
-  m_Name: OxygenSlider
+  m_Name: PollutionSlider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -658,7 +658,7 @@ GameObject:
   - component: {fileID: 552704492715222589}
   - component: {fileID: 2170884588218623336}
   m_Layer: 5
-  m_Name: OxygenImage
+  m_Name: PollutionImage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
