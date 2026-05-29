@@ -6,18 +6,19 @@ public class UIAquisitionPopup : MonoBehaviour
     [Header("--- 팝업 내부 문구 ---")]
     [SerializeField] private TextMeshProUGUI rewardMessageText;
 
-    [Header("--- 인벤토리 연동 ---")]
-    [SerializeField] private UIInventory inventory;
+    private string pendingItemId;
 
-    private string pendingItemName;
-    private string pendingDescription;
-    private string pendingItemType;
-
-    public void SetupPopup(string itemName, string description, string itemType, int count)
+    public void SetupPopup(string itemId, int count)
     {
-        pendingItemName = itemName;
-        pendingDescription = description;
-        pendingItemType = itemType;
+        pendingItemId = itemId;
+
+        // DataManager에서 실제 아이템 이름 가져오기
+        string itemName = itemId;
+        if (DataManager.Instance != null)
+        {
+            ItemData data = DataManager.Instance.GetItemData(itemId);
+            if (data != null) itemName = data.name;
+        }
 
         if (rewardMessageText != null)
             rewardMessageText.text = $"{itemName}을(를) {count}개 수집했습니다.\n아이템은 인벤토리에 자동으로 들어갑니다.";
@@ -28,11 +29,10 @@ public class UIAquisitionPopup : MonoBehaviour
     {
         Debug.Log("[UIAquisitionPopup] 확인 버튼 클릭.");
 
-        // 인벤토리에 아이템 추가
-        if (inventory != null)
-            inventory.AddItem(pendingItemName, pendingDescription, pendingItemType);
+        if (InventoryManager.Instance != null)
+            InventoryManager.Instance.AddItem(pendingItemId);
         else
-            Debug.LogWarning("[UIAquisitionPopup] inventory가 연결되지 않았습니다!");
+            Debug.LogWarning("[UIAquisitionPopup] InventoryManager가 없습니다!");
 
         gameObject.SetActive(false);
 

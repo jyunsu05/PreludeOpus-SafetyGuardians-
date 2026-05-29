@@ -765,6 +765,50 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 7160072124573993643, guid: 38e7b7db009f8c246829a106dd0a2c1c, type: 3}
   m_PrefabInstance: {fileID: 2019998841}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1616251129
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1616251131}
+  - component: {fileID: 1616251130}
+  m_Layer: 0
+  m_Name: InventoryManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1616251130
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1616251129}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ccbcdef115f87f340bcbe3f00a9c3577, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InventoryManager
+--- !u!4 &1616251131
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1616251129}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!224 &1690289699 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 1043694137895513498, guid: 01d70f8a66948dd4ab664ca39c58a5bb, type: 3}
@@ -1007,3 +1051,4 @@ SceneRoots:
   - {fileID: 619394802}
   - {fileID: 1344943090}
   - {fileID: 1267986617}
+  - {fileID: 1616251131}

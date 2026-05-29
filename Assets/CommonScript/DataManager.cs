@@ -40,6 +40,24 @@ public class DataManager : MonoBehaviour
         Debug.Log("DataManager: 모든 데이터 로드 완료!");
     }
 
+    // 아이템 ID 존재 여부 확인 (factory + monster 통합 검색)
+    public bool HasItem(string id) => FactoryItemDict.ContainsKey(id) || MonsterItemDict.ContainsKey(id);
+
+    // 아이템 데이터 반환
+    public ItemData GetItemData(string id)
+    {
+        if (FactoryItemDict.TryGetValue(id, out ItemData item)) return item;
+        if (MonsterItemDict.TryGetValue(id, out item)) return item;
+        return null;
+    }
+
+    // 몬스터 데이터 반환
+    public MonsterData GetMonsterData(string id)
+    {
+        MonsterDict.TryGetValue(id, out MonsterData monster);
+        return monster;
+    }
+
     // 제네릭을 사용하면 똑같은 코드를 반복하지 않아도 됩니다!
     private void LoadDataToDict<T, TList>(TextAsset textAsset, Dictionary<string, T> dict) where TList : class, IDataList<T>
     {
