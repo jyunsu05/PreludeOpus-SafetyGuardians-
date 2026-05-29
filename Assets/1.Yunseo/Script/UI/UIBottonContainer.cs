@@ -110,7 +110,7 @@ public class UIButtonContainer : MonoBehaviour
         if (acquisitionPopup != null)
         {
             acquisitionPopup.gameObject.SetActive(true);
-            acquisitionPopup.SetupPopup("아이템 이름", "전투에서 획득한 아이템입니다.", "소모품", 1); // TODO: 실제 아이템 데이터로 교체
+            acquisitionPopup.SetupPopup("MI-101", 1); // TODO: 실제 몬스터 드롭 데이터로 교체
         }
         else
         {

@@ -1,19 +1,16 @@
 fileFormatVersion: 2
-guid: 87d52577767728c4f825d4f937c9b623
+guid: e5550b9dbd746504cb97847237b9a745
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -2178046980988538021
-    second: oxygen gauge_0
+      213: -5808493965831976469
+    second: The-Safety-Guardians_Items_v1.0_0
   - first:
-      213: 8358943449661916506
-    second: oxygen gauge_1
+      213: 2426754965074197784
+    second: The-Safety-Guardians_Items_v1.0_1
   - first:
-      213: -8407754951197819981
-    second: oxygen gauge_2
-  - first:
-      213: 2261403847854733669
-    second: oxygen gauge_3
+      213: -1597189312500174178
+    second: The-Safety-Guardians_Items_v1.0_2
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -122,13 +119,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: oxygen gauge_0
+      name: The-Safety-Guardians_Items_v1.0_0
       rect:
         serializedVersion: 2
-        x: 171
-        y: 698
-        width: 1194
-        height: 132
+        x: 226
+        y: 295
+        width: 340
+        height: 398
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -137,20 +134,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: b53f0128fc506c1e0800000000000000
-      internalID: -2178046980988538021
+      spriteID: be9c5964385146fa0800000000000000
+      internalID: -5808493965831976469
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: oxygen gauge_1
+      name: The-Safety-Guardians_Items_v1.0_1
       rect:
         serializedVersion: 2
-        x: 172
-        y: 467
-        width: 1192
-        height: 126
+        x: 604
+        y: 288
+        width: 328
+        height: 408
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -159,20 +156,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: a554da6a7cee00470800000000000000
-      internalID: 8358943449661916506
+      spriteID: 81db92288c09da120800000000000000
+      internalID: 2426754965074197784
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: oxygen gauge_2
+      name: The-Safety-Guardians_Items_v1.0_2
       rect:
         serializedVersion: 2
-        x: 172
-        y: 287
-        width: 1192
-        height: 120
+        x: 991
+        y: 294
+        width: 360
+        height: 386
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -181,30 +178,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 3bb72570b67a15b80800000000000000
-      internalID: -8407754951197819981
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: oxygen gauge_3
-      rect:
-        serializedVersion: 2
-        x: 173
-        y: 66
-        width: 131
-        height: 194
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 569351571de126f10800000000000000
-      internalID: 2261403847854733669
+      spriteID: e92706558c4a5d9e0800000000000000
+      internalID: -1597189312500174178
       vertices: []
       indices: 
       edges: []
@@ -223,10 +198,9 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      oxygen gauge_0: -2178046980988538021
-      oxygen gauge_1: 8358943449661916506
-      oxygen gauge_2: -8407754951197819981
-      oxygen gauge_3: 2261403847854733669
+      The-Safety-Guardians_Items_v1.0_0: -5808493965831976469
+      The-Safety-Guardians_Items_v1.0_1: 2426754965074197784
+      The-Safety-Guardians_Items_v1.0_2: -1597189312500174178
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

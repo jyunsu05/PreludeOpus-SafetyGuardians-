@@ -684,7 +684,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -4943070293070099551, guid: abdd715f41bf697488e57ddf4d6fb257, type: 3}
+  m_Sprite: {fileID: -4943070293070099551, guid: 7014765d1fdd436458128a6de5ac5a76, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -855,6 +855,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2994066629805730655}
   - component: {fileID: -2863525082731974030}
+  - component: {fileID: 4779326148928543390}
   m_Layer: 5
   m_Name: UIBattlescene
   m_TagString: Untagged
@@ -905,6 +906,20 @@ MonoBehaviour:
   infectionTypeText: {fileID: 9203231476752371468}
   descriptionText: {fileID: 5334116896712028762}
   inventoryStatusText: {fileID: 230360874833888543}
+--- !u!114 &4779326148928543390
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1978609888579264080}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 519ddbad41125d14c8b23805819becc3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BattleUIController
+  fleePenaltyAmount: 15
+  playerOxygen: {fileID: 0}
 --- !u!1 &1999932119882758139
 GameObject:
   m_ObjectHideFlags: 0
@@ -1394,9 +1409,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 6336157620756632991}
-        m_TargetAssemblyTypeName: UIButtonContainer, Assembly-CSharp
-        m_MethodName: OnEscapeClick
+      - m_Target: {fileID: 4779326148928543390}
+        m_TargetAssemblyTypeName: BattleUIController, Assembly-CSharp
+        m_MethodName: OnFleeButtonClicked
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1608,7 +1623,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 4608028673547224922, guid: abdd715f41bf697488e57ddf4d6fb257, type: 3}
+  m_Sprite: {fileID: 4608028673547224922, guid: 7014765d1fdd436458128a6de5ac5a76, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -2129,8 +2144,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 8.522972, y: 0}
-  m_SizeDelta: {x: 27.047, y: 0}
+  m_AnchoredPosition: {x: 8.522972, y: 1.3876}
+  m_SizeDelta: {x: 27.047, y: 2.7752}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5873682037214038184
 CanvasRenderer:
@@ -2160,7 +2175,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -961079832983248275, guid: abdd715f41bf697488e57ddf4d6fb257, type: 3}
+  m_Sprite: {fileID: -961079832983248275, guid: 7014765d1fdd436458128a6de5ac5a76, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -3492,7 +3507,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -49453884762331875, guid: abdd715f41bf697488e57ddf4d6fb257, type: 3}
+  m_Sprite: {fileID: -49453884762331875, guid: 7014765d1fdd436458128a6de5ac5a76, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
