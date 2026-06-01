@@ -12,7 +12,7 @@ public class UIButtonContainer : MonoBehaviour
     [SerializeField] private Button escapeButton;   // 도망 버튼
 
     [Header("--- 아이템 획득 팝업 ---")]
-    [SerializeField] private UIAquisitionPopup acquisitionPopup;
+    [SerializeField] private UIAcquisitionPopup acquisitionPopup;
 
     private bool isScanned = false; // 탐색 완료 여부 판별
 

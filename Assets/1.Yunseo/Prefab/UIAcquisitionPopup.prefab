@@ -1458,7 +1458,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 1138763428972544567}
-        m_TargetAssemblyTypeName: UIAquisitionPopup, Assembly-CSharp
+        m_TargetAssemblyTypeName: UIAcquisitionPopup, Assembly-CSharp
         m_MethodName: OnConfirmButtonClick
         m_Mode: 1
         m_Arguments:

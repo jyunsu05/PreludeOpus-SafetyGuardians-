@@ -338,6 +338,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5022463118578693994, guid: d1dabda33c6689b42987b9f0c25cd6de, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5191832510628354185, guid: d1dabda33c6689b42987b9f0c25cd6de, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -583,13 +587,17 @@ PrefabInstance:
       propertyPath: m_Name
       value: UILoading
       objectReference: {fileID: 0}
+    - target: {fileID: 302463321996297589, guid: 9ef1266cb1b917945a95fa75447f8675, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5551761399202122257, guid: 9ef1266cb1b917945a95fa75447f8675, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5551761399202122257, guid: 9ef1266cb1b917945a95fa75447f8675, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8868762925433697026, guid: 9ef1266cb1b917945a95fa75447f8675, type: 3}
       propertyPath: m_Pivot.x

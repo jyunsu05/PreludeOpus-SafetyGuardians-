@@ -7,7 +7,7 @@ public class UIManager : MonoBehaviour
 
     [Header("--- UI 패널 ---")]
     [SerializeField] private UIInventory inventory;
-    [SerializeField] private UIAquisitionPopup acquisitionPopup;
+    [SerializeField] private UIAcquisitionPopup acquisitionPopup;
     [SerializeField] private GameObject battleUIPanel;
     [SerializeField] private UIMainHUD mainHUD;
 

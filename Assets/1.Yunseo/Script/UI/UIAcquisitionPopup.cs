@@ -1,7 +1,7 @@
 using UnityEngine;
 using TMPro;
 
-public class UIAquisitionPopup : MonoBehaviour
+public class UIAcquisitionPopup : MonoBehaviour
 {
     [Header("--- 팝업 내부 문구 ---")]
     [SerializeField] private TextMeshProUGUI rewardMessageText;
@@ -27,12 +27,12 @@ public class UIAquisitionPopup : MonoBehaviour
     // [확인] 버튼과 연결할 함수
     public void OnConfirmButtonClick()
     {
-        Debug.Log("[UIAquisitionPopup] 확인 버튼 클릭.");
+        Debug.Log("[UIAcquisitionPopup] 확인 버튼 클릭.");
 
         if (InventoryManager.Instance != null)
             InventoryManager.Instance.AddItem(pendingItemId);
         else
-            Debug.LogWarning("[UIAquisitionPopup] InventoryManager가 없습니다!");
+            Debug.LogWarning("[UIAcquisitionPopup] InventoryManager가 없습니다!");
 
         gameObject.SetActive(false);
 
