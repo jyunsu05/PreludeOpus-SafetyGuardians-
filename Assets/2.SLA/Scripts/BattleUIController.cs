@@ -16,6 +16,7 @@ public class BattleUIController : MonoBehaviour
 
     [Header("컴포넌트 연결")]
     [SerializeField] private PlayerOxygen playerOxygen;
+    [SerializeField] private PlayerController playerController;
 
     private bool isFleeProcessing;
     private UnityEngine.UI.Button fleeButton;
@@ -25,6 +26,7 @@ public class BattleUIController : MonoBehaviour
         isFleeProcessing = false;
         CacheAndBindButton();
         ResolveActivePlayerOxygen();
+        ResolveActivePlayerController();
     }
 
     private void OnEnable()
@@ -68,12 +70,18 @@ public class BattleUIController : MonoBehaviour
             fleeButton.interactable = false;
 
         ResolveActivePlayerOxygen();
+        ResolveActivePlayerController();
 
         // 1. 산소 패널티 즉시 차감 (컴포넌트가 있을 때만)
         if (playerOxygen != null)
             playerOxygen.ApplyFleePenalty(fleePenaltyAmount);
         else
             Debug.LogWarning("[BattleUIController] PlayerOxygen이 없어 도망 패널티는 생략하고 배틀 종료만 진행합니다.");
+
+        if (playerController != null)
+            playerController.BeginPostFleeGraceWindow();
+        else
+            Debug.LogWarning("[BattleUIController] PlayerController를 찾지 못해 도망 후 재진입 방지 시간을 적용하지 못했습니다.");
 
         // 2. GameManager에 필드 복귀 알림 (OnBattleEnded 이벤트 발행)
         if (GameManager.Instance != null)
@@ -99,5 +107,20 @@ public class BattleUIController : MonoBehaviour
         }
 
         playerOxygen = null;
+    }
+
+    private void ResolveActivePlayerController()
+    {
+        if (playerController != null && playerController.isActiveAndEnabled)
+            return;
+
+        PlayerController found = FindAnyObjectByType<PlayerController>();
+        if (found != null && found.isActiveAndEnabled)
+        {
+            playerController = found;
+            return;
+        }
+
+        playerController = null;
     }
 }

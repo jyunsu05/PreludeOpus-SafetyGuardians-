@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D), typeof(Animator), typeof(SpriteRenderer))]
@@ -9,11 +10,17 @@ public class PlayerController : MonoBehaviour
 
     [Header("기본 UI(HUD) 연결")]
     [SerializeField] private GameObject mainHUD;
+
+    [Header("도망 후 재진입 방지")]
+    [Tooltip("도망 직후 다시 전투에 들어가지 않도록 잠깐 막는 시간")]
+    [SerializeField] private float postFleeGraceDuration = 0.75f;
     
     private Rigidbody2D rb;
     private SpriteRenderer spriteRenderer;
+    private Coroutine postFleeGraceRoutine;
     
     private Vector2 movementInput;
+    private bool isBattleEntryLocked;
 
     private const string MonsterIdSlime = "M-001";
     private const string MonsterIdFungus = "M-002";
@@ -49,9 +56,32 @@ public class PlayerController : MonoBehaviour
         rb.MovePosition(rb.position + movementInput * moveSpeed * Time.fixedDeltaTime);
     }
 
+    /// <summary>
+    /// 도망 직후 잠깐 전투 재진입을 막습니다.
+    /// </summary>
+    public void BeginPostFleeGraceWindow()
+    {
+        if (postFleeGraceRoutine != null)
+            StopCoroutine(postFleeGraceRoutine);
+
+        postFleeGraceRoutine = StartCoroutine(PostFleeGraceRoutine());
+    }
+
+    private void OnDisable()
+    {
+        if (postFleeGraceRoutine != null)
+            StopCoroutine(postFleeGraceRoutine);
+
+        postFleeGraceRoutine = null;
+        isBattleEntryLocked = false;
+    }
+
     // 몬스터와 충돌 시 전투씬창 UI 활성화
     private void OnTriggerEnter2D(Collider2D other)
     {
+        if (isBattleEntryLocked)
+            return;
+
         if (IsMonsterCollider(other))
         {
             BattleEncounterContext.SetEncounteredMonsterId(ResolveMonsterId(other));
@@ -64,6 +94,14 @@ public class PlayerController : MonoBehaviour
             if (mainHUD != null)
                 mainHUD.SetActive(false);
         }
+    }
+
+    private IEnumerator PostFleeGraceRoutine()
+    {
+        isBattleEntryLocked = true;
+        yield return new WaitForSecondsRealtime(postFleeGraceDuration);
+        isBattleEntryLocked = false;
+        postFleeGraceRoutine = null;
     }
 
     private bool IsMonsterCollider(Collider2D other)
