@@ -1,0 +1,284 @@
+fileFormatVersion: 2
+guid: f2643ae2a05452a40a8385f53214536e
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -1982872460862964028
+    second: Monster_M003_Fire_Idle_0
+  - first:
+      213: 1165989153561046851
+    second: Monster_M003_Fire_Idle_1
+  - first:
+      213: 5026237804093360776
+    second: Monster_M003_Fire_Idle_2
+  - first:
+      213: 3317490544988817398
+    second: Monster_M003_Fire_Idle_3
+  - first:
+      213: 2928603248394012885
+    second: Monster_M003_Fire_Idle_4
+  - first:
+      213: -305377161701711647
+    second: Monster_M003_Fire_Idle_5
+  - first:
+      213: -6404508668109342351
+    second: Monster_M003_Fire_Idle_6
+  - first:
+      213: 655017581443911395
+    second: Monster_M003_Fire_Idle_7
+  - first:
+      213: 371537884398959910
+    second: Monster_M003_Fire_Idle_8
+  - first:
+      213: 1330137768676915568
+    second: Monster_M003_Fire_Idle_9
+  - first:
+      213: -2058615727381027285
+    second: Monster_M003_Fire_Idle_10
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Monster_M003_Fire_Idle_0
+      rect:
+        serializedVersion: 2
+        x: 46
+        y: 44
+        width: 252
+        height: 340
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4cebb57a00c6b74e0800000000000000
+      internalID: -1982872460862964028
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_M003_Fire_Idle_2
+      rect:
+        serializedVersion: 2
+        x: 367
+        y: 44
+        width: 253
+        height: 336
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 88acf9517a8c0c540800000000000000
+      internalID: 5026237804093360776
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_M003_Fire_Idle_8
+      rect:
+        serializedVersion: 2
+        x: 689
+        y: 44
+        width: 255
+        height: 335
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 62d3334ccb7f72500800000000000000
+      internalID: 371537884398959910
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_M003_Fire_Idle_9
+      rect:
+        serializedVersion: 2
+        x: 1014
+        y: 44
+        width: 252
+        height: 335
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0797154d049957210800000000000000
+      internalID: 1330137768676915568
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_M003_Fire_Idle_10
+      rect:
+        serializedVersion: 2
+        x: 1337
+        y: 30
+        width: 253
+        height: 347
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b26eb6827e35e63e0800000000000000
+      internalID: -2058615727381027285
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: a1d9689a31f2b37488b4a02eb163aa49
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Monster_M003_Fire_Idle_0: -1982872460862964028
+      Monster_M003_Fire_Idle_1: 1165989153561046851
+      Monster_M003_Fire_Idle_10: -2058615727381027285
+      Monster_M003_Fire_Idle_2: 5026237804093360776
+      Monster_M003_Fire_Idle_3: 3317490544988817398
+      Monster_M003_Fire_Idle_4: 2928603248394012885
+      Monster_M003_Fire_Idle_5: -305377161701711647
+      Monster_M003_Fire_Idle_6: -6404508668109342351
+      Monster_M003_Fire_Idle_7: 655017581443911395
+      Monster_M003_Fire_Idle_8: 371537884398959910
+      Monster_M003_Fire_Idle_9: 1330137768676915568
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -1,0 +1,318 @@
+fileFormatVersion: 2
+guid: 85691efdfe7f2e546919b851078be91b
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 8291779235996704333
+    second: Monster_M001_Slime_Idle_0
+  - first:
+      213: 1461129305259147199
+    second: Monster_M001_Slime_Idle_1
+  - first:
+      213: 6339596375431380084
+    second: Monster_M001_Slime_Idle_2
+  - first:
+      213: -3334215778901235556
+    second: Monster_M001_Slime_Idle_3
+  - first:
+      213: 3608634682055434501
+    second: Monster_M001_Slime_Idle_4
+  - first:
+      213: -9066965336492466584
+    second: Monster_M001_Slime_Idle_5
+  - first:
+      213: -8816514681779730074
+    second: Monster_M001_Slime_Idle_6
+  - first:
+      213: 839047645123776441
+    second: Monster_M001_Slime_Idle_7
+  - first:
+      213: 5796440464063587986
+    second: Monster_M001_Slime_Idle_8
+  - first:
+      213: -1747536235951080997
+    second: Monster_M001_Slime_Idle_9
+  - first:
+      213: 871095131543488351
+    second: Monster_M001_Slime_Idle_10
+  - first:
+      213: -3549584900354765823
+    second: Monster_M001_Slime_Idle_11
+  - first:
+      213: -721456871920135092
+    second: Monster_M001_Slime_Idle_12
+  - first:
+      213: 2056375820219756204
+    second: Monster_M001_Slime_Idle_13
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Monster_M001_Slime_Idle_4
+      rect:
+        serializedVersion: 2
+        x: 1477
+        y: 335
+        width: 256
+        height: 212
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 501a11cbf12741230800000000000000
+      internalID: 3608634682055434501
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_M001_Slime_Idle_8
+      rect:
+        serializedVersion: 2
+        x: 18
+        y: 334
+        width: 267
+        height: 187
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 296e53624e7117050800000000000000
+      internalID: 5796440464063587986
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_M001_Slime_Idle_9
+      rect:
+        serializedVersion: 2
+        x: 308
+        y: 335
+        width: 274
+        height: 192
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bd933006d018fb7e0800000000000000
+      internalID: -1747536235951080997
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_M001_Slime_Idle_11
+      rect:
+        serializedVersion: 2
+        x: 600
+        y: 335
+        width: 262
+        height: 210
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 10c8342f6575dbec0800000000000000
+      internalID: -3549584900354765823
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_M001_Slime_Idle_12
+      rect:
+        serializedVersion: 2
+        x: 890
+        y: 335
+        width: 253
+        height: 214
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c449f642ccedcf5f0800000000000000
+      internalID: -721456871920135092
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_M001_Slime_Idle_13
+      rect:
+        serializedVersion: 2
+        x: 1183
+        y: 335
+        width: 258
+        height: 215
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: caea6e0d9e6b98c10800000000000000
+      internalID: 2056375820219756204
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 3537399353bd201419bce215285f5c72
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Monster_M001_Slime_Idle_0: 8291779235996704333
+      Monster_M001_Slime_Idle_1: 1461129305259147199
+      Monster_M001_Slime_Idle_10: 871095131543488351
+      Monster_M001_Slime_Idle_11: -3549584900354765823
+      Monster_M001_Slime_Idle_12: -721456871920135092
+      Monster_M001_Slime_Idle_13: 2056375820219756204
+      Monster_M001_Slime_Idle_2: 6339596375431380084
+      Monster_M001_Slime_Idle_3: -3334215778901235556
+      Monster_M001_Slime_Idle_4: 3608634682055434501
+      Monster_M001_Slime_Idle_5: -9066965336492466584
+      Monster_M001_Slime_Idle_6: -8816514681779730074
+      Monster_M001_Slime_Idle_7: 839047645123776441
+      Monster_M001_Slime_Idle_8: 5796440464063587986
+      Monster_M001_Slime_Idle_9: -1747536235951080997
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
