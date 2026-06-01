@@ -185,7 +185,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8262382494914530255, guid: 5fa4c472c84bfd64899a1be0aa8d43e9, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -979,6 +979,17 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 1978609888579264080, guid: 670e2a2f4876d9b43af120ca18810067, type: 3}
   m_PrefabInstance: {fileID: 1303790571}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1137649556 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4779326148928543390, guid: 670e2a2f4876d9b43af120ca18810067, type: 3}
+  m_PrefabInstance: {fileID: 1303790571}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1137649553}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 519ddbad41125d14c8b23805819becc3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BattleUIController
 --- !u!1 &1158180297 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2023566366084749911, guid: 3733886cf5e0c7940b04d6b0f4238d70, type: 3}
@@ -1234,7 +1245,7 @@ PrefabInstance:
     - target: {fileID: 8509126455126889291, guid: 670e2a2f4876d9b43af120ca18810067, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 1137649556}
     - target: {fileID: 8509126455126889291, guid: 670e2a2f4876d9b43af120ca18810067, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_Target
       value: 
@@ -1392,7 +1403,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1402275103
 RectTransform:
   m_ObjectHideFlags: 0
