@@ -196,6 +196,7 @@ MonoBehaviour:
   moveSpeed: 5
   battleSceneUI: {fileID: 0}
   mainHUD: {fileID: 0}
+  postFleeGraceDuration: 0.5
 --- !u!114 &7236435115061726686
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -212,3 +213,5 @@ MonoBehaviour:
   currentOxygen: 0
   decayRate: 1
   oxygenSlider: {fileID: 0}
+  gameOverUI: {fileID: 0}
+  mainHUD: {fileID: 0}
