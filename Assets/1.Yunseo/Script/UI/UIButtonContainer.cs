@@ -18,6 +18,7 @@ public class UIButtonContainer : MonoBehaviour
     [SerializeField] private int purifyDurabilityPerUse = 10;
 
     private bool isScanned = false; // 탐색 완료 여부 판별
+    private bool isExitRequested = false;
     private string depletedItemIdThisBattle;
 
     private const string DefaultRewardItemId = "MI-101";
@@ -53,6 +54,7 @@ public class UIButtonContainer : MonoBehaviour
     public void ResetButtonsState()
     {
         isScanned = false;
+        isExitRequested = false;
         depletedItemIdThisBattle = null;
 
         if (searchButton != null)
@@ -65,7 +67,10 @@ public class UIButtonContainer : MonoBehaviour
             purifyButton.gameObject.SetActive(false);
 
         if (escapeButton != null)
+        {
             escapeButton.gameObject.SetActive(true);
+            escapeButton.interactable = true;
+        }
     }
 
     // [탐색] 버튼 클릭 이벤트
@@ -97,6 +102,12 @@ public class UIButtonContainer : MonoBehaviour
     // [정화] 버튼 클릭 이벤트
     public void OnPurifyClick()
     {
+        if (isExitRequested || !IsBattleActive())
+        {
+            Debug.Log("[UIButtonContainer] 전투 종료 중이므로 정화를 처리하지 않습니다.");
+            return;
+        }
+
         if (!isScanned)
         {
             Debug.LogWarning("[UIButtonContainer] 탐색이 완료되지 않아 정화할 수 없습니다.");
@@ -145,6 +156,13 @@ public class UIButtonContainer : MonoBehaviour
     // [도망] 버튼 클릭 이벤트
     public void OnEscapeClick()
     {
+        if (isExitRequested)
+            return;
+
+        isExitRequested = true;
+        if (escapeButton != null)
+            escapeButton.interactable = false;
+
         Debug.Log("[UIButtonContainer] 전투 이탈 시도.");
 
         ExitBattleUI();
@@ -161,6 +179,8 @@ public class UIButtonContainer : MonoBehaviour
     // 오염도 0 도달 시 호출 - 모든 버튼 비활성화
     private void OnContaminationCleared()
     {
+        isExitRequested = true;
+
         if (searchButton != null) searchButton.gameObject.SetActive(false);
         if (purifyButton != null) purifyButton.gameObject.SetActive(false);
         if (escapeButton != null) escapeButton.gameObject.SetActive(false);
@@ -271,5 +291,17 @@ public class UIButtonContainer : MonoBehaviour
             return itemId;
 
         return data.name;
+    }
+
+    private bool IsBattleActive()
+    {
+        bool isBattleUiActive = gameObject.activeInHierarchy;
+
+        if (GameManager.Instance == null)
+            return isBattleUiActive;
+
+        // 현재 프로젝트는 배틀 UI를 직접 여는 경로가 있어 GameState가 Field인 경우가 있습니다.
+        // 이때도 배틀 UI가 실제로 열려 있으면 배틀 입력을 허용합니다.
+        return GameManager.Instance.CurrentState == GameManager.GameState.Battle || isBattleUiActive;
     }
 }
