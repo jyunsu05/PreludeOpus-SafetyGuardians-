@@ -5,6 +5,7 @@
       "image_key": "monster_slime",
       "name": "슬라임",
       "contamination_level": 100,
+      "capture_difficulty": "보통",
       "description": "산성 감염을 일으킨 점액질 생명체입니다.",
       "drop_item_id": "MI-101"
     },
@@ -13,6 +14,7 @@
       "image_key": "monster_fungus",
       "name": "곰팡이",
       "contamination_level": 100,
+      "capture_difficulty": "보통",
       "description": "독성 감염되어 증식하는 유기체입니다.",
       "drop_item_id": "MI-102"
     },
@@ -21,6 +23,7 @@
       "image_key": "monster_fire",
       "name": "불",
       "contamination_level": 100,
+      "capture_difficulty": "보통",
       "description": "인화성 감염을 일으킨 화재성 괴물입니다.",
       "drop_item_id": "MI-201"
     }

@@ -7,7 +7,7 @@ public class AtlasManager : MonoBehaviour
 
     [Header("--- Sprite Atlas References ---")]
     [SerializeField] private SpriteAtlas itemAtlas;
-    [SerializeField] private SpriteAtlas monsterAtlas;
+    [SerializeField] private SpriteAtlas MonsterImages;
 
     void Awake()
     {
@@ -19,8 +19,8 @@ public class AtlasManager : MonoBehaviour
             if (itemAtlas == null)
                 Debug.LogError("[AtlasManager] ItemAtlas가 인스펙터에 할당되지 않았습니다.");
 
-            if (monsterAtlas == null)
-                Debug.LogError("[AtlasManager] MonsterAtlas가 인스펙터에 할당되지 않았습니다.");
+            if (MonsterImages == null)
+                Debug.LogError("[AtlasManager] MonsterImages가 인스펙터에 할당되지 않았습니다.");
         }
         else
         {
@@ -43,7 +43,7 @@ public class AtlasManager : MonoBehaviour
     /// </summary>
     public Sprite GetMonsterSprite(string spriteName)
     {
-        return GetSpriteFromAtlas(monsterAtlas, spriteName, "MonsterAtlas");
+        return GetSpriteFromAtlas(MonsterImages, spriteName, "MonsterImages");
     }
 
     private Sprite GetSpriteFromAtlas(SpriteAtlas atlas, string spriteName, string atlasName)

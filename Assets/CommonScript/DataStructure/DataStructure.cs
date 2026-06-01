@@ -27,12 +27,14 @@ public class DropItem
 public class MonsterData : IIdentifiable
 {
     public string id;
+    public string image_key;
     public string name;
     public int contamination_level;
     public string capture_difficulty;
     public int speed;
     public string infection_type;
     public string description;
+    public string drop_item_id;
     public List<DropItem> drop_items;
     public string GetId() => id;
 }

@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 
 public class DataManager : MonoBehaviour
 {
@@ -87,6 +88,11 @@ public class DataManager : MonoBehaviour
     {
         MonsterDict.TryGetValue(id, out MonsterData monster);
         return monster;
+    }
+
+    public List<string> GetMonsterIds()
+    {
+        return MonsterDict.Keys.ToList();
     }
 
     // 제네릭을 사용하면 똑같은 코드를 반복하지 않아도 됩니다!

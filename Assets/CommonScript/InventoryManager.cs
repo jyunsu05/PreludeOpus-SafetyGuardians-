@@ -6,8 +6,15 @@ public class InventoryManager : MonoBehaviour
 {
     public static InventoryManager Instance { get; private set; }
 
-    // 현재 인벤토리에 들어있는 아이템 ID 리스트
-    private List<string> itemIds = new List<string>();
+    private class InventoryItemInstance
+    {
+        public string id;
+        public int remainingDurability;
+    }
+
+    // 현재 인벤토리에 들어있는 아이템 인스턴스 리스트
+    private readonly List<InventoryItemInstance> items = new List<InventoryItemInstance>();
+    private readonly List<string> itemIdSnapshot = new List<string>();
 
     // 인벤토리 변화 시 UI에 알리는 이벤트
     public event Action OnInventoryChanged;
@@ -40,16 +47,28 @@ public class InventoryManager : MonoBehaviour
             return;
         }
 
-        itemIds.Add(id);
-        Debug.Log($"[InventoryManager] 아이템 추가됨: {id}");
+        ItemData data = DataManager.Instance.GetItemData(id);
+        int durability = 1;
+        if (data != null && data.durability > 0)
+            durability = data.durability;
+
+        items.Add(new InventoryItemInstance
+        {
+            id = id,
+            remainingDurability = durability
+        });
+
+        Debug.Log($"[InventoryManager] 아이템 추가됨: {id} (내구도 {durability})");
         OnInventoryChanged?.Invoke();
     }
 
     // 아이템 제거
     public void RemoveItem(string id)
     {
-        if (itemIds.Remove(id))
+        int index = items.FindIndex(x => x.id == id);
+        if (index >= 0)
         {
+            items.RemoveAt(index);
             Debug.Log($"[InventoryManager] 아이템 제거됨: {id}");
             OnInventoryChanged?.Invoke();
         }
@@ -59,12 +78,65 @@ public class InventoryManager : MonoBehaviour
         }
     }
 
+    public bool HasItem(string id)
+    {
+        if (string.IsNullOrEmpty(id))
+            return false;
+
+        return items.Exists(x => x.id == id);
+    }
+
+    public int GetItemRemainingDurability(string id)
+    {
+        int index = items.FindIndex(x => x.id == id);
+        if (index < 0)
+            return 0;
+
+        return items[index].remainingDurability;
+    }
+
+    // amount만큼 내구도를 소모하고 실제 소모량을 반환합니다.
+    public int ConsumeItemDurability(string id, int amount)
+    {
+        if (string.IsNullOrEmpty(id) || amount <= 0)
+            return 0;
+
+        int index = items.FindIndex(x => x.id == id);
+        if (index < 0)
+            return 0;
+
+        InventoryItemInstance item = items[index];
+        int consumed = Mathf.Min(amount, item.remainingDurability);
+        item.remainingDurability -= consumed;
+
+        if (item.remainingDurability <= 0)
+        {
+            items.RemoveAt(index);
+            Debug.Log($"[InventoryManager] 아이템 소모 완료: {id}");
+        }
+        else
+        {
+            Debug.Log($"[InventoryManager] 아이템 내구도 소모: {id} (-{consumed}), 남은 내구도 {item.remainingDurability}");
+        }
+
+        OnInventoryChanged?.Invoke();
+        return consumed;
+    }
+
     // 현재 아이템 ID 리스트 반환 (읽기 전용)
-    public IReadOnlyList<string> GetItemIds() => itemIds;
+    public IReadOnlyList<string> GetItemIds()
+    {
+        itemIdSnapshot.Clear();
+        foreach (InventoryItemInstance item in items)
+            itemIdSnapshot.Add(item.id);
+
+        return itemIdSnapshot;
+    }
 
     public void ResetAll()
     {
-        itemIds.Clear();
+        items.Clear();
+        itemIdSnapshot.Clear();
         OnInventoryChanged?.Invoke();
     }
 }

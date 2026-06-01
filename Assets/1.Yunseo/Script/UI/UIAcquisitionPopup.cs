@@ -11,9 +11,11 @@ public class UIAcquisitionPopup : MonoBehaviour
     [SerializeField] private Image rewardItemIconImage;
 
     private string pendingItemId;
+    private bool addToInventoryOnConfirm = true;
 
-    public void SetupPopup(string itemId, int count)
+    public void SetupPopup(string itemId, int count, bool shouldAddToInventory = true)
     {
+        addToInventoryOnConfirm = shouldAddToInventory;
         pendingItemId = ResolveInventoryItemId(itemId);
 
         // DataManager에서 실제 아이템 이름 가져오기
@@ -86,10 +88,13 @@ public class UIAcquisitionPopup : MonoBehaviour
     {
         Debug.Log("[UIAcquisitionPopup] 확인 버튼 클릭.");
 
-        if (InventoryManager.Instance != null)
-            InventoryManager.Instance.AddItem(pendingItemId);
-        else
-            Debug.LogWarning("[UIAcquisitionPopup] InventoryManager가 없습니다!");
+        if (addToInventoryOnConfirm)
+        {
+            if (InventoryManager.Instance != null)
+                InventoryManager.Instance.AddItem(pendingItemId);
+            else
+                Debug.LogWarning("[UIAcquisitionPopup] InventoryManager가 없습니다!");
+        }
 
         ExitBattleUIIfNeeded();
 
