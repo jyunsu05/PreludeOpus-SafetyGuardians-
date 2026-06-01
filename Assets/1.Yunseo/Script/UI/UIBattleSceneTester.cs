@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class UIBattleSceneTester : MonoBehaviour
 {
@@ -64,13 +65,38 @@ public class UIBattleSceneTester : MonoBehaviour
         if (battleManager != null)
         {
             battleManager.ResetBattleUIState();
-            battleManager.SetMonsterBasicUI(testMonsterName, testDifficulty, testMaxContamination);
+
+            string randomMonsterId = GetRandomMonsterIdFromJson();
+            if (!string.IsNullOrEmpty(randomMonsterId))
+            {
+                battleManager.SetMonsterById(randomMonsterId);
+                Debug.Log($"[UIBattleSceneTester] 랜덤 몬스터 로드: {randomMonsterId}");
+            }
+            else
+            {
+                // 데이터 매니저가 없거나 몬스터 목록이 비어있을 때 기존 테스트 값으로 폴백합니다.
+                battleManager.SetMonsterBasicUI(testMonsterName, testDifficulty, testMaxContamination);
+                Debug.LogWarning("[UIBattleSceneTester] 몬스터 JSON 목록이 없어 기본 테스트 UI 값을 사용합니다.");
+            }
         }
 
         if (buttonContainer != null)
             buttonContainer.ResetButtonsState();
 
         Debug.Log("[UIBattleSceneTester] 배틀 UI 테스트 시작.");
+    }
+
+    private string GetRandomMonsterIdFromJson()
+    {
+        if (DataManager.Instance == null)
+            return null;
+
+        List<string> monsterIds = DataManager.Instance.GetMonsterIds();
+        if (monsterIds == null || monsterIds.Count == 0)
+            return null;
+
+        int randomIndex = Random.Range(0, monsterIds.Count);
+        return monsterIds[randomIndex];
     }
 
     private void ForceCloseBattleUI()

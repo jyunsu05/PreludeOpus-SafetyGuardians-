@@ -72,7 +72,10 @@ public class UIBattleManager : MonoBehaviour
         if (DataManager.Instance == null)
             return;
 
-        string monsterId = defaultMonsterId;
+        string monsterId = BattleEncounterContext.ConsumeEncounteredMonsterId();
+        if (string.IsNullOrEmpty(monsterId))
+            monsterId = defaultMonsterId;
+
         if (DataManager.Instance.GetMonsterData(monsterId) == null)
         {
             List<string> ids = DataManager.Instance.GetMonsterIds();

@@ -15,6 +15,10 @@ public class PlayerController : MonoBehaviour
     
     private Vector2 movementInput;
 
+    private const string MonsterIdSlime = "M-001";
+    private const string MonsterIdFungus = "M-002";
+    private const string MonsterIdFire = "M-003";
+
     private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -48,8 +52,10 @@ public class PlayerController : MonoBehaviour
     // 몬스터와 충돌 시 전투씬창 UI 활성화
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Monster"))
+        if (IsMonsterCollider(other))
         {
+            BattleEncounterContext.SetEncounteredMonsterId(ResolveMonsterId(other));
+
             if (battleSceneUI != null)
                 battleSceneUI.SetActive(true);
             else
@@ -58,5 +64,49 @@ public class PlayerController : MonoBehaviour
             if (mainHUD != null)
                 mainHUD.SetActive(false);
         }
+    }
+
+    private bool IsMonsterCollider(Collider2D other)
+    {
+        if (other == null)
+            return false;
+
+        try
+        {
+            if (other.CompareTag("Monster"))
+                return true;
+        }
+        catch (UnityException)
+        {
+            // Monster 태그가 아직 프로젝트에 등록되지 않은 경우를 안전하게 우회합니다.
+        }
+
+        string objectName = other.gameObject.name;
+        return !string.IsNullOrEmpty(objectName) &&
+               (objectName.Contains("슬라임") || objectName.Contains("곰팡") || objectName.Contains("불") ||
+                objectName.ToLowerInvariant().Contains("slime") || objectName.ToLowerInvariant().Contains("fungus") || objectName.ToLowerInvariant().Contains("fire"));
+    }
+
+    private string ResolveMonsterId(Collider2D other)
+    {
+        if (other == null)
+            return null;
+
+        string objectName = other.gameObject.name;
+        if (string.IsNullOrEmpty(objectName))
+            return null;
+
+        string lower = objectName.ToLowerInvariant();
+
+        if (objectName.Contains("슬라임") || lower.Contains("slime"))
+            return MonsterIdSlime;
+
+        if (objectName.Contains("곰팡") || lower.Contains("fungus"))
+            return MonsterIdFungus;
+
+        if (objectName.Contains("불") || lower.Contains("fire"))
+            return MonsterIdFire;
+
+        return null;
     }
 }
