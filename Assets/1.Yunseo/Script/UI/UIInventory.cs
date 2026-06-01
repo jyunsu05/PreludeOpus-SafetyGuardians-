@@ -9,6 +9,7 @@ public class UIInventory : MonoBehaviour
     [SerializeField] private Transform contentParent;
     [FormerlySerializedAs("itemPrefabs")]
     [SerializeField] private UIInventoryItemSceneView[] itemSceneViews;
+    [SerializeField] private UIInventoryItemSceneView[] itemPrefabs; // Legacy scene/prefab compatibility
 
     [Header("--- 닫기 버튼 ---")]
     [SerializeField] private Button closeButton;
@@ -70,16 +71,29 @@ public class UIInventory : MonoBehaviour
     // 슬롯 1개 생성
     private void SpawnSlot(ItemData data)
     {
-        if (itemSceneViews == null || itemSceneViews.Length == 0 || contentParent == null)
+        UIInventoryItemSceneView[] prefabCandidates = GetItemViewCandidates();
+
+        if (prefabCandidates == null || prefabCandidates.Length == 0 || contentParent == null)
         {
             Debug.LogError($"[UIInventory] itemSceneViews 또는 contentParent가 연결되지 않았습니다! ({gameObject.name})");
             return;
         }
 
         // TODO: 나중에 아이템 타입별로 프리팹 선택 로직 추가 예정
-        UIInventoryItemSceneView prefab = itemSceneViews[0];
+        UIInventoryItemSceneView prefab = prefabCandidates[0];
         UIInventoryItemSceneView slot = Instantiate(prefab, contentParent);
         slot.Setup(data.name, data.description, GetItemTypeLabel(data), GetItemSprite(data));
+    }
+
+    private UIInventoryItemSceneView[] GetItemViewCandidates()
+    {
+        if (itemSceneViews != null && itemSceneViews.Length > 0)
+            return itemSceneViews;
+
+        if (itemPrefabs != null && itemPrefabs.Length > 0)
+            return itemPrefabs;
+
+        return null;
     }
 
     private string GetItemTypeLabel(ItemData data)
@@ -121,6 +135,12 @@ public class UIInventory : MonoBehaviour
 
     private void EnsureReferences()
     {
+        if ((itemSceneViews == null || itemSceneViews.Length == 0) && itemPrefabs != null && itemPrefabs.Length > 0)
+            itemSceneViews = itemPrefabs;
+
+        if ((itemPrefabs == null || itemPrefabs.Length == 0) && itemSceneViews != null && itemSceneViews.Length > 0)
+            itemPrefabs = itemSceneViews;
+
         if (contentParent == null)
         {
             foreach (Transform t in GetComponentsInChildren<Transform>(true))
@@ -133,11 +153,14 @@ public class UIInventory : MonoBehaviour
             }
         }
 
-        if (itemSceneViews == null || itemSceneViews.Length == 0)
+        if ((itemSceneViews == null || itemSceneViews.Length == 0) && (itemPrefabs == null || itemPrefabs.Length == 0))
         {
             UIInventoryItemSceneView[] candidates = GetComponentsInChildren<UIInventoryItemSceneView>(true);
             if (candidates != null && candidates.Length > 0)
+            {
                 itemSceneViews = new[] { candidates[0] };
+                itemPrefabs = itemSceneViews;
+            }
         }
     }
 
