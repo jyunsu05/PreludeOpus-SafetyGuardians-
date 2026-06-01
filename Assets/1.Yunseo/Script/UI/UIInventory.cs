@@ -1,10 +1,13 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Serialization;
 
 public class UIInventory : MonoBehaviour
 {
     [Header("--- 스크롤뷰 설정 ---")]
+    [FormerlySerializedAs("content")]
     [SerializeField] private Transform contentParent;
+    [FormerlySerializedAs("itemPrefabs")]
     [SerializeField] private UIInventoryItemSceneView[] itemSceneViews;
 
     [Header("--- 닫기 버튼 ---")]
@@ -12,6 +15,8 @@ public class UIInventory : MonoBehaviour
 
     void Start()
     {
+        EnsureReferences();
+
         if (closeButton != null)
             closeButton.onClick.AddListener(Close);
 
@@ -35,6 +40,8 @@ public class UIInventory : MonoBehaviour
     // InventoryManager 이벤트 수신 시 전체 슬롯 갱신
     private void RefreshUI()
     {
+        EnsureReferences();
+
         if (InventoryManager.Instance == null || DataManager.Instance == null)
         {
             if (InventoryManager.Instance == null)
@@ -65,7 +72,7 @@ public class UIInventory : MonoBehaviour
     {
         if (itemSceneViews == null || itemSceneViews.Length == 0 || contentParent == null)
         {
-            Debug.LogError("[UIInventory] itemSceneViews 또는 contentParent가 연결되지 않았습니다!");
+            Debug.LogError($"[UIInventory] itemSceneViews 또는 contentParent가 연결되지 않았습니다! ({gameObject.name})");
             return;
         }
 
@@ -110,6 +117,28 @@ public class UIInventory : MonoBehaviour
         }
 
         return null;
+    }
+
+    private void EnsureReferences()
+    {
+        if (contentParent == null)
+        {
+            foreach (Transform t in GetComponentsInChildren<Transform>(true))
+            {
+                if (t.name == "Content")
+                {
+                    contentParent = t;
+                    break;
+                }
+            }
+        }
+
+        if (itemSceneViews == null || itemSceneViews.Length == 0)
+        {
+            UIInventoryItemSceneView[] candidates = GetComponentsInChildren<UIInventoryItemSceneView>(true);
+            if (candidates != null && candidates.Length > 0)
+                itemSceneViews = new[] { candidates[0] };
+        }
     }
 
     // 모든 슬롯 제거
