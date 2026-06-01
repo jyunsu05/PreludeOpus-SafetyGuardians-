@@ -159,6 +159,14 @@ public class MonsterSpawner : MonoBehaviour
             Debug.Log($"Monster Type {i}: {monsterTypeCounts[i]}");
     }
 
+    public void RemoveSpawnedMonster(GameObject monster)
+    {
+        if (monster == null)
+            return;
+
+        spawnedMonsters.Remove(monster);
+    }
+
     private void ClearSpawnedMonsters()
     {
         for (int i = spawnedMonsters.Count - 1; i >= 0; i--)

@@ -7,8 +7,12 @@ public class MonsterController : MonoBehaviour
     [SerializeField] private float moveSpeed = 2f;
     [SerializeField] private float detectRange = 5f;
 
+    [Header("Battle")]
+    [SerializeField] private float chasePauseAfterBattle = 1.5f;
+
     private Rigidbody2D rb;
     private Transform player;
+    private float chaseBlockedUntil;
 
     private void Awake()
     {
@@ -22,10 +26,31 @@ public class MonsterController : MonoBehaviour
             player = playerObject.transform;
         else
             Debug.LogWarning("Player tag object was not found.");
+
+        if (GameManager.Instance != null)
+            GameManager.Instance.OnBattleEnded += OnBattleEnded;
+    }
+
+    private void OnDestroy()
+    {
+        if (GameManager.Instance != null)
+            GameManager.Instance.OnBattleEnded -= OnBattleEnded;
+    }
+
+    private void OnBattleEnded()
+    {
+        StopMoving();
+        chaseBlockedUntil = Time.time + chasePauseAfterBattle;
     }
 
     private void FixedUpdate()
     {
+        if (Time.time < chaseBlockedUntil)
+        {
+            StopMoving();
+            return;
+        }
+
         if (player == null)
         {
             StopMoving();
