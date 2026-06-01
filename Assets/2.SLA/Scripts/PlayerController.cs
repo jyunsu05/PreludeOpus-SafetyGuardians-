@@ -4,6 +4,11 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 5.0f;
+    [Header("전투씬창 UI 연결")]
+    [SerializeField] private GameObject battleSceneUI;
+
+    [Header("기본 UI(HUD) 연결")]
+    [SerializeField] private GameObject mainHUD;
     
     private Rigidbody2D rb;
     private SpriteRenderer spriteRenderer;
@@ -38,5 +43,20 @@ public class PlayerController : MonoBehaviour
     {
         // 물리 엔진 루프에서 요원을 부드럽게 이동시킵니다.
         rb.MovePosition(rb.position + movementInput * moveSpeed * Time.fixedDeltaTime);
+    }
+
+    // 몬스터와 충돌 시 전투씬창 UI 활성화
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.CompareTag("Monster"))
+        {
+            if (battleSceneUI != null)
+                battleSceneUI.SetActive(true);
+            else
+                Debug.LogWarning("[PlayerController] battleSceneUI가 연결되지 않았습니다.");
+
+            if (mainHUD != null)
+                mainHUD.SetActive(false);
+        }
     }
 }
