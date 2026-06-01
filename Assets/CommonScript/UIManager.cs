@@ -90,8 +90,29 @@ public class UIManager : MonoBehaviour
     }
 
     // --- 배틀 UI ---
-    public void OpenBattleUI() => SetPanelActive(battleUIPanel, true);
+    public void OpenBattleUI()
+    {
+        SetPanelActive(battleUIPanel, true);
+        ResetBattleUIOnOpen();
+    }
+
     public void CloseBattleUI() => SetPanelActive(battleUIPanel, false);
+
+    private void ResetBattleUIOnOpen()
+    {
+        CloseAcquisitionPopup();
+
+        if (battleUIPanel == null)
+            return;
+
+        UIBattleManager battleManager = battleUIPanel.GetComponentInChildren<UIBattleManager>(true);
+        if (battleManager != null)
+            battleManager.ResetBattleUIState();
+
+        UIButtonContainer buttonContainer = battleUIPanel.GetComponentInChildren<UIButtonContainer>(true);
+        if (buttonContainer != null)
+            buttonContainer.ResetButtonsState();
+    }
 
     // --- HUD ---
     public void UpdateOxygenGauge(float currentOxygen, float maxOxygen)

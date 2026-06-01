@@ -178,8 +178,12 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3969975852445350046, guid: de48aa7b444ffd644a5b3438be28ef3e, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 4302335392019922402, guid: de48aa7b444ffd644a5b3438be28ef3e, type: 3}
+      propertyPath: itemAtlas
+      value: 
+      objectReference: {fileID: 100100200, guid: 03491cd2ba9aff54b9ddf2db6078bce2, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -330,6 +334,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1344943090}
     m_Modifications:
+    - target: {fileID: 915269216227031219, guid: d1dabda33c6689b42987b9f0c25cd6de, type: 3}
+      propertyPath: itemSceneViews.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 915269216227031219, guid: d1dabda33c6689b42987b9f0c25cd6de, type: 3}
+      propertyPath: 'itemSceneViews.Array.data[0]'
+      value: 
+      objectReference: {fileID: 4120395585604495486, guid: 4218901afd9107f419f0826a1af4489d, type: 3}
     - target: {fileID: 3765347458450488039, guid: d1dabda33c6689b42987b9f0c25cd6de, type: 3}
       propertyPath: m_Name
       value: UIInventory
@@ -484,7 +496,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6729180021402166320, guid: a297c4d7d4b07a64b9ec2ddd81033d68, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -747,7 +759,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8262382494914530255, guid: 5fa4c472c84bfd64899a1be0aa8d43e9, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -792,6 +804,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1afd4c489da06a34f8f8c83c8b3082e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIInventoryTester
+--- !u!114 &1084352353 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8155346107567690619, guid: 01d70f8a66948dd4ab664ca39c58a5bb, type: 3}
+  m_PrefabInstance: {fileID: 2131906279}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
 --- !u!1 &1137649553 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1978609888579264080, guid: 670e2a2f4876d9b43af120ca18810067, type: 3}
@@ -1014,6 +1037,10 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: -49453884762331875, guid: 7014765d1fdd436458128a6de5ac5a76, type: 3}
+    - target: {fileID: 4779326148928543390, guid: 670e2a2f4876d9b43af120ca18810067, type: 3}
+      propertyPath: playerOxygen
+      value: 
+      objectReference: {fileID: 1345992253}
     - target: {fileID: 6064049701375546285, guid: 670e2a2f4876d9b43af120ca18810067, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
       value: 1
@@ -1220,7 +1247,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1604986371281037963, guid: 438d90f48b866c24c8518ace47b74683, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7749337337835635184, guid: 438d90f48b866c24c8518ace47b74683, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1418,7 +1445,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2302950888665949414, guid: 7c1d4e8b65e9b00498028831f5b41798, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5826444590195338742, guid: 7c1d4e8b65e9b00498028831f5b41798, type: 3}
       propertyPath: m_Pivot.x
@@ -1524,7 +1551,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4591531822692927888, guid: 01062fe0ed4e96e41b572e28f23da44c, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4785660234104790324, guid: 01062fe0ed4e96e41b572e28f23da44c, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1663,6 +1690,10 @@ PrefabInstance:
       propertyPath: inventory
       value: 
       objectReference: {fileID: 981371387}
+    - target: {fileID: 1138763428972544567, guid: 01d70f8a66948dd4ab664ca39c58a5bb, type: 3}
+      propertyPath: rewardItemIconImage
+      value: 
+      objectReference: {fileID: 1084352353}
     - target: {fileID: 3560980294193933452, guid: 01d70f8a66948dd4ab664ca39c58a5bb, type: 3}
       propertyPath: m_Name
       value: UIAcquisitionPopup
@@ -1671,8 +1702,13 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8029909717532661622, guid: 01d70f8a66948dd4ab664ca39c58a5bb, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 8029909717532661622, guid: 01d70f8a66948dd4ab664ca39c58a5bb, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 01d70f8a66948dd4ab664ca39c58a5bb, type: 3}
@@ -1701,19 +1737,19 @@ PrefabInstance:
       objectReference: {fileID: 981371387}
     - target: {fileID: 2460399870300243763, guid: 38e7b7db009f8c246829a106dd0a2c1c, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2460399870300243763, guid: 38e7b7db009f8c246829a106dd0a2c1c, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3186338631344234300, guid: 38e7b7db009f8c246829a106dd0a2c1c, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3186338631344234300, guid: 38e7b7db009f8c246829a106dd0a2c1c, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3379858696355260729, guid: 38e7b7db009f8c246829a106dd0a2c1c, type: 3}
       propertyPath: m_Name
@@ -1729,7 +1765,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8679454650599392281, guid: 38e7b7db009f8c246829a106dd0a2c1c, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8934887675269467278, guid: 38e7b7db009f8c246829a106dd0a2c1c, type: 3}
       propertyPath: m_Pivot.x
@@ -1892,7 +1928,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7007862870832319201, guid: 4e3e41b227f2c6849bf807917f03535b, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

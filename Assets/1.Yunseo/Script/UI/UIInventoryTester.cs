@@ -4,9 +4,8 @@ using TMPro;
 
 public class UIInventoryTester : MonoBehaviour
 {
-    // 테스트할 아이템 ID 목록 (JSON에 있는 실제 ID)
-    private readonly string[] testItemIds = { "MI-101", "MI-102", "MI-201" };
-    private int testIndex = 0;
+    // 테스트할 아이템 ID 목록 (공장 + 몬스터)
+    private readonly string[] testItemIds = { "FI-101", "FI-102", "FI-201", "MI-101", "MI-102", "MI-201" };
 
     void Start()
     {
@@ -63,8 +62,7 @@ public class UIInventoryTester : MonoBehaviour
             return;
         }
 
-        string id = testItemIds[testIndex % testItemIds.Length];
-        testIndex++;
+        string id = testItemIds[Random.Range(0, testItemIds.Length)];
 
         InventoryManager.Instance.AddItem(id);
         Debug.Log($"[UIInventoryTester] 아이템 추가 요청: {id}");

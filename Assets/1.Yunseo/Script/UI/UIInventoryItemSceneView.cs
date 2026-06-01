@@ -14,6 +14,6 @@ public class UIInventoryItemSceneView : MonoBehaviour
         if (itemNameText != null)        itemNameText.text = itemName;
         if (itemDescriptionText != null) itemDescriptionText.text = description;
         if (itemTypeText != null)        itemTypeText.text = itemType;
-        if (itemIconImage != null && icon != null) itemIconImage.sprite = icon;
+        if (itemIconImage != null) itemIconImage.sprite = icon;
     }
 }

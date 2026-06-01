@@ -8,6 +8,8 @@ public interface IDataList<T> { List<T> GetList(); }
 public class ItemData : IIdentifiable
 {
     public string id;
+    public string image_key;
+    public string item_type;
     public string name;
     public int durability;
     public string description;

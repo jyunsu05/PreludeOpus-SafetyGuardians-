@@ -51,6 +51,37 @@ public class DataManager : MonoBehaviour
         return null;
     }
 
+    // 몬스터 보상 아이템 ID를 인벤토리용 공장 아이템 ID로 변환
+    public string GetFactoryItemIdForInventory(string itemId)
+    {
+        if (string.IsNullOrEmpty(itemId))
+            return itemId;
+
+        if (FactoryItemDict.ContainsKey(itemId))
+            return itemId;
+
+        if (MonsterItemDict.TryGetValue(itemId, out ItemData monsterItem))
+        {
+            foreach (ItemData factoryItem in FactoryItemDict.Values)
+            {
+                if (!string.IsNullOrEmpty(monsterItem.image_key) && monsterItem.image_key == factoryItem.image_key)
+                    return factoryItem.id;
+
+                if (!string.IsNullOrEmpty(monsterItem.name) && monsterItem.name == factoryItem.name)
+                    return factoryItem.id;
+            }
+        }
+
+        if (itemId.StartsWith("MI-"))
+        {
+            string convertedId = "FI-" + itemId.Substring(3);
+            if (FactoryItemDict.ContainsKey(convertedId))
+                return convertedId;
+        }
+
+        return itemId;
+    }
+
     // 몬스터 데이터 반환
     public MonsterData GetMonsterData(string id)
     {

@@ -32,6 +32,11 @@ public class UIButtonContainer : MonoBehaviour
         ResetButtonsState();
     }
 
+    void OnEnable()
+    {
+        ResetButtonsState();
+    }
+
     void OnDestroy()
     {
         if (uiManager != null)
@@ -42,10 +47,18 @@ public class UIButtonContainer : MonoBehaviour
     public void ResetButtonsState()
     {
         isScanned = false;
-        
-        if (searchButton != null) searchButton.interactable = true;
-        if (purifyButton != null) purifyButton.gameObject.SetActive(false);
-        if (escapeButton != null) escapeButton.gameObject.SetActive(true);
+
+        if (searchButton != null)
+        {
+            searchButton.gameObject.SetActive(true);
+            searchButton.interactable = true;
+        }
+
+        if (purifyButton != null)
+            purifyButton.gameObject.SetActive(false);
+
+        if (escapeButton != null)
+            escapeButton.gameObject.SetActive(true);
     }
 
     // [탐색] 버튼 클릭 이벤트
@@ -94,8 +107,16 @@ public class UIButtonContainer : MonoBehaviour
     public void OnEscapeClick()
     {
         Debug.Log("[UIButtonContainer] 전투 이탈 시도.");
-        
-        // TODO: 나중에 씬 전환 기능이 들어갈 자리
+
+        ExitBattleUI();
+    }
+
+    private void ExitBattleUI()
+    {
+        if (GameManager.Instance != null)
+            GameManager.Instance.ReturnToField();
+        else if (UIManager.Instance != null)
+            UIManager.Instance.CloseBattleUI();
     }
 
     // 오염도 0 도달 시 호출 - 모든 버튼 비활성화
@@ -109,8 +130,12 @@ public class UIButtonContainer : MonoBehaviour
 
         if (acquisitionPopup != null)
         {
+            string rewardItemId = "MI-101";
+            if (DataManager.Instance != null)
+                rewardItemId = DataManager.Instance.GetFactoryItemIdForInventory(rewardItemId);
+
             acquisitionPopup.gameObject.SetActive(true);
-            acquisitionPopup.SetupPopup("MI-101", 1); // TODO: 실제 몬스터 드롭 데이터로 교체
+            acquisitionPopup.SetupPopup(rewardItemId, 1); // TODO: 실제 몬스터 드롭 데이터로 교체
         }
         else
         {

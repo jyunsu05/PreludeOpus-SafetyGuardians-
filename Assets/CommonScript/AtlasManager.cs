@@ -5,11 +5,9 @@ public class AtlasManager : MonoBehaviour
 {
     public static AtlasManager Instance { get; private set; }
 
-    private const string ItemAtlasPath = "Atlases/ItemAtlas";
-    private const string MonsterAtlasPath = "Atlases/MonsterAtlas";
-
-    private SpriteAtlas itemAtlas;
-    private SpriteAtlas monsterAtlas;
+    [Header("--- Sprite Atlas References ---")]
+    [SerializeField] private SpriteAtlas itemAtlas;
+    [SerializeField] private SpriteAtlas monsterAtlas;
 
     void Awake()
     {
@@ -18,14 +16,11 @@ public class AtlasManager : MonoBehaviour
             Instance = this;
             DontDestroyOnLoad(gameObject);
 
-            itemAtlas = Resources.Load<SpriteAtlas>(ItemAtlasPath);
-            monsterAtlas = Resources.Load<SpriteAtlas>(MonsterAtlasPath);
-
             if (itemAtlas == null)
-                Debug.LogError($"[AtlasManager] ItemAtlas를 찾을 수 없습니다: {ItemAtlasPath}");
+                Debug.LogError("[AtlasManager] ItemAtlas가 인스펙터에 할당되지 않았습니다.");
 
             if (monsterAtlas == null)
-                Debug.LogError($"[AtlasManager] MonsterAtlas를 찾을 수 없습니다: {MonsterAtlasPath}");
+                Debug.LogError("[AtlasManager] MonsterAtlas가 인스펙터에 할당되지 않았습니다.");
         }
         else
         {
@@ -57,6 +52,9 @@ public class AtlasManager : MonoBehaviour
             return null;
 
         Sprite sprite = atlas.GetSprite(spriteName);
+        if (sprite == null)
+            sprite = atlas.GetSprite($"{spriteName}_0");
+
         if (sprite == null)
             Debug.LogWarning($"[AtlasManager] {atlasName}에서 스프라이트를 찾을 수 없습니다: {spriteName}");
 

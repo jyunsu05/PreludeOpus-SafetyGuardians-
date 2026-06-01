@@ -5,7 +5,7 @@ public class UIInventory : MonoBehaviour
 {
     [Header("--- 스크롤뷰 설정 ---")]
     [SerializeField] private Transform contentParent;
-    [SerializeField] private UIInventoryItemSceneView[] itemPrefabs;
+    [SerializeField] private UIInventoryItemSceneView[] itemSceneViews;
 
     [Header("--- 닫기 버튼 ---")]
     [SerializeField] private Button closeButton;
@@ -63,16 +63,53 @@ public class UIInventory : MonoBehaviour
     // 슬롯 1개 생성
     private void SpawnSlot(ItemData data)
     {
-        if (itemPrefabs == null || itemPrefabs.Length == 0 || contentParent == null)
+        if (itemSceneViews == null || itemSceneViews.Length == 0 || contentParent == null)
         {
-            Debug.LogError("[UIInventory] itemPrefabs 또는 contentParent가 연결되지 않았습니다!");
+            Debug.LogError("[UIInventory] itemSceneViews 또는 contentParent가 연결되지 않았습니다!");
             return;
         }
 
         // TODO: 나중에 아이템 타입별로 프리팹 선택 로직 추가 예정
-        UIInventoryItemSceneView prefab = itemPrefabs[0];
+        UIInventoryItemSceneView prefab = itemSceneViews[0];
         UIInventoryItemSceneView slot = Instantiate(prefab, contentParent);
-        slot.Setup(data.name, data.description, "아이템");
+        slot.Setup(data.name, data.description, GetItemTypeLabel(data), GetItemSprite(data));
+    }
+
+    private string GetItemTypeLabel(ItemData data)
+    {
+        if (data != null && !string.IsNullOrEmpty(data.item_type))
+            return data.item_type;
+
+        return "아이템";
+    }
+
+    private Sprite GetItemSprite(ItemData data)
+    {
+        if (AtlasManager.Instance == null || data == null)
+            return null;
+
+        if (!string.IsNullOrEmpty(data.image_key))
+        {
+            Sprite sprite = AtlasManager.Instance.GetSprite(data.image_key);
+            if (sprite != null)
+                return sprite;
+        }
+
+        if (!string.IsNullOrEmpty(data.id))
+        {
+            Sprite sprite = AtlasManager.Instance.GetSprite(data.id);
+            if (sprite != null)
+                return sprite;
+        }
+
+        if (!string.IsNullOrEmpty(data.name))
+        {
+            Sprite sprite = AtlasManager.Instance.GetSprite(data.name);
+            if (sprite != null)
+                return sprite;
+        }
+
+        return null;
     }
 
     // 모든 슬롯 제거

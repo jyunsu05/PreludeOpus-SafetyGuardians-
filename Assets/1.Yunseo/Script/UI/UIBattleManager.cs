@@ -20,10 +20,25 @@ public class UIBattleManager : MonoBehaviour
 
     void Awake()
     {
+        ResetBattleUIState();
+    }
+
+    void OnEnable()
+    {
+        ResetBattleUIState();
+    }
+
+    public void ResetBattleUIState()
+    {
         if (scanInfoPanel != null)
-        {
             scanInfoPanel.SetActive(false);
-        }
+
+        if (infectionTypeText != null) infectionTypeText.text = string.Empty;
+        if (descriptionText != null) descriptionText.text = string.Empty;
+        if (inventoryStatusText != null) inventoryStatusText.text = string.Empty;
+
+        if (contaminationSlider != null)
+            contaminationSlider.value = contaminationSlider.maxValue;
     }
 
     public void SetMonsterBasicUI(string name, string difficulty, int maxContamination)
