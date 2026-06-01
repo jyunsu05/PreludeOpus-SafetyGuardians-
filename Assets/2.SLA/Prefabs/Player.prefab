@@ -194,6 +194,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   moveSpeed: 5
+  battleSceneUI: {fileID: 0}
+  mainHUD: {fileID: 0}
 --- !u!114 &7236435115061726686
 MonoBehaviour:
   m_ObjectHideFlags: 0

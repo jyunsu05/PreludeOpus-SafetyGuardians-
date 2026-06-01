@@ -11,6 +11,10 @@ public class PlayerOxygen : MonoBehaviour
     [Header("연동할 UI")]
     public Slider oxygenSlider;        // HUD 프리팹의 산소 게이지 슬라이더
 
+    // 파일 상단 변수 선언부에 추가
+[SerializeField] private GameObject gameOverUI; // 게임오버 UI 오브젝트(윤서님 프리팹)
+[SerializeField] private GameObject mainHUD;    // HUD UI 오브젝트
+
     void Start()
     {
         currentOxygen = maxOxygen;
@@ -40,11 +44,23 @@ public class PlayerOxygen : MonoBehaviour
             oxygenSlider.value = currentOxygen / maxOxygen;
         }
 
+        
         if (currentOxygen <= 0)
+    {
+        // 1. 게임오버 UI 활성화
+        if (gameOverUI != null && !gameOverUI.activeSelf)
         {
-            Debug.LogWarning("산소가 전부 고갈되었습니다! 데미지를 주거나 게임오버 처리가 필요합니다.");
-            // TODO: 정윤서 팀장님이 만들 게임오버 팝업 연동 구역
+            var goComp = gameOverUI.GetComponent<UIGameOver>();
+            if (goComp != null)
+                goComp.Show();
+            else
+                gameOverUI.SetActive(true);
         }
+
+        // 2. HUD 비활성화
+        if (mainHUD != null && mainHUD.activeSelf)
+            mainHUD.SetActive(false);
+    }
     }
 
     /// <summary>
