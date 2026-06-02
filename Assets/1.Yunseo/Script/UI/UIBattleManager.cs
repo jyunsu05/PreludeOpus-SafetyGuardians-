@@ -2,16 +2,21 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
+using System;
 
 public class UIBattleManager : MonoBehaviour
 {
+    private const int DefaultContaminationLevel = 100;
+    private static readonly Dictionary<string, int> contaminationProgressByMonsterId = new Dictionary<string, int>();
+    private static string lastResolvedEncounterMonsterId;
+
     public event System.Action OnContaminationEmpty;
     [Header("--- 몬스터 기본 정보 UI (항상 보임) ---")]
     [SerializeField] private Image monsterImage;
     [SerializeField] private TextMeshProUGUI monsterNameText;       // 몬스터: name
     [SerializeField] private TextMeshProUGUI difficultyText;        // 포획 난이도: New Text
     [SerializeField] private Slider contaminationSlider;            // 오염도 게이지 바
-    [SerializeField] private string defaultMonsterId = "M-001";
+    [SerializeField] private string defaultMonsterId = string.Empty;
 
     [Header("--- 탐색 시 통째로 열리는 부모 Panel ---")]
     [SerializeField] private GameObject scanInfoPanel;              // 3개를 하나로 묶으신 부모 오브젝트
@@ -22,6 +27,7 @@ public class UIBattleManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI inventoryStatusText;   // 인벤토리 상황 : 아이템 보유
 
     private MonsterData currentMonsterData;
+    private string currentMonsterId;
     private PlayerController lockedPlayerController;
     private Rigidbody2D lockedPlayerRigidbody;
     private bool wasPlayerRigidbodySimulated;
@@ -37,11 +43,13 @@ public class UIBattleManager : MonoBehaviour
 
     void Awake()
     {
+        BindGameEvents();
         ResetBattleUIState();
     }
 
     void OnEnable()
     {
+        BindGameEvents();
         ResetBattleUIState();
         LoadMonsterFromData();
         LockPlayerMovementAtBattleEntry();
@@ -50,6 +58,7 @@ public class UIBattleManager : MonoBehaviour
 
     void OnDisable()
     {
+        SaveCurrentContaminationProgress();
         UnlockPlayerMovement();
         UnlockMonsterMovement();
     }
@@ -58,6 +67,9 @@ public class UIBattleManager : MonoBehaviour
     {
         UnlockPlayerMovement();
         UnlockMonsterMovement();
+
+        if (GameManager.Instance != null)
+            GameManager.Instance.OnBattleEnded -= HandleBattleEnded;
     }
 
     public void ResetBattleUIState()
@@ -69,8 +81,7 @@ public class UIBattleManager : MonoBehaviour
         if (descriptionText != null) descriptionText.text = string.Empty;
         if (inventoryStatusText != null) inventoryStatusText.text = string.Empty;
 
-        if (contaminationSlider != null)
-            contaminationSlider.value = contaminationSlider.maxValue;
+        ResetContaminationGaugeToInitial();
     }
 
     public MonsterData GetCurrentMonsterData() => currentMonsterData;
@@ -98,23 +109,95 @@ public class UIBattleManager : MonoBehaviour
         if (DataManager.Instance == null)
             return;
 
-        string monsterId = BattleEncounterContext.ConsumeEncounteredMonsterId();
+        string monsterId = ResolveBattleMonsterId();
         if (string.IsNullOrEmpty(monsterId))
-            monsterId = TryResolveEncounteredMonsterIdFromScene();
-
-        if (string.IsNullOrEmpty(monsterId))
-            monsterId = defaultMonsterId;
-
-        if (DataManager.Instance.GetMonsterData(monsterId) == null)
         {
-            List<string> ids = DataManager.Instance.GetMonsterIds();
-            if (ids.Count == 0)
-                return;
-
-            monsterId = ids[0];
+            Debug.LogWarning("[UIBattleManager] 유효한 몬스터 ID를 찾지 못했습니다. JSON/충돌 매핑을 확인하세요.");
+            ClearCurrentMonsterUI();
+            return;
         }
 
         SetMonsterById(monsterId);
+    }
+
+    private void ClearCurrentMonsterUI()
+    {
+        currentMonsterData = null;
+        currentMonsterId = null;
+
+        if (monsterNameText != null)
+            monsterNameText.text = "Unknown";
+
+        if (difficultyText != null)
+            difficultyText.text = "Unknown";
+
+        if (monsterImage != null)
+            monsterImage.sprite = null;
+
+        if (contaminationSlider != null)
+        {
+            contaminationSlider.maxValue = DefaultContaminationLevel;
+            contaminationSlider.value = DefaultContaminationLevel;
+        }
+    }
+
+    private string ResolveBattleMonsterId()
+    {
+        string encounterId = BattleEncounterContext.ConsumeEncounteredMonsterId();
+        bool isEncounterValid = IsValidMonsterId(encounterId);
+        if (isEncounterValid)
+        {
+            lastResolvedEncounterMonsterId = encounterId;
+            Debug.LogWarning($"[UIBattleManager] ResolveBattleMonsterId: encounterId='{encounterId}' (valid)");
+            return encounterId;
+        }
+
+        string sceneResolvedId = TryResolveEncounteredMonsterIdFromScene();
+        bool isSceneResolvedValid = IsValidMonsterId(sceneResolvedId);
+        if (isSceneResolvedValid)
+        {
+            lastResolvedEncounterMonsterId = sceneResolvedId;
+            Debug.LogWarning($"[UIBattleManager] ResolveBattleMonsterId: encounterId='{encounterId ?? "null"}' invalid, sceneResolvedId='{sceneResolvedId}' (valid)");
+            return sceneResolvedId;
+        }
+
+        bool isCachedValid = IsValidMonsterId(lastResolvedEncounterMonsterId);
+        if (isCachedValid)
+        {
+            Debug.LogWarning($"[UIBattleManager] ResolveBattleMonsterId: encounter/scene invalid, cachedId='{lastResolvedEncounterMonsterId}' (valid)");
+            return lastResolvedEncounterMonsterId;
+        }
+
+        Debug.LogWarning($"[UIBattleManager] ResolveBattleMonsterId 실패. encounterId='{encounterId ?? "null"}', sceneResolvedId='{sceneResolvedId ?? "null"}', cachedId='{lastResolvedEncounterMonsterId ?? "null"}'");
+
+        return null;
+    }
+
+    private bool IsValidMonsterId(string monsterId)
+    {
+        if (string.IsNullOrEmpty(monsterId) || DataManager.Instance == null)
+            return false;
+
+        return DataManager.Instance.GetMonsterData(monsterId) != null;
+    }
+
+    private string GetFirstMonsterIdFromJson()
+    {
+        if (DataManager.Instance == null)
+            return null;
+
+        List<string> ids = DataManager.Instance.GetMonsterIds();
+        if (ids == null || ids.Count == 0)
+            return null;
+
+        ids.Sort(StringComparer.Ordinal);
+        for (int i = 0; i < ids.Count; i++)
+        {
+            if (IsValidMonsterId(ids[i]))
+                return ids[i];
+        }
+
+        return null;
     }
 
     private string TryResolveEncounteredMonsterIdFromScene()
@@ -124,23 +207,51 @@ public class UIBattleManager : MonoBehaviour
             return null;
 
         Collider2D playerCollider = player.GetComponent<Collider2D>();
+        if (playerCollider != null)
+        {
+            const int maxOverlapCount = 32;
+            Collider2D[] overlapHits = new Collider2D[maxOverlapCount];
+            int hitCount = playerCollider.Overlap(new ContactFilter2D().NoFilter(), overlapHits);
+            string overlapResolvedId = ResolveClosestMonsterId(player.transform.position, overlapHits, hitCount);
+            if (!string.IsNullOrEmpty(overlapResolvedId))
+                return overlapResolvedId;
+        }
+
         float radius = 0.6f;
         if (playerCollider != null)
-            radius = Mathf.Max(playerCollider.bounds.extents.x, playerCollider.bounds.extents.y) + 0.2f;
+            radius = Mathf.Max(playerCollider.bounds.extents.x, playerCollider.bounds.extents.y) + 0.3f;
 
         Collider2D[] hits = Physics2D.OverlapCircleAll(player.transform.position, radius);
-        for (int i = 0; i < hits.Length; i++)
+        return ResolveClosestMonsterId(player.transform.position, hits, hits.Length);
+    }
+
+    private string ResolveClosestMonsterId(Vector2 playerPosition, Collider2D[] hits, int hitCount)
+    {
+        if (hits == null || hitCount <= 0)
+            return null;
+
+        string closestResolvedId = null;
+        float closestDistanceSqr = float.MaxValue;
+
+        for (int i = 0; i < hitCount; i++)
         {
             Collider2D hit = hits[i];
             if (hit == null || !IsMonsterLikeCollider(hit))
                 continue;
 
             string resolvedId = TryResolveMonsterIdFromObjectName(hit.gameObject.name);
-            if (!string.IsNullOrEmpty(resolvedId))
-                return resolvedId;
+            if (string.IsNullOrEmpty(resolvedId))
+                continue;
+
+            float distanceSqr = ((Vector2)hit.transform.position - playerPosition).sqrMagnitude;
+            if (distanceSqr < closestDistanceSqr)
+            {
+                closestDistanceSqr = distanceSqr;
+                closestResolvedId = resolvedId;
+            }
         }
 
-        return null;
+        return closestResolvedId;
     }
 
     private bool IsMonsterLikeCollider(Collider2D col)
@@ -159,7 +270,9 @@ public class UIBattleManager : MonoBehaviour
             return false;
 
         string lower = objectName.ToLowerInvariant();
-        return lower.Contains("slime") || lower.Contains("fungus") || lower.Contains("mold") || lower.Contains("m002") || lower.Contains("fire") ||
+         return lower.Contains("slime") || lower.Contains("m001") ||
+             lower.Contains("fungus") || lower.Contains("mold") || lower.Contains("m002") ||
+             lower.Contains("fire") || lower.Contains("m003") ||
                objectName.Contains("슬라임") || objectName.Contains("곰팡") || objectName.Contains("불");
     }
 
@@ -185,15 +298,22 @@ public class UIBattleManager : MonoBehaviour
 
             if (!string.IsNullOrEmpty(data.id) && lowerObjectName.Contains(data.id.ToLowerInvariant()))
                 return id;
+
+            if (!string.IsNullOrEmpty(data.id))
+            {
+                string normalizedId = data.id.Replace("-", string.Empty).ToLowerInvariant();
+                if (lowerObjectName.Contains(normalizedId))
+                    return id;
+            }
         }
 
-        if (lowerObjectName.Contains("slime") || objectName.Contains("슬라임"))
+        if (lowerObjectName.Contains("slime") || lowerObjectName.Contains("m001") || objectName.Contains("슬라임"))
             return "M-001";
 
         if (lowerObjectName.Contains("fungus") || lowerObjectName.Contains("mold") || lowerObjectName.Contains("m002") || objectName.Contains("곰팡"))
             return "M-002";
 
-        if (lowerObjectName.Contains("fire") || objectName.Contains("불"))
+        if (lowerObjectName.Contains("fire") || lowerObjectName.Contains("m003") || objectName.Contains("불"))
             return "M-003";
 
         return null;
@@ -202,10 +322,12 @@ public class UIBattleManager : MonoBehaviour
     private void ApplyMonsterData(MonsterData data)
     {
         currentMonsterData = data;
+        currentMonsterId = data != null ? data.id : null;
 
         string difficulty = string.IsNullOrEmpty(data.capture_difficulty) ? "Unknown" : data.capture_difficulty;
-        int contamination = data.contamination_level > 0 ? data.contamination_level : 100;
-        SetMonsterBasicUI(data.name, difficulty, contamination);
+        int maxContamination = GetMonsterMaxContamination(data);
+        int currentContamination = ResolveInitialContamination(data);
+        SetMonsterBasicUI(data.name, difficulty, maxContamination, currentContamination);
 
         if (monsterImage != null)
             monsterImage.sprite = GetMonsterSprite(data);
@@ -271,10 +393,15 @@ public class UIBattleManager : MonoBehaviour
 
     public void SetMonsterBasicUI(string name, string difficulty, int maxContamination)
     {
+        SetMonsterBasicUI(name, difficulty, maxContamination, maxContamination);
+    }
+
+    private void SetMonsterBasicUI(string name, string difficulty, int maxContamination, int currentContamination)
+    {
         monsterNameText.text = name;
         difficultyText.text = difficulty;
         contaminationSlider.maxValue = maxContamination;
-        contaminationSlider.value = maxContamination;
+        contaminationSlider.value = Mathf.Clamp(currentContamination, 0, maxContamination);
     }
 
     // [탐색] 버튼을 눌렀을 때 실행될 함수
@@ -300,13 +427,95 @@ public class UIBattleManager : MonoBehaviour
         if (contaminationSlider == null) return;
 
         contaminationSlider.value = Mathf.Max(0, contaminationSlider.value - amount);
+        CacheCurrentMonsterContamination((int)contaminationSlider.value);
         Debug.Log($"[UIBattleManager] 오염도 감소: {contaminationSlider.value}");
 
         if (contaminationSlider.value <= 0)
         {
+            ClearCurrentMonsterContamination();
             Debug.Log("[UIBattleManager] 오염도 0 도달! 정화 완료.");
             OnContaminationEmpty?.Invoke();
         }
+    }
+
+    private void BindGameEvents()
+    {
+        if (GameManager.Instance == null)
+            return;
+
+        GameManager.Instance.OnBattleEnded -= HandleBattleEnded;
+        GameManager.Instance.OnBattleEnded += HandleBattleEnded;
+    }
+
+    private void HandleBattleEnded()
+    {
+        lastResolvedEncounterMonsterId = null;
+        BattleEncounterContext.SetEncounteredMonsterId(null);
+        SaveCurrentContaminationProgress();
+        ResetContaminationGaugeToInitial();
+    }
+
+    private void ResetContaminationGaugeToInitial()
+    {
+        if (contaminationSlider == null)
+            return;
+
+        int maxContamination = GetMonsterMaxContamination(currentMonsterData);
+        int initialContamination = ResolveInitialContamination(currentMonsterData);
+
+        contaminationSlider.maxValue = maxContamination;
+        contaminationSlider.value = Mathf.Clamp(initialContamination, 0, maxContamination);
+    }
+
+    private int GetMonsterMaxContamination(MonsterData data)
+    {
+        if (data == null)
+            return DefaultContaminationLevel;
+
+        return data.contamination_level > 0 ? data.contamination_level : DefaultContaminationLevel;
+    }
+
+    private int ResolveInitialContamination(MonsterData data)
+    {
+        if (data == null)
+            return DefaultContaminationLevel;
+
+        int maxContamination = GetMonsterMaxContamination(data);
+        if (!string.IsNullOrEmpty(data.id) && contaminationProgressByMonsterId.TryGetValue(data.id, out int savedContamination))
+            return Mathf.Clamp(savedContamination, 0, maxContamination);
+
+        return maxContamination;
+    }
+
+    private void CacheCurrentMonsterContamination(int contamination)
+    {
+        if (string.IsNullOrEmpty(currentMonsterId))
+            return;
+
+        contaminationProgressByMonsterId[currentMonsterId] = Mathf.Max(0, contamination);
+    }
+
+    private void ClearCurrentMonsterContamination()
+    {
+        if (string.IsNullOrEmpty(currentMonsterId))
+            return;
+
+        contaminationProgressByMonsterId.Remove(currentMonsterId);
+    }
+
+    private void SaveCurrentContaminationProgress()
+    {
+        if (contaminationSlider == null || string.IsNullOrEmpty(currentMonsterId))
+            return;
+
+        int current = Mathf.RoundToInt(contaminationSlider.value);
+        if (current <= 0)
+        {
+            contaminationProgressByMonsterId.Remove(currentMonsterId);
+            return;
+        }
+
+        contaminationProgressByMonsterId[currentMonsterId] = current;
     }
 
     private void LockPlayerMovementAtBattleEntry()

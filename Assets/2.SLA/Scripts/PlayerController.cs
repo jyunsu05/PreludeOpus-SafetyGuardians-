@@ -21,6 +21,7 @@ public class PlayerController : MonoBehaviour
     
     private Vector2 movementInput;
     private bool isBattleEntryLocked;
+    private bool hasEnteredBattle;
 
     private const string MonsterIdSlime = "M-001";
     private const string MonsterIdFungus = "M-002";
@@ -30,6 +31,12 @@ public class PlayerController : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.OnBattleEnded -= HandleBattleEnded;
+            GameManager.Instance.OnBattleEnded += HandleBattleEnded;
+        }
     }
 
     private void Update()
@@ -72,8 +79,12 @@ public class PlayerController : MonoBehaviour
         if (postFleeGraceRoutine != null)
             StopCoroutine(postFleeGraceRoutine);
 
+        if (GameManager.Instance != null)
+            GameManager.Instance.OnBattleEnded -= HandleBattleEnded;
+
         postFleeGraceRoutine = null;
         isBattleEntryLocked = false;
+        hasEnteredBattle = false;
     }
 
     // 몬스터와 충돌 시 전투씬창 UI 활성화
@@ -82,9 +93,21 @@ public class PlayerController : MonoBehaviour
         if (isBattleEntryLocked)
             return;
 
+        if (hasEnteredBattle)
+            return;
+
         if (IsMonsterCollider(other))
         {
-            BattleEncounterContext.SetEncounteredMonsterId(ResolveMonsterId(other));
+            string resolvedMonsterId = ResolveMonsterId(other);
+            BattleEncounterContext.SetEncounteredMonsterId(resolvedMonsterId);
+
+            string colliderName = other != null && other.gameObject != null ? other.gameObject.name : "(null)";
+            Debug.LogWarning($"[PlayerController] 배틀 충돌 감지. collider='{colliderName}', resolvedMonsterId='{resolvedMonsterId ?? "null"}'");
+
+            hasEnteredBattle = true;
+
+            if (string.IsNullOrEmpty(resolvedMonsterId))
+                Debug.LogWarning($"[PlayerController] 몬스터 ID 해석 실패: {other.gameObject.name}");
 
             if (battleSceneUI != null)
                 battleSceneUI.SetActive(true);
@@ -94,6 +117,11 @@ public class PlayerController : MonoBehaviour
             if (mainHUD != null)
                 mainHUD.SetActive(false);
         }
+    }
+
+    private void HandleBattleEnded()
+    {
+        hasEnteredBattle = false;
     }
 
     private IEnumerator PostFleeGraceRoutine()
@@ -119,32 +147,74 @@ public class PlayerController : MonoBehaviour
             // Monster 태그가 아직 프로젝트에 등록되지 않은 경우를 안전하게 우회합니다.
         }
 
-        string objectName = other.gameObject.name;
-        return !string.IsNullOrEmpty(objectName) &&
-               (objectName.Contains("슬라임") || objectName.Contains("곰팡") || objectName.Contains("불") ||
-                objectName.ToLowerInvariant().Contains("slime") || objectName.ToLowerInvariant().Contains("fungus") || objectName.ToLowerInvariant().Contains("fire"));
+        return TryResolveMonsterNameHint(other, out string _);
     }
 
     private string ResolveMonsterId(Collider2D other)
     {
-        if (other == null)
-            return null;
-
-        string objectName = other.gameObject.name;
-        if (string.IsNullOrEmpty(objectName))
+        if (!TryResolveMonsterNameHint(other, out string objectName))
             return null;
 
         string lower = objectName.ToLowerInvariant();
 
-        if (objectName.Contains("슬라임") || lower.Contains("slime"))
+        if (objectName.Contains("슬라임") || lower.Contains("slime") || lower.Contains("m001"))
             return MonsterIdSlime;
 
-        if (objectName.Contains("곰팡") || lower.Contains("fungus"))
+        if (objectName.Contains("곰팡") || lower.Contains("fungus") || lower.Contains("mold") || lower.Contains("m002"))
             return MonsterIdFungus;
 
-        if (objectName.Contains("불") || lower.Contains("fire"))
+        if (objectName.Contains("불") || lower.Contains("fire") || lower.Contains("m003"))
             return MonsterIdFire;
 
         return null;
+    }
+
+    private bool TryResolveMonsterNameHint(Collider2D other, out string monsterNameHint)
+    {
+        monsterNameHint = null;
+        if (other == null)
+            return false;
+
+        if (TryGetMatchedMonsterName(other.gameObject, out monsterNameHint))
+            return true;
+
+        if (other.attachedRigidbody != null && TryGetMatchedMonsterName(other.attachedRigidbody.gameObject, out monsterNameHint))
+            return true;
+
+        Transform tr = other.transform;
+        if (tr != null)
+        {
+            if (tr.parent != null && TryGetMatchedMonsterName(tr.parent.gameObject, out monsterNameHint))
+                return true;
+
+            Transform root = tr.root;
+            if (root != null && TryGetMatchedMonsterName(root.gameObject, out monsterNameHint))
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool TryGetMatchedMonsterName(GameObject candidate, out string matchedName)
+    {
+        matchedName = null;
+        if (candidate == null)
+            return false;
+
+        string objectName = candidate.name;
+        if (string.IsNullOrEmpty(objectName))
+            return false;
+
+        string lowerObjectName = objectName.ToLowerInvariant();
+        bool isMonsterName = objectName.Contains("슬라임") || objectName.Contains("곰팡") || objectName.Contains("불") ||
+                             lowerObjectName.Contains("slime") || lowerObjectName.Contains("m001") ||
+                             lowerObjectName.Contains("fungus") || lowerObjectName.Contains("mold") || lowerObjectName.Contains("m002") ||
+                             lowerObjectName.Contains("fire") || lowerObjectName.Contains("m003");
+
+        if (!isMonsterName)
+            return false;
+
+        matchedName = objectName;
+        return true;
     }
 }
