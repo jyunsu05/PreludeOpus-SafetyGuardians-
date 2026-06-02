@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 1358970918100211876}
   - component: {fileID: 4443536012741815071}
   - component: {fileID: 4644724820778612467}
-  - component: {fileID: 8944670783707821961}
+  - component: {fileID: 2275512225953302958}
   - component: {fileID: 8041950453835316283}
   - component: {fileID: 117757869302763951}
   - component: {fileID: -3142432540484853496}
@@ -146,8 +146,8 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 1
   m_Constraints: 4
---- !u!60 &8944670783707821961
-PolygonCollider2D:
+--- !u!58 &2275512225953302958
+CircleCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -181,99 +181,7 @@ PolygonCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 2.14, y: 1.9}
-    newSize: {x: 2.14, y: 1.9}
-    adaptiveTilingThreshold: 0.5
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  m_Points:
-    m_Paths:
-    - - {x: 0.9, y: -0.95}
-      - {x: 1.02, y: -0.88}
-      - {x: 1.1, y: -0.85999995}
-      - {x: 1.1999999, y: -0.81}
-      - {x: 1.22, y: -0.76}
-      - {x: 1.22, y: -0.68}
-      - {x: 1.17, y: -0.63}
-      - {x: 1.03, y: -0.56}
-      - {x: 0.96, y: -0.44}
-      - {x: 0.95, y: -0.32}
-      - {x: 0.90999997, y: -0.17999999}
-      - {x: 0.87, y: -0.08}
-      - {x: 0.78999996, y: 0.07}
-      - {x: 0.56, y: 0.29999998}
-      - {x: 0.41, y: 0.37}
-      - {x: 0.58, y: 0.39999998}
-      - {x: 0.62, y: 0.42}
-      - {x: 0.61, y: 0.51}
-      - {x: 0.48999998, y: 0.48}
-      - {x: 0.08, y: 0.5}
-      - {x: -0.089999996, y: 0.45999998}
-      - {x: -0.35999998, y: 0.53}
-      - {x: -0.47, y: 0.59}
-      - {x: -0.58, y: 0.65999997}
-      - {x: -0.7, y: 0.65999997}
-      - {x: -0.77, y: 0.63}
-      - {x: -0.75, y: 0.56}
-      - {x: -0.7, y: 0.52}
-      - {x: -0.59, y: 0.51}
-      - {x: -0.39, y: 0.39999998}
-      - {x: -0.57, y: 0.31}
-      - {x: -0.71, y: 0.17999999}
-      - {x: -0.84999996, y: 0.02}
-      - {x: -0.95, y: -0.17}
-      - {x: -0.98999995, y: -0.29}
-      - {x: -1.02, y: -0.47}
-      - {x: -1.09, y: -0.58}
-      - {x: -1.18, y: -0.61}
-      - {x: -1.23, y: -0.68}
-      - {x: -1.23, y: -0.78999996}
-      - {x: -1.17, y: -0.84999996}
-      - {x: -0.9, y: -0.95}
-      - {x: -0.84, y: -0.98999995}
-      - {x: -0.66999996, y: -1.01}
-      - {x: -0.48999998, y: -0.98999995}
-      - {x: -0.39, y: -1.02}
-      - {x: -0.29999998, y: -1.05}
-      - {x: 0.22, y: -1.05}
-      - {x: 0.41, y: -1}
-      - {x: 0.58, y: -1.01}
-      - {x: 0.7, y: -1}
-    - - {x: 0.84999996, y: 0.65}
-      - {x: 0.7, y: 0.65}
-      - {x: 0.59999996, y: 0.57}
-      - {x: 0.59999996, y: 0.5}
-      - {x: 0.61, y: 0.48999998}
-      - {x: 0.82, y: 0.48999998}
-      - {x: 0.88, y: 0.53}
-      - {x: 0.88, y: 0.64}
-    - - {x: -0.049999997, y: 0.75}
-      - {x: -0.06, y: 0.7}
-      - {x: -0.06, y: 0.53999996}
-      - {x: 0.08, y: 0.53999996}
-      - {x: 0.13, y: 0.59}
-      - {x: 0.13, y: 0.75}
-    - - {x: -0.41, y: 1.01}
-      - {x: -0.41, y: 0.68}
-      - {x: -0.22, y: 0.68}
-      - {x: -0.16, y: 0.69}
-      - {x: -0.14999999, y: 0.71999997}
-      - {x: -0.14999999, y: 0.81}
-      - {x: -0.28, y: 1.01}
-    - - {x: 0.52, y: 1}
-      - {x: 0.47, y: 1}
-      - {x: 0.39999998, y: 0.96999997}
-      - {x: 0.34, y: 0.78}
-      - {x: 0.34, y: 0.69}
-      - {x: 0.45, y: 0.69}
-      - {x: 0.52, y: 0.72999996}
-      - {x: 0.57, y: 0.91999996}
-      - {x: 0.57, y: 0.96}
-  m_UseDelaunayMesh: 1
+  m_Radius: 1.07
 --- !u!58 &8041950453835316283
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -308,8 +216,8 @@ CircleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0.012465545, y: 0}
-  m_Radius: 1.8409514
+  m_Offset: {x: 0.012465417, y: 0}
+  m_Radius: 1.3801342
 --- !u!114 &117757869302763951
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -341,3 +249,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterAnimationController
   isMovingParameter: IsMoving
   movingThreshold: 0.01
+  defaultFacingRight: 0

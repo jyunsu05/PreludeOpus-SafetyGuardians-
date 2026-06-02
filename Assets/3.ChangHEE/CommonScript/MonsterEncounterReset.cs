@@ -15,7 +15,22 @@ public class MonsterEncounterReset : MonoBehaviour
 
     private void Awake()
     {
-        encounterCollider = GetComponent<Collider2D>();
+        // 몬스터에 콜라이더가 여러 개 있을 수 있으므로, 배틀 감지 역할을 하는 isTrigger 콜라이더를 우선적으로 찾아 지정합니다.
+        Collider2D[] colliders = GetComponents<Collider2D>();
+        foreach (Collider2D col in colliders)
+        {
+            if (col.isTrigger)
+            {
+                encounterCollider = col;
+                break;
+            }
+        }
+
+        // 만약 isTrigger 콜라이더를 못 찾았다면 첫 번째 콜라이더를 기본값으로 지정합니다.
+        if (encounterCollider == null)
+        {
+            encounterCollider = GetComponent<Collider2D>();
+        }
     }
 
     private void Start()
