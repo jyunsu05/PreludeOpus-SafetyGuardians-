@@ -10,8 +10,22 @@ public class UIMainHUD : MonoBehaviour
     [Header("--- 인벤토리 ---")]
     [SerializeField] private UIInventory inventory;
 
+    private bool isBattleEventBound;
+
+    private void Awake()
+    {
+        TryBindBattleEvents();
+    }
+
+    private void OnEnable()
+    {
+        TryBindBattleEvents();
+    }
+
     void Start()
     {
+        TryBindBattleEvents();
+
         // 1. 게임이 시작되면 가방 버튼의 클릭 이벤트를 자동으로 가로챕니다.
         if (bagButton != null)
         {
@@ -21,6 +35,35 @@ public class UIMainHUD : MonoBehaviour
         {
             Debug.LogWarning("[UI_MainHUD] bagButton 슬롯이 비어 있습니다! 하이어라키에서 연결해 주세요.");
         }
+    }
+
+    private void Update()
+    {
+        if (!isBattleEventBound)
+            TryBindBattleEvents();
+    }
+
+    private void OnDestroy()
+    {
+        if (GameManager.Instance != null)
+            GameManager.Instance.OnBattleEnded -= HandleBattleEnded;
+
+        isBattleEventBound = false;
+    }
+
+    private void TryBindBattleEvents()
+    {
+        if (GameManager.Instance == null)
+            return;
+
+        GameManager.Instance.OnBattleEnded -= HandleBattleEnded;
+        GameManager.Instance.OnBattleEnded += HandleBattleEnded;
+        isBattleEventBound = true;
+    }
+
+    private void HandleBattleEnded()
+    {
+        gameObject.SetActive(true);
     }
 
     /// <summary>

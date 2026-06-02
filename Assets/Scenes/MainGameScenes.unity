@@ -716,6 +716,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 2994066629805730655, guid: 670e2a2f4876d9b43af120ca18810067, type: 3}
   m_PrefabInstance: {fileID: 2077185040}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &656191517 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 840028928485046927, guid: 670e2a2f4876d9b43af120ca18810067, type: 3}
+  m_PrefabInstance: {fileID: 2077185040}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
 --- !u!1 &691861719 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1978609888579264080, guid: 670e2a2f4876d9b43af120ca18810067, type: 3}
@@ -1773,6 +1784,80 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3317559665929794838, guid: de48aa7b444ffd644a5b3438be28ef3e, type: 3}
   m_PrefabInstance: {fileID: 1574554577}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &1979220696
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 6032771533145249390, guid: 0dc6e57b97dac98438626977fd007495, type: 3}
+      propertyPath: monsterPrefabs.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6032771533145249390, guid: 0dc6e57b97dac98438626977fd007495, type: 3}
+      propertyPath: 'monsterPrefabs.Array.data[0]'
+      value: 
+      objectReference: {fileID: 8118885640346336792, guid: d979b70f191b9f940b6049bc18af3de5, type: 3}
+    - target: {fileID: 6032771533145249390, guid: 0dc6e57b97dac98438626977fd007495, type: 3}
+      propertyPath: 'monsterPrefabs.Array.data[1]'
+      value: 
+      objectReference: {fileID: 2932125396628927345, guid: 64edf202b6df31d48a3593a95bfba6b1, type: 3}
+    - target: {fileID: 6032771533145249390, guid: 0dc6e57b97dac98438626977fd007495, type: 3}
+      propertyPath: 'monsterPrefabs.Array.data[2]'
+      value: 
+      objectReference: {fileID: 304650823833005646, guid: 4d3f750d4415a434ca42f483c294044f, type: 3}
+    - target: {fileID: 7843413112448936996, guid: 0dc6e57b97dac98438626977fd007495, type: 3}
+      propertyPath: m_Name
+      value: FactoryStage_01_PrefabRoot
+      objectReference: {fileID: 0}
+    - target: {fileID: 8363580370970491188, guid: 0dc6e57b97dac98438626977fd007495, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -2.95735
+      objectReference: {fileID: 0}
+    - target: {fileID: 8363580370970491188, guid: 0dc6e57b97dac98438626977fd007495, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -1.08808
+      objectReference: {fileID: 0}
+    - target: {fileID: 8363580370970491188, guid: 0dc6e57b97dac98438626977fd007495, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8363580370970491188, guid: 0dc6e57b97dac98438626977fd007495, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8363580370970491188, guid: 0dc6e57b97dac98438626977fd007495, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8363580370970491188, guid: 0dc6e57b97dac98438626977fd007495, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8363580370970491188, guid: 0dc6e57b97dac98438626977fd007495, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8363580370970491188, guid: 0dc6e57b97dac98438626977fd007495, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8363580370970491188, guid: 0dc6e57b97dac98438626977fd007495, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8363580370970491188, guid: 0dc6e57b97dac98438626977fd007495, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects:
+    - {fileID: 2408277247133711008, guid: 0dc6e57b97dac98438626977fd007495, type: 3}
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 0dc6e57b97dac98438626977fd007495, type: 3}
 --- !u!1001 &2077185040
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1781,6 +1866,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1708929172}
     m_Modifications:
+    - target: {fileID: -2863525082731974030, guid: 670e2a2f4876d9b43af120ca18810067, type: 3}
+      propertyPath: monsterImage
+      value: 
+      objectReference: {fileID: 656191517}
     - target: {fileID: 1978609888579264080, guid: 670e2a2f4876d9b43af120ca18810067, type: 3}
       propertyPath: m_Name
       value: UIBattlescene
@@ -1885,6 +1974,10 @@ PrefabInstance:
       propertyPath: playerController
       value: 
       objectReference: {fileID: 1289618979}
+    - target: {fileID: 6336157620756632991, guid: 670e2a2f4876d9b43af120ca18810067, type: 3}
+      propertyPath: acquisitionPopup
+      value: 
+      objectReference: {fileID: 1648513204}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1964,3 +2057,4 @@ SceneRoots:
   - {fileID: 1716791031}
   - {fileID: 467864506}
   - {fileID: 1582304876}
+  - {fileID: 1979220696}
