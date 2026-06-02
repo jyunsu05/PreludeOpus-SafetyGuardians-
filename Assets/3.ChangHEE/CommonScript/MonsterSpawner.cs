@@ -76,6 +76,7 @@ public class MonsterSpawner : MonoBehaviour
             Transform spawnPoint = spawnPoints[i];
             GameObject prefab = GetMonsterPrefab(monsterType);
             GameObject monster = Instantiate(prefab, spawnPoint.position, spawnPoint.rotation);
+            EnsureBattleRegistration(monster);
             spawnedMonsters.Add(monster);
             monsterTypeCounts[monsterType]++;
         }
@@ -194,6 +195,15 @@ public class MonsterSpawner : MonoBehaviour
 
             monsterPrefabs = fixedPrefabs;
         }
+    }
+
+    private static void EnsureBattleRegistration(GameObject monster)
+    {
+        if (monster == null)
+            return;
+
+        if (monster.GetComponent<MonsterBattleRegistration>() == null)
+            monster.AddComponent<MonsterBattleRegistration>();
     }
 
     private void EnsureSpawnCountsByStage()

@@ -22,6 +22,8 @@ public class MonsterBattleRegistration : MonoBehaviour
         if (!other.CompareTag("Player"))
             return;
 
+        BattleEncounterContext.SetEncounteredMonsterObject(gameObject);
+
         if (MonsterBattleTracker.Instance != null)
             MonsterBattleTracker.Instance.RegisterBattleMonster(gameObject);
     }

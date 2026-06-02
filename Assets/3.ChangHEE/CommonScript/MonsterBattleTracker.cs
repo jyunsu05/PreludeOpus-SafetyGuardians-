@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 /// <summary>
@@ -8,13 +9,17 @@ public class MonsterBattleTracker : MonoBehaviour
 {
     public static MonsterBattleTracker Instance { get; private set; }
 
+    [Header("PlayerController와 동일한 전투 UI 루트")]
+    [SerializeField] private GameObject battleSceneUI;
+
     private GameObject currentBattleMonster;
     private GameObject purifiedMonsterSnapshot;
     private bool purifiedThisBattle;
     private UIBattleManager battleManager;
     private MonsterSpawner monsterSpawner;
-    private GameObject battleSceneUI;
     private bool wasBattleUIActive;
+    private bool gameManagerSubscribed;
+    private Coroutine registerRetryRoutine;
 
     private void Awake()
     {
@@ -35,9 +40,7 @@ public class MonsterBattleTracker : MonoBehaviour
 
         TryBindBattleManager();
         TryFindBattleUI();
-
-        if (GameManager.Instance != null)
-            GameManager.Instance.OnBattleEnded += OnBattleEnded;
+        TrySubscribeGameManager();
     }
 
     private void Update()
@@ -48,6 +51,9 @@ public class MonsterBattleTracker : MonoBehaviour
         if (battleSceneUI == null)
             TryFindBattleUI();
 
+        if (!gameManagerSubscribed)
+            TrySubscribeGameManager();
+
         CheckBattleUIOpened();
     }
 
@@ -56,10 +62,11 @@ public class MonsterBattleTracker : MonoBehaviour
         if (Instance == this)
             Instance = null;
 
-        UnbindBattleManager();
+        if (registerRetryRoutine != null)
+            StopCoroutine(registerRetryRoutine);
 
-        if (GameManager.Instance != null)
-            GameManager.Instance.OnBattleEnded -= OnBattleEnded;
+        UnbindBattleManager();
+        UnsubscribeGameManager();
     }
 
     public void RegisterBattleMonster(GameObject monster)
@@ -75,7 +82,27 @@ public class MonsterBattleTracker : MonoBehaviour
 
         currentBattleMonster = monster;
         purifiedMonsterSnapshot = null;
+        BattleEncounterContext.SetEncounteredMonsterObject(monster);
         Debug.Log($"[MonsterBattleTracker] 전투 몬스터 등록: {monster.name}");
+    }
+
+    private void TrySubscribeGameManager()
+    {
+        if (gameManagerSubscribed || GameManager.Instance == null)
+            return;
+
+        GameManager.Instance.OnBattleEnded -= OnBattleEnded;
+        GameManager.Instance.OnBattleEnded += OnBattleEnded;
+        gameManagerSubscribed = true;
+    }
+
+    private void UnsubscribeGameManager()
+    {
+        if (!gameManagerSubscribed || GameManager.Instance == null)
+            return;
+
+        GameManager.Instance.OnBattleEnded -= OnBattleEnded;
+        gameManagerSubscribed = false;
     }
 
     private void TryBindBattleManager()
@@ -99,6 +126,8 @@ public class MonsterBattleTracker : MonoBehaviour
 
     private void OnContaminationEmpty()
     {
+        EnsureBattleMonsterRegistered();
+
         purifiedThisBattle = true;
         purifiedMonsterSnapshot = currentBattleMonster;
         Debug.Log($"[MonsterBattleTracker] 몬스터 정화 성공. 대상: {purifiedMonsterSnapshot?.name ?? "없음"}");
@@ -121,6 +150,7 @@ public class MonsterBattleTracker : MonoBehaviour
             Debug.LogWarning("[MonsterBattleTracker] 정화됐지만 제거할 몬스터가 등록되지 않았습니다.");
         }
 
+        BattleEncounterContext.ConsumeEncounteredMonsterObject();
         currentBattleMonster = null;
         purifiedMonsterSnapshot = null;
         purifiedThisBattle = false;
@@ -131,9 +161,28 @@ public class MonsterBattleTracker : MonoBehaviour
         if (battleSceneUI != null)
             return;
 
-        var battleManagerObject = FindAnyObjectByType<UIBattleManager>(FindObjectsInactive.Include);
-        if (battleManagerObject != null)
-            battleSceneUI = battleManagerObject.gameObject;
+        UIBattleManager[] managers = FindObjectsByType<UIBattleManager>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < managers.Length; i++)
+        {
+            Transform candidate = managers[i].transform;
+            while (candidate != null)
+            {
+                string name = candidate.name;
+                if (name.Contains("UIBattle") || name.Contains("Battlescene"))
+                {
+                    battleSceneUI = candidate.gameObject;
+                    return;
+                }
+
+                if (candidate.parent != null && candidate.parent.name == "Canvas")
+                {
+                    battleSceneUI = candidate.gameObject;
+                    return;
+                }
+
+                candidate = candidate.parent;
+            }
+        }
     }
 
     private void CheckBattleUIOpened()
@@ -143,33 +192,206 @@ public class MonsterBattleTracker : MonoBehaviour
 
         bool active = battleSceneUI.activeInHierarchy;
         if (active && !wasBattleUIActive)
-            TryRegisterOverlappingMonster();
+            BeginBattleMonsterRegistration();
 
         wasBattleUIActive = active;
     }
 
-    private void TryRegisterOverlappingMonster()
+    private void BeginBattleMonsterRegistration()
     {
-        if (purifiedThisBattle)
+        EnsureBattleMonsterRegistered();
+
+        if (currentBattleMonster != null)
             return;
 
+        if (registerRetryRoutine != null)
+            StopCoroutine(registerRetryRoutine);
+
+        registerRetryRoutine = StartCoroutine(RetryRegisterBattleMonster());
+    }
+
+    private IEnumerator RetryRegisterBattleMonster()
+    {
+        for (int i = 0; i < 5; i++)
+        {
+            EnsureBattleMonsterRegistered();
+            if (currentBattleMonster != null)
+            {
+                registerRetryRoutine = null;
+                yield break;
+            }
+
+            yield return null;
+        }
+
+        if (currentBattleMonster == null)
+            Debug.LogWarning("[MonsterBattleTracker] 전투 UI는 열렸지만 등록할 몬스터를 찾지 못했습니다.");
+
+        registerRetryRoutine = null;
+    }
+
+    private void EnsureBattleMonsterRegistered()
+    {
+        if (currentBattleMonster != null || purifiedThisBattle)
+            return;
+
+        GameObject fromContext = BattleEncounterContext.PeekEncounteredMonsterObject();
+        if (fromContext != null)
+        {
+            RegisterBattleMonster(fromContext);
+            return;
+        }
+
+        GameObject overlappingMonster = FindOverlappingMonsterNearPlayer();
+        if (overlappingMonster != null)
+        {
+            RegisterBattleMonster(overlappingMonster);
+            return;
+        }
+
+        GameObject battleMonster = FindMonsterForCurrentBattle();
+        if (battleMonster != null)
+            RegisterBattleMonster(battleMonster);
+    }
+
+    private GameObject FindOverlappingMonsterNearPlayer()
+    {
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player == null)
-            return;
+            return null;
 
         Collider2D playerCollider = player.GetComponent<Collider2D>();
-        float radius = 0.6f;
+        float radius = 3f;
         if (playerCollider != null)
-            radius = Mathf.Max(playerCollider.bounds.extents.x, playerCollider.bounds.extents.y) + 0.15f;
+        {
+            radius = Mathf.Max(
+                radius,
+                Mathf.Max(playerCollider.bounds.extents.x, playerCollider.bounds.extents.y) + 1f);
+        }
 
         Collider2D[] hits = Physics2D.OverlapCircleAll(player.transform.position, radius);
+        GameObject closestMonster = null;
+        float closestDistance = float.MaxValue;
+
         for (int i = 0; i < hits.Length; i++)
         {
-            if (hits[i].CompareTag("Monster"))
-            {
-                RegisterBattleMonster(hits[i].gameObject);
-                return;
-            }
+            GameObject monster = ResolveMonsterObject(hits[i]);
+            if (monster == null)
+                continue;
+
+            float distance = Vector2.Distance(player.transform.position, monster.transform.position);
+            if (distance >= closestDistance)
+                continue;
+
+            closestMonster = monster;
+            closestDistance = distance;
         }
+
+        return closestMonster;
+    }
+
+    private GameObject FindMonsterForCurrentBattle()
+    {
+        if (battleManager == null)
+            battleManager = FindAnyObjectByType<UIBattleManager>(FindObjectsInactive.Include);
+
+        MonsterData data = battleManager != null ? battleManager.GetCurrentMonsterData() : null;
+        if (data == null || string.IsNullOrEmpty(data.id))
+            return null;
+
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        Vector2 origin = player != null ? player.transform.position : Vector2.zero;
+
+        MonsterController[] monsters = FindObjectsByType<MonsterController>(FindObjectsSortMode.None);
+        GameObject closestMonster = null;
+        float closestDistance = float.MaxValue;
+
+        for (int i = 0; i < monsters.Length; i++)
+        {
+            GameObject candidate = monsters[i].gameObject;
+            if (!MatchesMonsterId(candidate, data.id))
+                continue;
+
+            float distance = Vector2.Distance(origin, candidate.transform.position);
+            if (distance >= closestDistance)
+                continue;
+
+            closestMonster = candidate;
+            closestDistance = distance;
+        }
+
+        return closestMonster;
+    }
+
+    private static bool MatchesMonsterId(GameObject candidate, string monsterId)
+    {
+        if (candidate == null || string.IsNullOrEmpty(monsterId))
+            return false;
+
+        string objectName = candidate.name.ToLowerInvariant();
+
+        switch (monsterId)
+        {
+            case "M-001":
+                return objectName.Contains("slime") || objectName.Contains("m001") || candidate.name.Contains("슬라임");
+            case "M-002":
+                return objectName.Contains("mold") || objectName.Contains("fungus") || objectName.Contains("m002") ||
+                       candidate.name.Contains("곰팡");
+            case "M-003":
+                return objectName.Contains("fire") || objectName.Contains("m003") || candidate.name.Contains("불");
+            default:
+                return false;
+        }
+    }
+
+    private static GameObject ResolveMonsterObject(Collider2D collider)
+    {
+        if (collider == null)
+            return null;
+
+        if (IsMonsterObject(collider.gameObject))
+            return collider.gameObject;
+
+        if (collider.attachedRigidbody != null && IsMonsterObject(collider.attachedRigidbody.gameObject))
+            return collider.attachedRigidbody.gameObject;
+
+        Transform parent = collider.transform.parent;
+        if (parent != null && IsMonsterObject(parent.gameObject))
+            return parent.gameObject;
+
+        Transform root = collider.transform.root;
+        if (root != null && IsMonsterObject(root.gameObject))
+            return root.gameObject;
+
+        return null;
+    }
+
+    private static bool IsMonsterObject(GameObject candidate)
+    {
+        if (candidate == null)
+            return false;
+
+        if (candidate.GetComponent<MonsterController>() != null)
+            return true;
+
+        try
+        {
+            if (candidate.CompareTag("Monster"))
+                return true;
+        }
+        catch (UnityException)
+        {
+            // Monster 태그가 없으면 이름으로 판별합니다.
+        }
+
+        string objectName = candidate.name;
+        if (string.IsNullOrEmpty(objectName))
+            return false;
+
+        string lowerObjectName = objectName.ToLowerInvariant();
+        return objectName.Contains("슬라임") || objectName.Contains("곰팡") || objectName.Contains("불") ||
+               lowerObjectName.Contains("slime") || lowerObjectName.Contains("m001") ||
+               lowerObjectName.Contains("fungus") || lowerObjectName.Contains("mold") || lowerObjectName.Contains("m002") ||
+               lowerObjectName.Contains("fire") || lowerObjectName.Contains("m003");
     }
 }
