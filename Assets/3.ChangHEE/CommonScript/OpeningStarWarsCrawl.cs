@@ -1,16 +1,42 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 [RequireComponent(typeof(RectTransform))]
 public class OpeningStarWarsCrawl : MonoBehaviour
 {
+    enum CrawlPhase
+    {
+        Scrolling,
+        WaitingForInput
+    }
+
     [Header("Timing")]
     [SerializeField] float initialDelay = 0.8f;
+
+    [Header("Press Key Timing")]
+    [Tooltip("크롤 시작 후 몇 초에 '아무 키나'를 시작할지. 0이면 아래 자동(글자 사라짐) 모드.")]
+    [SerializeField] float pressKeyAtSeconds = 0f;
+    [Tooltip("스토리 글자가 화면에서 사라진 뒤, '아무 키나' 페이드 시작까지 추가 대기(초). pressKeyAtSeconds=0 일 때만 사용.")]
+    [SerializeField] float pressKeyDelayAfterTextGone = 0f;
+    [Tooltip("'아무 키나'가 서서히 나타나는 시간(초).")]
+    [SerializeField] float pressKeyFadeInSeconds = 1.5f;
+    [Tooltip("'아무 키나'가 완전히 보이는 시간(초).")]
+    [SerializeField] float pressKeyHoldSeconds = 2.5f;
+    [Tooltip("'아무 키나'가 서서히 사라지는 시간(초).")]
+    [SerializeField] float pressKeyFadeOutSeconds = 1.5f;
+
+    [Header("Timer Log (측정용)")]
+    [SerializeField] bool logCrawlTimerToConsole = false;
+    [SerializeField] float logIntervalSeconds = 0.5f;
 
     [Header("Text")]
     [SerializeField] TMP_FontAsset storyFont;
     [Range(28f, 84f)]
-    [SerializeField] float fontSize = 52f;
+    [SerializeField] float fontSize = 72.3f;
     [SerializeField] FontWeight fontWeight = FontWeight.Bold;
     [SerializeField] Color textColor = new Color(1f, 0.82f, 0.12f, 1f);
     [SerializeField] float lineSpacing = 10f;
@@ -19,20 +45,44 @@ public class OpeningStarWarsCrawl : MonoBehaviour
     [Header("Credits Scroll")]
     [SerializeField] float crawlSpeed = 55f;
     [SerializeField] float startOffsetFromBottom = 40f;
-    [SerializeField] float finishPadding = 260f;
+    [Tooltip("마지막 줄이 화면 위로 사라진 뒤 추가 대기(px). 0에 가까울수록 빨리 '아무 키나'가 뜹니다.")]
+    [SerializeField] float finishPadding = 0f;
     [SerializeField] bool fadeAtTop = true;
     [SerializeField] float topFadeRange = 220f;
 
+    [Header("Transition")]
+    [SerializeField] TransitionMode transitionMode = TransitionMode.LoadScene;
+    [SerializeField] string nextSceneName = "MainGameScenes";
+    [SerializeField] string pressAnyKeyMessage = "아무 키나 누르세요";
+    [SerializeField] float pressAnyKeyFontSize = 36f;
+
+    public enum TransitionMode
+    {
+        LoadScene,
+        InScene
+    }
+
     const string CreditsObjectName = "StoryCreditsText";
+    const string PressAnyKeyObjectName = "PressAnyKeyText";
 
     RectTransform canvasRect;
+    Canvas rootCanvas;
+    OpeningSequenceController inSceneController;
     TextMeshProUGUI creditsText;
     RectTransform creditsRect;
+    TextMeshProUGUI pressAnyKeyText;
     float creditsHeight;
+    float textScrollHeight;
     float runtimeStartY;
     float elapsed;
     float scrollOffset;
-    bool finished;
+    float crawlTimer;
+    float pressKeyElapsed;
+    float nextLogTime;
+    bool crawlTimerStarted;
+    bool loggedTextGone;
+    float textVisuallyGoneAt = -1f;
+    CrawlPhase phase = CrawlPhase.Scrolling;
 
     const string StoryText =
         "인류는 끊임없는 발전과 풍요라는 달콤한 과실을 따기 위해, 매일같이 과학의 한계를 시험대 위에 올렸다. " +
@@ -43,27 +93,264 @@ public class OpeningStarWarsCrawl : MonoBehaviour
         "그것은 지옥의 문이 열리는 소리였다. 그 순간, 인류의 기술로는 감당할 수조차 없는 미지의 정제되지 않은 화학 물질들이 " +
         "차가운 공장 바닥과 대기 중으로 무차별하게 쏟아져 나왔다.";
 
+    public void ConfigureInSceneMode(OpeningSequenceController controller)
+    {
+        inSceneController = controller;
+        transitionMode = TransitionMode.InScene;
+    }
+
     void Awake()
     {
         canvasRect = GetComponent<RectTransform>();
+        rootCanvas = GetComponent<Canvas>();
+        EnsureFullScreenLayout();
         BuildCreditsText();
+        BuildPressAnyKeyText();
         ResetCrawl();
     }
 
     void Update()
     {
-        if (finished)
-            return;
+        AdvanceCrawlTimer();
 
+        if (phase == CrawlPhase.Scrolling)
+            UpdateScroll();
+
+        if (phase == CrawlPhase.WaitingForInput)
+        {
+            pressKeyElapsed += Time.deltaTime;
+            UpdatePressKeyFade();
+        }
+
+        if (phase == CrawlPhase.WaitingForInput && WasAnyKeyPressed())
+            FinishOpening();
+    }
+
+    void AdvanceCrawlTimer()
+    {
         elapsed += Time.deltaTime;
         if (elapsed < initialDelay)
             return;
 
+        if (!crawlTimerStarted)
+        {
+            crawlTimerStarted = true;
+            crawlTimer = 0f;
+            nextLogTime = 0f;
+            if (logCrawlTimerToConsole)
+                Debug.Log("[OpeningTimer] 크롤 시작 — 0.0초 (글자 스크롤 시작)");
+        }
+
+        crawlTimer += Time.deltaTime;
+        LogCrawlTimerIfNeeded();
+    }
+
+    void UpdateScroll()
+    {
+        if (!crawlTimerStarted)
+            return;
+
         scrollOffset += crawlSpeed * Time.deltaTime;
         UpdateCreditsTransform();
+        TrackTextVisuallyGone();
+        LogTextGoneIfNeeded();
 
-        if (creditsRect != null && (creditsRect.anchoredPosition.y - creditsHeight) > GetTopY() + finishPadding)
-            finished = true;
+        if (ShouldShowPressKey())
+            BeginWaitingForInput();
+    }
+
+    void TrackTextVisuallyGone()
+    {
+        if (textVisuallyGoneAt >= 0f || !IsCreditsVisuallyGone())
+            return;
+
+        textVisuallyGoneAt = crawlTimer;
+    }
+
+    void LogCrawlTimerIfNeeded()
+    {
+        if (!logCrawlTimerToConsole || logIntervalSeconds <= 0f)
+            return;
+
+        if (crawlTimer < nextLogTime)
+            return;
+
+        nextLogTime += logIntervalSeconds;
+        Debug.Log($"[OpeningTimer] {crawlTimer:F1}초");
+    }
+
+    void LogTextGoneIfNeeded()
+    {
+        if (!logCrawlTimerToConsole || loggedTextGone || creditsText == null)
+            return;
+
+        if (creditsText.color.a > 0.05f)
+            return;
+
+        loggedTextGone = true;
+        Debug.Log($"[OpeningTimer] 글자 사라짐(화면상) — {crawlTimer:F1}초");
+    }
+
+    bool ShouldShowPressKey()
+    {
+        if (pressKeyAtSeconds > 0f)
+            return crawlTimer >= pressKeyAtSeconds;
+
+        if (IsCrawlFinished())
+            return true;
+
+        if (textVisuallyGoneAt >= 0f)
+            return crawlTimer >= textVisuallyGoneAt + pressKeyDelayAfterTextGone;
+
+        return false;
+    }
+
+    bool IsCreditsVisuallyGone()
+    {
+        if (!crawlTimerStarted || creditsText == null)
+            return false;
+
+        return creditsText.color.a <= 0.05f;
+    }
+
+    bool IsCrawlFinished()
+    {
+        if (creditsRect == null)
+            return false;
+
+        float bottomOfText = creditsRect.anchoredPosition.y - textScrollHeight;
+        return bottomOfText >= GetTopY() + finishPadding;
+    }
+
+    void BeginWaitingForInput()
+    {
+        if (phase == CrawlPhase.WaitingForInput)
+            return;
+
+        phase = CrawlPhase.WaitingForInput;
+        pressKeyElapsed = 0f;
+        if (logCrawlTimerToConsole)
+            Debug.Log($"[OpeningTimer] '아무 키나' 페이드 시작 — {crawlTimer:F1}초");
+
+        HideCreditsText();
+
+        if (pressAnyKeyText != null)
+        {
+            pressAnyKeyText.gameObject.SetActive(true);
+            UpdatePressKeyFade();
+        }
+    }
+
+    void HideCreditsText()
+    {
+        if (creditsText == null)
+            return;
+
+        Color hidden = textColor;
+        hidden.a = 0f;
+        creditsText.color = hidden;
+    }
+
+    void UpdatePressKeyFade()
+    {
+        if (pressAnyKeyText == null)
+            return;
+
+        float alpha = GetPressKeyAlpha();
+        Color c = pressAnyKeyText.color;
+        c.r = textColor.r;
+        c.g = textColor.g;
+        c.b = textColor.b;
+        c.a = alpha * textColor.a;
+        pressAnyKeyText.color = c;
+    }
+
+    float GetPressKeyAlpha()
+    {
+        float t = pressKeyElapsed;
+        if (t <= 0f)
+            return 0f;
+
+        if (t < pressKeyFadeInSeconds)
+            return SmoothFade(t / pressKeyFadeInSeconds);
+
+        if (t < pressKeyFadeInSeconds + pressKeyHoldSeconds)
+            return 1f;
+
+        float fadeOutStart = pressKeyFadeInSeconds + pressKeyHoldSeconds;
+        if (t < fadeOutStart + pressKeyFadeOutSeconds)
+            return 1f - SmoothFade((t - fadeOutStart) / pressKeyFadeOutSeconds);
+
+        return 0f;
+    }
+
+    static float SmoothFade(float t)
+    {
+        t = Mathf.Clamp01(t);
+        return t * t * (3f - 2f * t);
+    }
+
+    void FinishOpening()
+    {
+        if (transitionMode == TransitionMode.InScene)
+        {
+            if (inSceneController != null)
+                inSceneController.FinishOpening();
+            else
+                gameObject.SetActive(false);
+
+            return;
+        }
+
+        LoadNextScene();
+    }
+
+    void LoadNextScene()
+    {
+        if (string.IsNullOrWhiteSpace(nextSceneName))
+        {
+            Debug.LogWarning("[OpeningStarWarsCrawl] nextSceneName is empty.");
+            return;
+        }
+
+        if (!Application.CanStreamedLevelBeLoaded(nextSceneName))
+        {
+            Debug.LogError(
+                $"[OpeningStarWarsCrawl] '{nextSceneName}' 씬을 불러올 수 없습니다. " +
+                "File > Build Settings 에 MainGameScenes 가 포함되어 있는지 확인하세요.");
+            return;
+        }
+
+        Debug.Log($"[OpeningStarWarsCrawl] '{nextSceneName}' 씬으로 이동합니다.");
+        SceneManager.LoadScene(nextSceneName);
+    }
+
+    void EnsureFullScreenLayout()
+    {
+        if (canvasRect == null)
+            return;
+
+        canvasRect.anchorMin = Vector2.zero;
+        canvasRect.anchorMax = Vector2.one;
+        canvasRect.offsetMin = Vector2.zero;
+        canvasRect.offsetMax = Vector2.zero;
+        canvasRect.localScale = Vector3.one;
+
+        if (rootCanvas != null)
+            rootCanvas.sortingOrder = 100;
+    }
+
+    static bool WasAnyKeyPressed()
+    {
+#if ENABLE_INPUT_SYSTEM
+        if (Keyboard.current != null && Keyboard.current.anyKey.wasPressedThisFrame)
+            return true;
+
+        if (Mouse.current != null &&
+            (Mouse.current.leftButton.wasPressedThisFrame || Mouse.current.rightButton.wasPressedThisFrame))
+            return true;
+#endif
+        return Input.anyKeyDown;
     }
 
     void BuildCreditsText()
@@ -96,8 +383,42 @@ public class OpeningStarWarsCrawl : MonoBehaviour
         creditsText.raycastTarget = false;
 
         creditsText.ForceMeshUpdate();
-        creditsHeight = creditsText.preferredHeight + 120f;
+        textScrollHeight = creditsText.preferredHeight;
+        creditsHeight = textScrollHeight + 120f;
         creditsRect.sizeDelta = new Vector2(textBoxWidth, creditsHeight);
+    }
+
+    void BuildPressAnyKeyText()
+    {
+        Transform old = transform.Find(PressAnyKeyObjectName);
+        if (old != null)
+            Destroy(old.gameObject);
+
+        GameObject go = new GameObject(PressAnyKeyObjectName, typeof(RectTransform), typeof(TextMeshProUGUI));
+        go.transform.SetParent(transform, false);
+
+        pressAnyKeyText = go.GetComponent<TextMeshProUGUI>();
+        RectTransform pressRect = pressAnyKeyText.rectTransform;
+        pressRect.anchorMin = new Vector2(0.5f, 0f);
+        pressRect.anchorMax = new Vector2(0.5f, 0f);
+        pressRect.pivot = new Vector2(0.5f, 0f);
+        pressRect.anchoredPosition = new Vector2(0f, 48f);
+        pressRect.sizeDelta = new Vector2(900f, 80f);
+
+        if (storyFont != null)
+            pressAnyKeyText.font = storyFont;
+
+        pressAnyKeyText.text = pressAnyKeyMessage;
+        pressAnyKeyText.fontSize = pressAnyKeyFontSize;
+        pressAnyKeyText.fontWeight = FontWeight.Bold;
+        pressAnyKeyText.enableWordWrapping = false;
+        pressAnyKeyText.alignment = TextAlignmentOptions.Center;
+        pressAnyKeyText.raycastTarget = false;
+
+        Color startColor = textColor;
+        startColor.a = 0f;
+        pressAnyKeyText.color = startColor;
+        pressAnyKeyText.gameObject.SetActive(false);
     }
 
     void OnValidate()
@@ -114,15 +435,30 @@ public class OpeningStarWarsCrawl : MonoBehaviour
         creditsText.fontWeight = fontWeight;
         creditsText.lineSpacing = lineSpacing;
         creditsRect.sizeDelta = new Vector2(textBoxWidth, Mathf.Max(creditsHeight, 1f));
+
+        if (pressAnyKeyText != null)
+        {
+            pressAnyKeyText.text = pressAnyKeyMessage;
+            pressAnyKeyText.fontSize = pressAnyKeyFontSize;
+        }
     }
 
     void ResetCrawl()
     {
         elapsed = 0f;
         scrollOffset = 0f;
-        finished = false;
+        crawlTimer = 0f;
+        pressKeyElapsed = 0f;
+        nextLogTime = 0f;
+        crawlTimerStarted = false;
+        loggedTextGone = false;
+        textVisuallyGoneAt = -1f;
+        phase = CrawlPhase.Scrolling;
         runtimeStartY = GetBottomY() - startOffsetFromBottom;
         UpdateCreditsTransform();
+
+        if (pressAnyKeyText != null)
+            pressAnyKeyText.gameObject.SetActive(false);
     }
 
     void UpdateCreditsTransform()
@@ -136,7 +472,7 @@ public class OpeningStarWarsCrawl : MonoBehaviour
         Color c = textColor;
         if (fadeAtTop)
         {
-            float bottomOfText = y - creditsHeight;
+            float bottomOfText = y - textScrollHeight;
             float fadeStart = GetBottomY();
             if (bottomOfText > fadeStart)
             {
@@ -148,16 +484,24 @@ public class OpeningStarWarsCrawl : MonoBehaviour
         creditsText.color = c;
     }
 
+    float GetHalfHeight()
+    {
+        Canvas.ForceUpdateCanvases();
+
+        float height = canvasRect != null ? canvasRect.rect.height : 0f;
+        if (height < 1f)
+            height = Screen.height;
+
+        return height * 0.5f;
+    }
+
     float GetTopY()
     {
-        if (canvasRect == null || canvasRect.rect.height <= 0f)
-            return Screen.height * 0.5f;
-
-        return canvasRect.rect.height * 0.5f;
+        return GetHalfHeight();
     }
 
     float GetBottomY()
     {
-        return -GetTopY();
+        return -GetHalfHeight();
     }
 }

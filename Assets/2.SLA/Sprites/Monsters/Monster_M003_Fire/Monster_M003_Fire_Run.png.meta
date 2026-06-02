@@ -128,10 +128,10 @@ TextureImporter:
       name: Monster_M003_Fire_Run_0
       rect:
         serializedVersion: 2
-        x: 55
-        y: 19
-        width: 316
-        height: 243
+        x: 51
+        y: 51
+        width: 282
+        height: 216
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -150,10 +150,10 @@ TextureImporter:
       name: Monster_M003_Fire_Run_1
       rect:
         serializedVersion: 2
-        x: 403
-        y: 18
-        width: 313
-        height: 240
+        x: 362
+        y: 59
+        width: 292
+        height: 219
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -172,10 +172,10 @@ TextureImporter:
       name: Monster_M003_Fire_Run_2
       rect:
         serializedVersion: 2
-        x: 778
-        y: 19
-        width: 312
-        height: 244
+        x: 696
+        y: 59
+        width: 289
+        height: 226
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -194,10 +194,10 @@ TextureImporter:
       name: Monster_M003_Fire_Run_3
       rect:
         serializedVersion: 2
-        x: 1137
-        y: 19
-        width: 317
-        height: 237
+        x: 1041
+        y: 59
+        width: 288
+        height: 221
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -216,10 +216,10 @@ TextureImporter:
       name: Monster_M003_Fire_Run_4
       rect:
         serializedVersion: 2
-        x: 1486
-        y: 10
-        width: 305
-        height: 234
+        x: 1358
+        y: 59
+        width: 292
+        height: 224
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}

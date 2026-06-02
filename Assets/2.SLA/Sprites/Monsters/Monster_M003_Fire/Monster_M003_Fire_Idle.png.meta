@@ -146,10 +146,10 @@ TextureImporter:
       name: Monster_M003_Fire_Idle_0
       rect:
         serializedVersion: 2
-        x: 46
-        y: 44
-        width: 252
-        height: 340
+        x: 258
+        y: 38
+        width: 198
+        height: 266
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -168,10 +168,10 @@ TextureImporter:
       name: Monster_M003_Fire_Idle_2
       rect:
         serializedVersion: 2
-        x: 367
-        y: 44
-        width: 253
-        height: 336
+        x: 509
+        y: 38
+        width: 199
+        height: 263
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -187,13 +187,13 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Monster_M003_Fire_Idle_8
+      name: Monster_M003_Fire_Idle_4
       rect:
         serializedVersion: 2
-        x: 689
-        y: 44
-        width: 255
-        height: 335
+        x: 760
+        y: 38
+        width: 201
+        height: 262
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -202,20 +202,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 62d3334ccb7f72500800000000000000
-      internalID: 371537884398959910
+      spriteID: 5d88494532d74a820800000000000000
+      internalID: 2928603248394012885
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Monster_M003_Fire_Idle_9
+      name: Monster_M003_Fire_Idle_6
       rect:
         serializedVersion: 2
         x: 1014
-        y: 44
-        width: 252
-        height: 335
+        y: 37
+        width: 199
+        height: 263
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -224,8 +224,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 0797154d049957210800000000000000
-      internalID: 1330137768676915568
+      spriteID: 179be648c4d9e17a0800000000000000
+      internalID: -6404508668109342351
       vertices: []
       indices: 
       edges: []
@@ -234,10 +234,10 @@ TextureImporter:
       name: Monster_M003_Fire_Idle_10
       rect:
         serializedVersion: 2
-        x: 1337
-        y: 30
-        width: 253
-        height: 347
+        x: 1268
+        y: 38
+        width: 196
+        height: 260
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -256,7 +256,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: a1d9689a31f2b37488b4a02eb163aa49
+    spriteID: 60a54ed69a7ea0d4da0dc4189cd4cf0a
     internalID: 0
     vertices: []
     indices: 
