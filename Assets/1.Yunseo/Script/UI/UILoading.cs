@@ -17,6 +17,7 @@ public class UILoading : MonoBehaviour
     private float panelShownTime;
     private bool waitForTouchDismiss;
     private bool isSceneLoading;
+    private Coroutine autoProgressRoutine;
 
     void Awake()
     {
@@ -67,11 +68,23 @@ public class UILoading : MonoBehaviour
         if (InformationText != null)
             InformationText.gameObject.SetActive(false);
 
+        gameObject.SetActive(true);
+
         if (loadingPanel != null)
             loadingPanel.SetActive(true);
 
         SetProgress(initialProgress);
         SetLoadingText(message);
+    }
+
+    public void ShowLoadingWithAutoProgress(string message = "로딩중", float duration = 2f)
+    {
+        ShowLoading(message, 0f);
+
+        if (autoProgressRoutine != null)
+            StopCoroutine(autoProgressRoutine);
+
+        autoProgressRoutine = StartCoroutine(AutoProgressRoutine(duration));
     }
 
     public void SetProgress(float normalizedProgress)
@@ -128,8 +141,35 @@ public class UILoading : MonoBehaviour
         waitForTouchDismiss = false;
         isSceneLoading = false;
 
+        if (autoProgressRoutine != null)
+        {
+            StopCoroutine(autoProgressRoutine);
+            autoProgressRoutine = null;
+        }
+
         if (loadingPanel != null)
             loadingPanel.SetActive(false);
+    }
+
+    private IEnumerator AutoProgressRoutine(float duration)
+    {
+        if (duration <= 0f)
+        {
+            SetProgress(1f);
+            autoProgressRoutine = null;
+            yield break;
+        }
+
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            SetProgress(elapsed / duration);
+            yield return null;
+        }
+
+        SetProgress(1f);
+        autoProgressRoutine = null;
     }
 
     private void LoadMainFactoryScene()

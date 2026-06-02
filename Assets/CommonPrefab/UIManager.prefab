@@ -52,4 +52,6 @@ MonoBehaviour:
   acquisitionPopup: {fileID: 0}
   battleUIPanel: {fileID: 0}
   mainHUD: {fileID: 0}
+  resultPanel: {fileID: 0}
   pollutionSlider: {fileID: 0}
+  uiRootCanvas: {fileID: 0}

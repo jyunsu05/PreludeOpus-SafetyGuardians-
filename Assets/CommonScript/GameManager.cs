@@ -13,6 +13,10 @@ public class GameManager : MonoBehaviour
     // 3. 이벤트 선언 (다른 매니저들이 이 이벤트를 구독함)
     public event Action OnBattleStarted;
     public event Action OnBattleEnded;
+    public event Action OnStageCleared;
+    public event Action OnStageMonstersSpawned;
+
+    private bool stageClearPending;
 
     private void Awake()
     {
@@ -50,5 +54,27 @@ public class GameManager : MonoBehaviour
     public void ResetToField()
     {
         CurrentState = GameState.Field;
+    }
+
+    public void NotifyStageCleared()
+    {
+        stageClearPending = true;
+        Debug.Log("[GameManager] 스테이지 클리어!");
+    }
+
+    public bool ConsumeStageClearPending()
+    {
+        if (!stageClearPending)
+            return false;
+
+        stageClearPending = false;
+        OnStageCleared?.Invoke();
+        return true;
+    }
+
+    public void NotifyStageMonstersSpawned()
+    {
+        stageClearPending = false;
+        OnStageMonstersSpawned?.Invoke();
     }
 }

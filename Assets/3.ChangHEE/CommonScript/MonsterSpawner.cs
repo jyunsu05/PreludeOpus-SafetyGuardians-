@@ -13,6 +13,18 @@ public class MonsterSpawner : MonoBehaviour
 
     private readonly List<GameObject> spawnedMonsters = new List<GameObject>();
 
+    public event System.Action OnAllMonstersCleared;
+    public event System.Action OnMonstersSpawned;
+
+    public int RemainingMonsterCount
+    {
+        get
+        {
+            PruneDestroyedMonsters();
+            return spawnedMonsters.Count;
+        }
+    }
+
     private void Start()
     {
         SpawnMonstersForCurrentStage(logResult: true);
@@ -83,6 +95,11 @@ public class MonsterSpawner : MonoBehaviour
 
         if (logResult)
             LogSpawnResult(count, monsterTypeCounts);
+
+        OnMonstersSpawned?.Invoke();
+
+        if (GameManager.Instance != null)
+            GameManager.Instance.NotifyStageMonstersSpawned();
     }
 
     private int GetSpawnCountForStage()
@@ -166,6 +183,24 @@ public class MonsterSpawner : MonoBehaviour
             return;
 
         spawnedMonsters.Remove(monster);
+        PruneDestroyedMonsters();
+        TryNotifyAllMonstersCleared();
+    }
+
+    private void PruneDestroyedMonsters()
+    {
+        spawnedMonsters.RemoveAll(monster => monster == null);
+    }
+
+    private void TryNotifyAllMonstersCleared()
+    {
+        if (spawnedMonsters.Count != 0)
+            return;
+
+        OnAllMonstersCleared?.Invoke();
+
+        if (GameManager.Instance != null)
+            GameManager.Instance.NotifyStageCleared();
     }
 
     private void ClearSpawnedMonsters()

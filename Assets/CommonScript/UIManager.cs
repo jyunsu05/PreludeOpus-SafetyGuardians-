@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,9 +11,13 @@ public class UIManager : MonoBehaviour
     [SerializeField] private UIAcquisitionPopup acquisitionPopup;
     [SerializeField] private GameObject battleUIPanel;
     [SerializeField] private UIMainHUD mainHUD;
+    [SerializeField] private UIResult resultPanel;
 
     [Header("--- 선택: 오염도 UI ---")]
     [SerializeField] private Slider pollutionSlider;
+
+    [Header("--- 선택: UIResult를 붙일 Canvas ---")]
+    [SerializeField] private Canvas uiRootCanvas;
 
     void Awake()
     {
@@ -30,22 +35,71 @@ public class UIManager : MonoBehaviour
         CloseAllPanels();
     }
 
+    private bool gameManagerSubscribed;
+    private Coroutine showStageResultRoutine;
+
     void Start()
     {
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.OnBattleStarted += OpenBattleUI;
-            GameManager.Instance.OnBattleEnded += CloseBattleUI;
-        }
+        TrySubscribeGameManager();
+    }
+
+    void Update()
+    {
+        if (!gameManagerSubscribed)
+            TrySubscribeGameManager();
     }
 
     void OnDestroy()
     {
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.OnBattleStarted -= OpenBattleUI;
-            GameManager.Instance.OnBattleEnded -= CloseBattleUI;
-        }
+        UnsubscribeGameManager();
+    }
+
+    private void TrySubscribeGameManager()
+    {
+        if (gameManagerSubscribed || GameManager.Instance == null)
+            return;
+
+        GameManager.Instance.OnBattleStarted += OpenBattleUI;
+        GameManager.Instance.OnBattleEnded += HandleBattleEnded;
+        GameManager.Instance.OnStageMonstersSpawned += ResetStageResult;
+        gameManagerSubscribed = true;
+    }
+
+    private void UnsubscribeGameManager()
+    {
+        if (!gameManagerSubscribed || GameManager.Instance == null)
+            return;
+
+        GameManager.Instance.OnBattleStarted -= OpenBattleUI;
+        GameManager.Instance.OnBattleEnded -= HandleBattleEnded;
+        GameManager.Instance.OnStageMonstersSpawned -= ResetStageResult;
+        gameManagerSubscribed = false;
+    }
+
+    private void HandleBattleEnded()
+    {
+        CloseBattleUI();
+
+        if (showStageResultRoutine != null)
+            StopCoroutine(showStageResultRoutine);
+
+        showStageResultRoutine = StartCoroutine(TryShowStageResultAfterBattleEnd());
+    }
+
+    private IEnumerator TryShowStageResultAfterBattleEnd()
+    {
+        yield return null;
+
+        UIResult panel = ResolveResultPanel();
+        if (panel != null)
+            EnsureResultPanelOnCanvas(panel);
+
+        ForceCloseBattleLayers();
+
+        if (GameManager.Instance != null && GameManager.Instance.ConsumeStageClearPending())
+            ShowStageResultImmediate();
+
+        showStageResultRoutine = null;
     }
 
     // --- 인벤토리 ---
@@ -87,6 +141,117 @@ public class UIManager : MonoBehaviour
     public void CloseAcquisitionPopup()
     {
         SetPanelActive(acquisitionPopup != null ? acquisitionPopup.gameObject : null, false);
+    }
+
+    // --- 스테이지 결과 ---
+    public void ShowStageResult()
+    {
+        if (showStageResultRoutine != null)
+            StopCoroutine(showStageResultRoutine);
+
+        showStageResultRoutine = StartCoroutine(ShowStageResultDeferred());
+    }
+
+    private IEnumerator ShowStageResultDeferred()
+    {
+        yield return null;
+
+        UIResult panel = ResolveResultPanel();
+        if (panel != null)
+            EnsureResultPanelOnCanvas(panel);
+
+        ForceCloseBattleLayers();
+        ShowStageResultImmediate();
+        showStageResultRoutine = null;
+    }
+
+    private void ShowStageResultImmediate()
+    {
+        UIResult panel = ResolveResultPanel();
+        if (panel == null)
+            return;
+
+        EnsureResultPanelOnCanvas(panel);
+        panel.ShowStageClearResult();
+    }
+
+    private void EnsureResultPanelOnCanvas(UIResult panel)
+    {
+        if (panel == null)
+            return;
+
+        Canvas rootCanvas = ResolveRootCanvas(panel);
+        if (rootCanvas == null)
+        {
+            Debug.LogWarning("[UIManager] UIResult를 붙일 Canvas를 찾지 못했습니다.");
+            return;
+        }
+
+        Transform canvasTransform = rootCanvas.transform;
+        if (panel.transform.parent != canvasTransform)
+            panel.transform.SetParent(canvasTransform, false);
+
+        if (!rootCanvas.gameObject.activeSelf)
+            rootCanvas.gameObject.SetActive(true);
+
+        panel.transform.SetAsLastSibling();
+    }
+
+    private Canvas ResolveRootCanvas(UIResult panel)
+    {
+        if (uiRootCanvas != null)
+            return uiRootCanvas;
+
+        if (mainHUD != null)
+        {
+            Canvas canvas = mainHUD.GetComponentInParent<Canvas>(true);
+            if (canvas != null)
+                return canvas;
+        }
+
+        if (inventory != null)
+        {
+            Canvas canvas = inventory.GetComponentInParent<Canvas>(true);
+            if (canvas != null)
+                return canvas;
+        }
+
+        if (panel != null)
+        {
+            Canvas[] canvases = panel.GetComponentsInParent<Canvas>(true);
+            if (canvases != null && canvases.Length > 0)
+                return canvases[canvases.Length - 1];
+        }
+
+        return FindAnyObjectByType<Canvas>(FindObjectsInactive.Include);
+    }
+
+    private UIResult ResolveResultPanel()
+    {
+        if (resultPanel != null)
+            return resultPanel;
+
+        UIResult found = FindAnyObjectByType<UIResult>(FindObjectsInactive.Include);
+        if (found == null)
+            Debug.LogWarning("[UIManager] resultPanel이 연결되지 않았습니다.");
+
+        return found;
+    }
+
+    private void ForceCloseBattleLayers()
+    {
+        CloseBattleUI();
+        CloseAcquisitionPopup();
+
+        GameObject battleRoot = GameObject.Find("UIBattlescene");
+        if (battleRoot != null && battleRoot.activeSelf)
+            battleRoot.SetActive(false);
+    }
+
+    public void ResetStageResult()
+    {
+        if (resultPanel != null)
+            resultPanel.ResetStageResultState();
     }
 
     // --- 배틀 UI ---
