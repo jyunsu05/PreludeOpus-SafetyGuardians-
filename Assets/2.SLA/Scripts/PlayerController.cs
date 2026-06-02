@@ -14,6 +14,9 @@ public class PlayerController : MonoBehaviour
     [Header("도망 후 재진입 방지")]
     [Tooltip("도망 직후 다시 전투에 들어가지 않도록 잠깐 막는 시간")]
     [SerializeField] private float postFleeGraceDuration = 0.75f;
+
+    [Tooltip("전투가 끝난 뒤 이 거리 이상 벗어나야 다시 전투에 들어갈 수 있습니다.")]
+    [SerializeField] private float postBattleReentryDistance = 1.0f;
     
     private Rigidbody2D rb;
     private SpriteRenderer spriteRenderer;
@@ -22,6 +25,8 @@ public class PlayerController : MonoBehaviour
     private Vector2 movementInput;
     private bool isBattleEntryLocked;
     private bool hasEnteredBattle;
+    private Vector2 lastBattleEndedPosition;
+    private bool hasLastBattleEndedPosition;
 
     private const string MonsterIdSlime = "M-001";
     private const string MonsterIdFungus = "M-002";
@@ -85,6 +90,7 @@ public class PlayerController : MonoBehaviour
         postFleeGraceRoutine = null;
         isBattleEntryLocked = false;
         hasEnteredBattle = false;
+        hasLastBattleEndedPosition = false;
     }
 
     // 몬스터와 충돌 시 전투씬창 UI 활성화
@@ -95,6 +101,13 @@ public class PlayerController : MonoBehaviour
 
         if (hasEnteredBattle)
             return;
+
+        if (hasLastBattleEndedPosition && rb != null)
+        {
+            float movedDistance = Vector2.Distance(rb.position, lastBattleEndedPosition);
+            if (movedDistance < postBattleReentryDistance)
+                return;
+        }
 
         if (IsMonsterCollider(other))
         {
@@ -122,6 +135,16 @@ public class PlayerController : MonoBehaviour
     private void HandleBattleEnded()
     {
         hasEnteredBattle = false;
+        if (rb != null)
+        {
+            lastBattleEndedPosition = rb.position;
+            hasLastBattleEndedPosition = true;
+        }
+        else
+        {
+            lastBattleEndedPosition = transform.position;
+            hasLastBattleEndedPosition = true;
+        }
     }
 
     private IEnumerator PostFleeGraceRoutine()

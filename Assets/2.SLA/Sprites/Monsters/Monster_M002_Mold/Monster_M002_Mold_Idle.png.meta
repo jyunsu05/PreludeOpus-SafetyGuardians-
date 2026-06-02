@@ -1,0 +1,442 @@
+fileFormatVersion: 2
+guid: 6ad1692c714187a449385806f7b00b02
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 3488536218998338862
+    second: Monster_M002_Mold_Idle_0
+  - first:
+      213: 5657191733423848973
+    second: Monster_M002_Mold_Idle_1
+  - first:
+      213: -1997759409811496664
+    second: Monster_M002_Mold_Idle_2
+  - first:
+      213: -8109355568447712102
+    second: Monster_M002_Mold_Idle_3
+  - first:
+      213: 8421465235586571332
+    second: Monster_M002_Mold_Idle_4
+  - first:
+      213: -3556866000540134286
+    second: Monster_M002_Mold_Idle_5
+  - first:
+      213: -8005559841463669415
+    second: Monster_M002_Mold_Idle_6
+  - first:
+      213: -5219411020656280848
+    second: Monster_M002_Mold_Idle_7
+  - first:
+      213: 3508297847363058621
+    second: Monster_M002_Mold_Idle_8
+  - first:
+      213: -9059834439908163897
+    second: Monster_M002_Mold_Idle_9
+  - first:
+      213: -1775751168184895088
+    second: Monster_M002_Mold_Idle_10
+  - first:
+      213: 8184538336952576958
+    second: Monster_M002_Mold_Idle_11
+  - first:
+      213: 3222682404407613489
+    second: Monster_M002_Mold_Idle_12
+  - first:
+      213: 3180667624628309611
+    second: Monster_M002_Mold_Idle_13
+  - first:
+      213: -1244965327422671396
+    second: Monster_M002_Mold_Idle_14
+  - first:
+      213: 6973062981123919851
+    second: Monster_M002_Mold_Idle_15
+  - first:
+      213: 1107089051301730109
+    second: Monster_M002_Mold_Idle_16
+  - first:
+      213: 9038272279236166741
+    second: Monster_M002_Mold_Idle_17
+  - first:
+      213: -8886551109330957755
+    second: Monster_M002_Mold_Idle_18
+  - first:
+      213: -3882329728279946340
+    second: Monster_M002_Mold_Idle_19
+  - first:
+      213: -6920431422106243714
+    second: Monster_M002_Mold_Idle_20
+  - first:
+      213: -6008459023905348751
+    second: Monster_M002_Mold_Idle_21
+  - first:
+      213: -6852715971997345695
+    second: Monster_M002_Mold_Idle_22
+  - first:
+      213: 1434845055061884800
+    second: Monster_M002_Mold_Idle_23
+  - first:
+      213: -5831468987972301663
+    second: Monster_M002_Mold_Idle_24
+  - first:
+      213: 7796597146039116407
+    second: Monster_M002_Mold_Idle_25
+  - first:
+      213: 7189575057671716068
+    second: Monster_M002_Mold_Idle_26
+  - first:
+      213: -1636384917602295723
+    second: Monster_M002_Mold_Idle_27
+  - first:
+      213: -5863361291329709538
+    second: Monster_M002_Mold_Idle_28
+  - first:
+      213: 5670448233276496105
+    second: Monster_M002_Mold_Idle_29
+  - first:
+      213: 6585898932016106168
+    second: Monster_M002_Mold_Idle_30
+  - first:
+      213: -7805405962564330022
+    second: Monster_M002_Mold_Idle_31
+  - first:
+      213: -6140455569936094532
+    second: Monster_M002_Mold_Idle_32
+  - first:
+      213: -4305588464255503469
+    second: Monster_M002_Mold_Idle_33
+  - first:
+      213: 8072807582572260269
+    second: Monster_M002_Mold_Idle_34
+  - first:
+      213: -3387669991533743278
+    second: Monster_M002_Mold_Idle_35
+  - first:
+      213: -4873281472176744731
+    second: Monster_M002_Mold_Idle_36
+  - first:
+      213: -2744489100112525348
+    second: Monster_M002_Mold_Idle_37
+  - first:
+      213: -6411128245628276948
+    second: Monster_M002_Mold_Idle_38
+  - first:
+      213: -2771944588023308740
+    second: Monster_M002_Mold_Idle_39
+  - first:
+      213: 3401258975588850469
+    second: Monster_M002_Mold_Idle_40
+  - first:
+      213: 8796281915992656917
+    second: Monster_M002_Mold_Idle_41
+  - first:
+      213: -3857273312388055638
+    second: Monster_M002_Mold_Idle_42
+  - first:
+      213: 8129043042745693393
+    second: Monster_M002_Mold_Idle_43
+  - first:
+      213: -5727171917645716761
+    second: Monster_M002_Mold_Idle_44
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Monster_M002_Mold_Idle_2
+      rect:
+        serializedVersion: 2
+        x: 131
+        y: 579
+        width: 380
+        height: 346
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 821ed7fb6688644e0800000000000000
+      internalID: -1997759409811496664
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_M002_Mold_Idle_3
+      rect:
+        serializedVersion: 2
+        x: 140
+        y: 135
+        width: 346
+        height: 321
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a9496516318c57f80800000000000000
+      internalID: -8109355568447712102
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_M002_Mold_Idle_16
+      rect:
+        serializedVersion: 2
+        x: 540
+        y: 130
+        width: 411
+        height: 342
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d37509560ab2d5f00800000000000000
+      internalID: 1107089051301730109
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_M002_Mold_Idle_17
+      rect:
+        serializedVersion: 2
+        x: 576
+        y: 571
+        width: 374
+        height: 329
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 554c12b40c46e6d70800000000000000
+      internalID: 9038272279236166741
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_M002_Mold_Idle_27
+      rect:
+        serializedVersion: 2
+        x: 1021
+        y: 573
+        width: 372
+        height: 340
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 550228e56946a49e0800000000000000
+      internalID: -1636384917602295723
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Monster_M002_Mold_Idle_29
+      rect:
+        serializedVersion: 2
+        x: 1029
+        y: 135
+        width: 368
+        height: 330
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9e8dfa5ff9a71be40800000000000000
+      internalID: 5670448233276496105
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 618099efbc7f5b5448ad3e5d413a1167
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Monster_M002_Mold_Idle_0: 3488536218998338862
+      Monster_M002_Mold_Idle_1: 5657191733423848973
+      Monster_M002_Mold_Idle_10: -1775751168184895088
+      Monster_M002_Mold_Idle_11: 8184538336952576958
+      Monster_M002_Mold_Idle_12: 3222682404407613489
+      Monster_M002_Mold_Idle_13: 3180667624628309611
+      Monster_M002_Mold_Idle_14: -1244965327422671396
+      Monster_M002_Mold_Idle_15: 6973062981123919851
+      Monster_M002_Mold_Idle_16: 1107089051301730109
+      Monster_M002_Mold_Idle_17: 9038272279236166741
+      Monster_M002_Mold_Idle_18: -8886551109330957755
+      Monster_M002_Mold_Idle_19: -3882329728279946340
+      Monster_M002_Mold_Idle_2: -1997759409811496664
+      Monster_M002_Mold_Idle_20: -6920431422106243714
+      Monster_M002_Mold_Idle_21: -6008459023905348751
+      Monster_M002_Mold_Idle_22: -6852715971997345695
+      Monster_M002_Mold_Idle_23: 1434845055061884800
+      Monster_M002_Mold_Idle_24: -5831468987972301663
+      Monster_M002_Mold_Idle_25: 7796597146039116407
+      Monster_M002_Mold_Idle_26: 7189575057671716068
+      Monster_M002_Mold_Idle_27: -1636384917602295723
+      Monster_M002_Mold_Idle_28: -5863361291329709538
+      Monster_M002_Mold_Idle_29: 5670448233276496105
+      Monster_M002_Mold_Idle_3: -8109355568447712102
+      Monster_M002_Mold_Idle_30: 6585898932016106168
+      Monster_M002_Mold_Idle_31: -7805405962564330022
+      Monster_M002_Mold_Idle_32: -6140455569936094532
+      Monster_M002_Mold_Idle_33: -4305588464255503469
+      Monster_M002_Mold_Idle_34: 8072807582572260269
+      Monster_M002_Mold_Idle_35: -3387669991533743278
+      Monster_M002_Mold_Idle_36: -4873281472176744731
+      Monster_M002_Mold_Idle_37: -2744489100112525348
+      Monster_M002_Mold_Idle_38: -6411128245628276948
+      Monster_M002_Mold_Idle_39: -2771944588023308740
+      Monster_M002_Mold_Idle_4: 8421465235586571332
+      Monster_M002_Mold_Idle_40: 3401258975588850469
+      Monster_M002_Mold_Idle_41: 8796281915992656917
+      Monster_M002_Mold_Idle_42: -3857273312388055638
+      Monster_M002_Mold_Idle_43: 8129043042745693393
+      Monster_M002_Mold_Idle_44: -5727171917645716761
+      Monster_M002_Mold_Idle_5: -3556866000540134286
+      Monster_M002_Mold_Idle_6: -8005559841463669415
+      Monster_M002_Mold_Idle_7: -5219411020656280848
+      Monster_M002_Mold_Idle_8: 3508297847363058621
+      Monster_M002_Mold_Idle_9: -9059834439908163897
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
