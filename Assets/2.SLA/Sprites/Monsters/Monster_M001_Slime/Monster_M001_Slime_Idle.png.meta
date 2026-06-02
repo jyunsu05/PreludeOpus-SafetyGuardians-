@@ -44,6 +44,63 @@ TextureImporter:
   - first:
       213: 2056375820219756204
     second: Monster_M001_Slime_Idle_13
+  - first:
+      213: -20465425769089326
+    second: Monster_M001_Slime_Idle_14
+  - first:
+      213: 5888776826522749353
+    second: Monster_M001_Slime_Idle_15
+  - first:
+      213: -1331191056418078962
+    second: Monster_M001_Slime_Idle_16
+  - first:
+      213: -5153138681061505725
+    second: Monster_M001_Slime_Idle_17
+  - first:
+      213: 3598168331622527159
+    second: Monster_M001_Slime_Idle_18
+  - first:
+      213: 7474346803761407487
+    second: Monster_M001_Slime_Idle_19
+  - first:
+      213: -4031642306942266320
+    second: Monster_M001_Slime_Idle_20
+  - first:
+      213: 2693560908596666989
+    second: Monster_M001_Slime_Idle_21
+  - first:
+      213: -9133235240908697394
+    second: Monster_M001_Slime_Idle_22
+  - first:
+      213: -8758065902239559334
+    second: Monster_M001_Slime_Idle_23
+  - first:
+      213: 8729632576274458441
+    second: Monster_M001_Slime_Idle_24
+  - first:
+      213: 3434744000854509264
+    second: Monster_M001_Slime_Idle_25
+  - first:
+      213: -4411815580530776454
+    second: Monster_M001_Slime_Idle_26
+  - first:
+      213: 5058529002456084638
+    second: Monster_M001_Slime_Idle_27
+  - first:
+      213: 3454847197610861862
+    second: Monster_M001_Slime_Idle_28
+  - first:
+      213: 8817391415381517582
+    second: Monster_M001_Slime_Idle_29
+  - first:
+      213: 8350316725094004362
+    second: Monster_M001_Slime_Idle_30
+  - first:
+      213: -435828110395059537
+    second: Monster_M001_Slime_Idle_31
+  - first:
+      213: -7093673169496483517
+    second: Monster_M001_Slime_Idle_32
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -152,13 +209,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Monster_M001_Slime_Idle_4
+      name: Monster_M001_Slime_Idle_0
       rect:
         serializedVersion: 2
-        x: 1477
-        y: 335
-        width: 256
-        height: 212
+        x: 353
+        y: 35
+        width: 214
+        height: 190
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -167,20 +224,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 501a11cbf12741230800000000000000
-      internalID: 3608634682055434501
+      spriteID: d4e1b8d8841521370800000000000000
+      internalID: 8291779235996704333
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Monster_M001_Slime_Idle_8
+      name: Monster_M001_Slime_Idle_5
       rect:
         serializedVersion: 2
-        x: 18
-        y: 334
-        width: 267
-        height: 187
+        x: 1123
+        y: 53
+        width: 220
+        height: 183
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -189,20 +246,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 296e53624e7117050800000000000000
-      internalID: 5796440464063587986
+      spriteID: 86e1697b01bab2280800000000000000
+      internalID: -9066965336492466584
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Monster_M001_Slime_Idle_9
+      name: Monster_M001_Slime_Idle_10
       rect:
         serializedVersion: 2
-        x: 308
-        y: 335
-        width: 274
-        height: 192
+        x: 95
+        y: 38
+        width: 221
+        height: 186
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -211,8 +268,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: bd933006d018fb7e0800000000000000
-      internalID: -1747536235951080997
+      spriteID: f57c8392860c61c00800000000000000
+      internalID: 871095131543488351
       vertices: []
       indices: 
       edges: []
@@ -221,10 +278,10 @@ TextureImporter:
       name: Monster_M001_Slime_Idle_11
       rect:
         serializedVersion: 2
-        x: 600
-        y: 335
-        width: 262
-        height: 210
+        x: 604
+        y: 58
+        width: 223
+        height: 185
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -243,10 +300,10 @@ TextureImporter:
       name: Monster_M001_Slime_Idle_12
       rect:
         serializedVersion: 2
-        x: 890
-        y: 335
-        width: 253
-        height: 214
+        x: 865
+        y: 53
+        width: 218
+        height: 191
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -265,10 +322,10 @@ TextureImporter:
       name: Monster_M001_Slime_Idle_13
       rect:
         serializedVersion: 2
-        x: 1183
-        y: 335
-        width: 258
-        height: 215
+        x: 1382
+        y: 41
+        width: 227
+        height: 201
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -287,7 +344,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 3537399353bd201419bce215285f5c72
+    spriteID: 1dbe9399ab2d0394cbd3660605f03e72
     internalID: 0
     vertices: []
     indices: 
@@ -303,8 +360,27 @@ TextureImporter:
       Monster_M001_Slime_Idle_11: -3549584900354765823
       Monster_M001_Slime_Idle_12: -721456871920135092
       Monster_M001_Slime_Idle_13: 2056375820219756204
+      Monster_M001_Slime_Idle_14: -20465425769089326
+      Monster_M001_Slime_Idle_15: 5888776826522749353
+      Monster_M001_Slime_Idle_16: -1331191056418078962
+      Monster_M001_Slime_Idle_17: -5153138681061505725
+      Monster_M001_Slime_Idle_18: 3598168331622527159
+      Monster_M001_Slime_Idle_19: 7474346803761407487
       Monster_M001_Slime_Idle_2: 6339596375431380084
+      Monster_M001_Slime_Idle_20: -4031642306942266320
+      Monster_M001_Slime_Idle_21: 2693560908596666989
+      Monster_M001_Slime_Idle_22: -9133235240908697394
+      Monster_M001_Slime_Idle_23: -8758065902239559334
+      Monster_M001_Slime_Idle_24: 8729632576274458441
+      Monster_M001_Slime_Idle_25: 3434744000854509264
+      Monster_M001_Slime_Idle_26: -4411815580530776454
+      Monster_M001_Slime_Idle_27: 5058529002456084638
+      Monster_M001_Slime_Idle_28: 3454847197610861862
+      Monster_M001_Slime_Idle_29: 8817391415381517582
       Monster_M001_Slime_Idle_3: -3334215778901235556
+      Monster_M001_Slime_Idle_30: 8350316725094004362
+      Monster_M001_Slime_Idle_31: -435828110395059537
+      Monster_M001_Slime_Idle_32: -7093673169496483517
       Monster_M001_Slime_Idle_4: 3608634682055434501
       Monster_M001_Slime_Idle_5: -9066965336492466584
       Monster_M001_Slime_Idle_6: -8816514681779730074
