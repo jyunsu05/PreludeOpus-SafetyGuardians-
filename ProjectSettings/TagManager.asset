@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 3
   tags:
   - Monster
+  - Item
   layers:
   - Default
   - TransparentFX
@@ -53,6 +54,9 @@ TagManager:
     locked: 0
   - name: Obstacles
     uniqueID: 304545193
+    locked: 0
+  - name: Item
+    uniqueID: 898871457
     locked: 0
   m_RenderingLayers:
   - Default
