@@ -27,6 +27,7 @@ public class PlayerController : MonoBehaviour
     private bool hasEnteredBattle;
     private Vector2 lastBattleEndedPosition;
     private bool hasLastBattleEndedPosition;
+    private bool isGameManagerSubscribed;
 
     private const string MonsterIdSlime = "M-001";
     private const string MonsterIdFungus = "M-002";
@@ -37,15 +38,69 @@ public class PlayerController : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
 
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.OnBattleEnded -= HandleBattleEnded;
-            GameManager.Instance.OnBattleEnded += HandleBattleEnded;
-        }
+        TrySubscribeGameManager();
+    }
+
+    private void TrySubscribeGameManager()
+    {
+        if (isGameManagerSubscribed || GameManager.Instance == null)
+            return;
+
+        GameManager.Instance.OnBattleEnded -= HandleBattleEnded;
+        GameManager.Instance.OnBattleEnded += HandleBattleEnded;
+        isGameManagerSubscribed = true;
+    }
+
+    private void OnDisable()
+    {
+        if (postFleeGraceRoutine != null)
+            StopCoroutine(postFleeGraceRoutine);
+
+        UnsubscribeGameManager();
+
+        postFleeGraceRoutine = null;
+        isBattleEntryLocked = false;
+        hasEnteredBattle = false;
+        hasLastBattleEndedPosition = false;
+    }
+
+    private void UnsubscribeGameManager()
+    {
+        if (!isGameManagerSubscribed || GameManager.Instance == null)
+            return;
+
+        GameManager.Instance.OnBattleEnded -= HandleBattleEnded;
+        isGameManagerSubscribed = false;
     }
 
     private void Update()
     {
+        // GameManager 구독이 누락된 경우(초기화 시점 문제 등)를 위해 매 프레임 체크합니다.
+        if (!isGameManagerSubscribed)
+            TrySubscribeGameManager();
+
+        // 전투 UI창이 켜져 있는 동안에는 입력을 원천 차단하고 움직임을 멈춥니다.
+        bool isBattleUIOpen = battleSceneUI != null && battleSceneUI.activeInHierarchy;
+        if (isBattleUIOpen)
+        {
+            movementInput = Vector2.zero;
+            if (rb != null)
+            {
+                rb.linearVelocity = Vector2.zero;
+                // 전투 중에는 물리 시뮬레이션을 끄기도 하지만, 여기서도 확실히 멈춰줍니다.
+                if (rb.simulated) rb.simulated = false;
+            }
+            return;
+        }
+
+        // --- 물리 복구 감시자 (Watchdog) ---
+        // UI가 닫혔는데 물리 시뮬레이션만 꺼져 있는 상태라면 즉각 복구합니다.
+        if (rb != null && !rb.simulated)
+        {
+            Debug.LogWarning("[PlayerController] 물리 시뮬레이션 복구됨 (Watchdog).");
+            rb.simulated = true;
+        }
+
         // 키보드 입력을 받아옵니다.
         movementInput.x = Input.GetAxisRaw("Horizontal");
         movementInput.y = Input.GetAxisRaw("Vertical");
@@ -64,8 +119,11 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        // 물리 엔진 루프에서 요원을 부드럽게 이동시킵니다.
-        rb.MovePosition(rb.position + movementInput * moveSpeed * Time.fixedDeltaTime);
+        // 물리 시뮬레이션이 켜져 있을 때만 MovePosition이 작동합니다.
+        if (rb != null && rb.simulated)
+        {
+            rb.MovePosition(rb.position + movementInput * moveSpeed * Time.fixedDeltaTime);
+        }
     }
 
     /// <summary>
@@ -79,21 +137,6 @@ public class PlayerController : MonoBehaviour
         postFleeGraceRoutine = StartCoroutine(PostFleeGraceRoutine());
     }
 
-    private void OnDisable()
-    {
-        if (postFleeGraceRoutine != null)
-            StopCoroutine(postFleeGraceRoutine);
-
-        if (GameManager.Instance != null)
-            GameManager.Instance.OnBattleEnded -= HandleBattleEnded;
-
-        postFleeGraceRoutine = null;
-        isBattleEntryLocked = false;
-        hasEnteredBattle = false;
-        hasLastBattleEndedPosition = false;
-    }
-
-    // 몬스터와 충돌 시 전투씬창 UI 활성화
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (isBattleEntryLocked)
@@ -139,6 +182,11 @@ public class PlayerController : MonoBehaviour
         {
             lastBattleEndedPosition = rb.position;
             hasLastBattleEndedPosition = true;
+            
+            // 전투가 종료되면 플레이어의 물리 시뮬레이션(simulated)을 강제로 복구하여
+            // 플레이어가 굳는 현상을 완벽하게 방어(Healing)합니다.
+            rb.simulated = true;
+            rb.linearVelocity = Vector2.zero;
         }
         else
         {
