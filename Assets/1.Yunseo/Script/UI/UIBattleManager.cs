@@ -32,6 +32,18 @@ public class UIBattleManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI descriptionText;       // 정화 방법 : 정화 방법 설명
     [SerializeField] private TextMeshProUGUI inventoryStatusText;   // 인벤토리 상황 : 아이템 보유
 
+    [Header("--- 정화 / 도망 상태 제약 ---")]
+    [SerializeField] private int purifyDurabilityPerUse = 10;
+
+    private const string DefaultPurifyItemId = "MI-101";
+
+    public bool IsScanned { get; private set; }
+    public bool IsPurifying { get; private set; }
+    public bool IsEscapeLocked { get; private set; }
+
+    /// <summary>true면 도망 UI를 숨깁니다(UIButtonContainer가 SetActive 처리).</summary>
+    public event Action<bool> OnEscapeLockChanged;
+
     private MonsterData currentMonsterData;
     private string currentMonsterId;
     private int contaminationAtBattleEntry;
@@ -60,6 +72,8 @@ public class UIBattleManager : MonoBehaviour
         hasFinalizedContaminationForSession = false;
         isProcessingBattleExit = false;
         SubscribeBattleEnded();
+        ExitBattle();
+        NotifyEscapeUnlockedForNewBattle();
         ResetBattleUIState();
         LoadMonsterFromData();
         LockPlayerMovementAtBattleEntry();
@@ -78,6 +92,7 @@ public class UIBattleManager : MonoBehaviour
     void OnDisable()
     {
         UnsubscribeBattleEnded();
+        ExitBattle();
         FinalizeContaminationOnce();
         ForceRestoreFieldPhysics();
     }
@@ -88,12 +103,111 @@ public class UIBattleManager : MonoBehaviour
         ForceRestoreFieldPhysics();
     }
 
+    public bool CanAttemptEscape => !IsPurifying && !IsEscapeLocked && !isProcessingBattleExit;
+
+    /// <summary>탐색 성공 — 정화 버튼을 켤 수 있는 상태로 전환합니다.</summary>
+    public void NotifySearchCompleted()
+    {
+        IsScanned = true;
+    }
+
+    /// <summary>정화 버튼(OnClickPurify) — 아이템 확인 후 정화 시작 시 도망을 즉시 잠급니다.</summary>
+    public bool OnClickPurify(out int consumedDurability)
+    {
+        consumedDurability = 0;
+
+        if (IsPurifying)
+            return false;
+
+        if (!IsScanned)
+        {
+            Debug.LogWarning("[UIBattleManager] 탐색 전에는 정화할 수 없습니다.");
+            return false;
+        }
+
+        string itemId = GetRequiredPurifyItemId();
+        if (!CanPurifyWithInventory(itemId))
+            return false;
+
+        BeginPurifySession();
+
+        int consumeRequest = Mathf.Max(1, purifyDurabilityPerUse);
+        consumedDurability = InventoryManager.Instance.ConsumeItemDurability(itemId, consumeRequest);
+        if (consumedDurability <= 0)
+        {
+            Debug.LogWarning("[UIBattleManager] 아이템 내구도 소모 실패 — 정화를 취소합니다.");
+            EndPurifyAttempt(unlockEscape: true);
+            return false;
+        }
+
+        ReduceContamination(consumedDurability);
+        EndPurifyAttempt(unlockEscape: false);
+        return true;
+    }
+
+    public bool CanPurifyWithInventory(string itemId = null)
+    {
+        if (string.IsNullOrEmpty(itemId))
+            itemId = GetRequiredPurifyItemId();
+
+        if (InventoryManager.Instance == null || string.IsNullOrEmpty(itemId))
+            return false;
+
+        if (!InventoryManager.Instance.HasItem(itemId))
+            return false;
+
+        return InventoryManager.Instance.GetItemRemainingDurability(itemId) > 0;
+    }
+
+    public string GetRequiredPurifyItemId()
+    {
+        if (currentMonsterData == null)
+            return DefaultPurifyItemId;
+
+        if (!string.IsNullOrEmpty(currentMonsterData.drop_item_id))
+            return currentMonsterData.drop_item_id;
+
+        if (currentMonsterData.drop_items != null && currentMonsterData.drop_items.Count > 0)
+            return currentMonsterData.drop_items[0].item_id;
+
+        return DefaultPurifyItemId;
+    }
+
+    public string BuildInventoryStatusText()
+    {
+        if (currentMonsterData == null)
+            return "필요 아이템 정보 없음";
+
+        string itemId = GetRequiredPurifyItemId();
+        if (string.IsNullOrEmpty(itemId))
+            return "필요 아이템 정보 없음";
+
+        string itemName = ResolveItemDisplayName(itemId);
+        if (!CanPurifyWithInventory(itemId))
+            return $"{itemName} 없음";
+
+        int remaining = InventoryManager.Instance.GetItemRemainingDurability(itemId);
+        return $"{itemName} 보유 {remaining}";
+    }
+
+    /// <summary>배틀 종료·UI 비활성 시 상태/도망 잠금을 방어적으로 해제합니다.</summary>
+    public void ExitBattle()
+    {
+        IsScanned = false;
+        IsPurifying = false;
+        isProcessingBattleExit = false;
+        SetEscapeLocked(false);
+    }
+
     /// <summary>도망 버튼 광클 방지. 성공 시 MarkFleeExit까지 처리됨.</summary>
     public bool TryBeginFleeExit()
     {
-        if (isProcessingBattleExit)
+        if (!CanAttemptEscape)
         {
-            Debug.Log("[UIBattleManager] 도망 처리 중 — 추가 입력 무시.");
+            if (IsPurifying || IsEscapeLocked)
+                Debug.Log("[UIBattleManager] 정화 진행 중 — 도망할 수 없습니다.");
+            else
+                Debug.Log("[UIBattleManager] 도망 처리 중 — 추가 입력 무시.");
             return false;
         }
 
@@ -104,12 +218,55 @@ public class UIBattleManager : MonoBehaviour
 
     public void CompleteFleeExit()
     {
+        ExitBattle();
+
         if (GameManager.Instance != null)
             GameManager.Instance.ReturnToField();
         else if (UIManager.Instance != null)
             UIManager.Instance.CloseBattleUI();
         else
             Debug.LogError("[UIBattleManager] GameManager를 찾을 수 없습니다.");
+    }
+
+    private void BeginPurifySession()
+    {
+        IsPurifying = true;
+        SetEscapeLocked(true);
+    }
+
+    private void EndPurifyAttempt(bool unlockEscape)
+    {
+        IsPurifying = false;
+        if (unlockEscape)
+            SetEscapeLocked(false);
+    }
+
+    private void SetEscapeLocked(bool locked)
+    {
+        if (IsEscapeLocked == locked)
+            return;
+
+        IsEscapeLocked = locked;
+        OnEscapeLockChanged?.Invoke(locked);
+    }
+
+    /// <summary>배틀 진입 시 도망 UI를 기본(해제) 상태로 동기화합니다. 이전 전투의 잠금이 남지 않도록 항상 알립니다.</summary>
+    private void NotifyEscapeUnlockedForNewBattle()
+    {
+        IsEscapeLocked = false;
+        OnEscapeLockChanged?.Invoke(false);
+    }
+
+    private static string ResolveItemDisplayName(string itemId)
+    {
+        if (DataManager.Instance == null || string.IsNullOrEmpty(itemId))
+            return itemId;
+
+        ItemData data = DataManager.Instance.GetItemData(itemId);
+        if (data == null || string.IsNullOrEmpty(data.name))
+            return itemId;
+
+        return data.name;
     }
 
     public void ResetBattleUIState()
@@ -501,12 +658,12 @@ public class UIBattleManager : MonoBehaviour
 
     private void HandleBattleEnded()
     {
+        ExitBattle();
         FinalizeContaminationOnce();
         ForceRestoreFieldPhysics();
 
         lastResolvedEncounterMonsterId = null;
         BattleEncounterContext.SetEncounteredMonsterId(null);
-        isProcessingBattleExit = false;
     }
 
     private void FinalizeContaminationOnce()
