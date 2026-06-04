@@ -1,6 +1,9 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+/// <summary>
+/// 에디터/개발용 배틀 UI 단축키. 빌드에서는 기본 비활성입니다.
+/// </summary>
 public class UIBattleSceneTester : MonoBehaviour
 {
     [Header("--- 테스트 대상 ---")]
@@ -13,15 +16,29 @@ public class UIBattleSceneTester : MonoBehaviour
     [SerializeField] private string testDifficulty = "Easy";
     [SerializeField] private int testMaxContamination = 100;
 
-    void Start()
+    [Header("--- 디버그 단축키 (F1~F5) ---")]
+    [Tooltip("켜면 F3 정화 등 키 입력이 동작합니다. 일반 플레이 시 끄세요.")]
+    [SerializeField] private bool enableDebugHotkeys;
+
+    private void Start()
     {
         AutoBindIfNeeded();
 
-        Debug.Log("[UIBattleSceneTester] 준비 완료. F1: 배틀UI 열기, F2: 탐색, F3: 정화, F4: 도망, F5: 강제 닫기");
+#if UNITY_EDITOR
+        if (!enableDebugHotkeys)
+            Debug.Log("[UIBattleSceneTester] 디버그 단축키 비활성. 필요 시 인스펙터에서 Enable Debug Hotkeys를 켜세요.");
+        else
+            Debug.Log("[UIBattleSceneTester] F1: 배틀UI, F2: 탐색, F3: 정화, F4: 도망, F5: 닫기");
+#else
+        enableDebugHotkeys = false;
+#endif
     }
 
-    void Update()
+    private void Update()
     {
+        if (!enableDebugHotkeys)
+            return;
+
         if (Input.GetKeyDown(KeyCode.F1))
             OpenBattleUIForTest();
 
@@ -74,7 +91,6 @@ public class UIBattleSceneTester : MonoBehaviour
             }
             else
             {
-                // 데이터 매니저가 없거나 몬스터 목록이 비어있을 때 기존 테스트 값으로 폴백합니다.
                 battleManager.SetMonsterBasicUI(testMonsterName, testDifficulty, testMaxContamination);
                 Debug.LogWarning("[UIBattleSceneTester] 몬스터 JSON 목록이 없어 기본 테스트 UI 값을 사용합니다.");
             }

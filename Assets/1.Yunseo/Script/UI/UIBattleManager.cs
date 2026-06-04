@@ -10,6 +10,12 @@ public class UIBattleManager : MonoBehaviour
     private static readonly Dictionary<string, int> contaminationProgressByMonsterId = new Dictionary<string, int>();
     private static string lastResolvedEncounterMonsterId;
 
+    public static void ResetSavedContaminationProgress()
+    {
+        contaminationProgressByMonsterId.Clear();
+        lastResolvedEncounterMonsterId = null;
+    }
+
     public event System.Action OnContaminationEmpty;
     [Header("--- 몬스터 기본 정보 UI (항상 보임) ---")]
     [SerializeField] private Image monsterImage;
@@ -58,6 +64,15 @@ public class UIBattleManager : MonoBehaviour
         LoadMonsterFromData();
         LockPlayerMovementAtBattleEntry();
         LockMonsterMovementAtBattleEntry();
+        DisableContaminationSliderDirectInput();
+    }
+
+    private void DisableContaminationSliderDirectInput()
+    {
+        if (contaminationSlider == null)
+            return;
+
+        contaminationSlider.interactable = false;
     }
 
     void OnDisable()
@@ -236,7 +251,7 @@ public class UIBattleManager : MonoBehaviour
         {
             const int maxOverlapCount = 32;
             Collider2D[] overlapHits = new Collider2D[maxOverlapCount];
-            int hitCount = playerCollider.Overlap(new ContactFilter2D().NoFilter(), overlapHits);
+            int hitCount = playerCollider.Overlap(ContactFilter2D.noFilter, overlapHits);
             string overlapResolvedId = ResolveClosestMonsterId(player.transform.position, overlapHits, hitCount);
             if (!string.IsNullOrEmpty(overlapResolvedId))
                 return overlapResolvedId;

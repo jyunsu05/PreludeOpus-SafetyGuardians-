@@ -46,6 +46,15 @@ public class MonsterSpawner : MonoBehaviour
         SpawnMonstersForCurrentStage(logResult: true);
     }
 
+    public void RespawnCurrentStage()
+    {
+        if (!Application.isPlaying)
+            return;
+
+        ClearSpawnedMonsters();
+        SpawnMonstersForCurrentStage(logResult: true);
+    }
+
     private void SpawnMonstersForCurrentStage(bool logResult)
     {
         if (spawnPointParent == null)

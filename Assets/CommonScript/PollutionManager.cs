@@ -40,6 +40,12 @@ public class PollutionManager : MonoBehaviour
         NotifyPollutionChanged();
     }
 
+    public void SetPollution(float value)
+    {
+        currentPollution = Mathf.Clamp(value, 0f, maxPollution);
+        NotifyPollutionChanged();
+    }
+
     private void NotifyPollutionChanged()
     {
         float ratio = maxPollution > 0f ? currentPollution / maxPollution : 0f;

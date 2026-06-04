@@ -34,6 +34,15 @@ public class ItemSpawner : MonoBehaviour
         SpawnItemsForCurrentStage(logResult: true);
     }
 
+    public void RespawnCurrentStage()
+    {
+        if (!Application.isPlaying)
+            return;
+
+        ClearSpawnedItems();
+        SpawnItemsForCurrentStage(logResult: true);
+    }
+
     private void SpawnItemsForCurrentStage(bool logResult)
     {
         if (itemSpawnPointParent == null)

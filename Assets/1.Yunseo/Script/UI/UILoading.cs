@@ -2,7 +2,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
-using UnityEngine.SceneManagement;
 
 public class UILoading : MonoBehaviour
 {
@@ -12,7 +11,10 @@ public class UILoading : MonoBehaviour
     [SerializeField] private TextMeshProUGUI loadingMessageText; // 로딩 상태 문구 텍스트
     [SerializeField] private float minDisplayTime = 2f; // 최소 로딩 화면 표시 시간
     [SerializeField] private TextMeshProUGUI InformationText;
-    [SerializeField] private string mainFactorySceneName = "FactoryScene"; // 로딩 완료 후 이동할 메인 공장 씬 이름
+
+    [Header("--- 다음 공장 챕터 ---")]
+    [SerializeField] private ChapterManager chapterManager;
+    [SerializeField] private FactoryChapterController factoryChapterController;
 
     private float panelShownTime;
     private bool waitForTouchDismiss;
@@ -40,7 +42,7 @@ public class UILoading : MonoBehaviour
 
         if (Input.GetMouseButtonDown(0))
         {
-            LoadMainFactoryScene();
+            AdvanceToNextFactoryChapter();
             return;
         }
 
@@ -48,7 +50,7 @@ public class UILoading : MonoBehaviour
         {
             Touch touch = Input.GetTouch(0);
             if (touch.phase == TouchPhase.Began)
-                LoadMainFactoryScene();
+                AdvanceToNextFactoryChapter();
         }
     }
 
@@ -172,26 +174,80 @@ public class UILoading : MonoBehaviour
         autoProgressRoutine = null;
     }
 
-    private void LoadMainFactoryScene()
+    private void AdvanceToNextFactoryChapter()
     {
-        if (string.IsNullOrEmpty(mainFactorySceneName))
+        if (isSceneLoading)
+            return;
+
+        isSceneLoading = true;
+
+        float progressPercent = GetProgressPercent();
+
+        ChapterManager manager = ResolveChapterManager();
+        if (manager != null)
         {
-            Debug.LogError("[UILoading] mainFactorySceneName이 비어 있습니다. 씬 이름을 확인해주세요.");
+            if (!manager.LoadNextChapter(out string chapterMessage))
+            {
+                SetLoadingText(chapterMessage);
+                Debug.LogWarning($"[UILoading] {progressPercent:0.00}% — {chapterMessage}");
+                isSceneLoading = false;
+                return;
+            }
+
+            Debug.Log($"[UILoading] {progressPercent:0.00}% — {chapterMessage}");
+            HideLoading();
+            isSceneLoading = false;
             return;
         }
 
-        float progressPercent = 0f;
-        if (loadingProgressBar != null)
+        FactoryChapterController controller = ResolveFactoryChapterController();
+        if (controller == null)
         {
-            float normalized = Mathf.InverseLerp(loadingProgressBar.minValue, loadingProgressBar.maxValue, loadingProgressBar.value);
-            progressPercent = normalized * 100f;
+            Debug.LogError("[UILoading] ChapterManager 또는 FactoryChapterController를 찾을 수 없습니다.");
+            isSceneLoading = false;
+            return;
         }
 
-        Debug.Log($"[UILoading] 로딩 화면 클릭/터치 감지. {progressPercent:0.00}% 상태에서 '{mainFactorySceneName}' 씬으로 이동합니다.");
+        if (!controller.TryAdvanceToNextChapter(out string resultMessage))
+        {
+            SetLoadingText(resultMessage);
+            Debug.LogWarning($"[UILoading] {progressPercent:0.00}% — {resultMessage}");
+            isSceneLoading = false;
+            return;
+        }
 
-        // TODO: 씬 연결 완료 후 아래 2줄 주석 해제
-        // isSceneLoading = true;
-        // SceneManager.LoadScene(mainFactorySceneName);
+        Debug.Log($"[UILoading] {progressPercent:0.00}% — {resultMessage}");
+        HideLoading();
+        isSceneLoading = false;
+    }
+
+    private ChapterManager ResolveChapterManager()
+    {
+        if (chapterManager != null)
+            return chapterManager;
+
+        return ChapterManager.EnsureInstance();
+    }
+
+    private FactoryChapterController ResolveFactoryChapterController()
+    {
+        if (factoryChapterController != null)
+            return factoryChapterController;
+
+        factoryChapterController = FactoryChapterController.EnsureInstance();
+        return factoryChapterController;
+    }
+
+    private float GetProgressPercent()
+    {
+        if (loadingProgressBar == null)
+            return waitForTouchDismiss ? 100f : 0f;
+
+        float normalized = Mathf.InverseLerp(
+            loadingProgressBar.minValue,
+            loadingProgressBar.maxValue,
+            loadingProgressBar.value);
+        return normalized * 100f;
     }
 
     public void HideLoadingWithMinimumTime()

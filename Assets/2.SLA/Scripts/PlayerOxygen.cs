@@ -15,9 +15,21 @@ public class PlayerOxygen : MonoBehaviour
 [SerializeField] private GameObject gameOverUI; // 게임오버 UI 오브젝트(윤서님 프리팹)
 [SerializeField] private GameObject mainHUD;    // HUD UI 오브젝트
 
-    void Start()
+    public void ResetOxygen()
     {
         currentOxygen = maxOxygen;
+
+        if (oxygenSlider != null)
+        {
+            oxygenSlider.minValue = 0f;
+            oxygenSlider.maxValue = 1f;
+            oxygenSlider.value = 1f;
+        }
+    }
+
+    void Start()
+    {
+        ResetOxygen();
 
         if (oxygenSlider == null)
         {

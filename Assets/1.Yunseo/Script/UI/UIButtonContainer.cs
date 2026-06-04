@@ -1,4 +1,6 @@
+using System.Collections;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class UIButtonContainer : MonoBehaviour
@@ -52,6 +54,14 @@ public class UIButtonContainer : MonoBehaviour
     {
         ResolveActionCanvasGroup();
         ResetButtonsState();
+        ApplyBattleKeyboardInputGuard();
+        StartCoroutine(ApplyBattleKeyboardInputGuardNextFrame());
+    }
+
+    private IEnumerator ApplyBattleKeyboardInputGuardNextFrame()
+    {
+        yield return null;
+        ApplyBattleKeyboardInputGuard();
     }
 
     private void OnDestroy()
@@ -83,6 +93,38 @@ public class UIButtonContainer : MonoBehaviour
             escapeButton.gameObject.SetActive(true);
             escapeButton.interactable = true;
         }
+
+        ApplyBattleKeyboardInputGuard();
+    }
+
+    /// <summary>
+    /// WASD/방향키 UI Navigate·Submit이 정화 버튼을 눌러버리는 것을 방지합니다. (마우스 클릭만 허용)
+    /// </summary>
+    private void ApplyBattleKeyboardInputGuard()
+    {
+        ClearUiSelection();
+        DisableButtonKeyboardNavigation(searchButton);
+        DisableButtonKeyboardNavigation(purifyButton);
+        DisableButtonKeyboardNavigation(escapeButton);
+    }
+
+    private static void ClearUiSelection()
+    {
+        EventSystem eventSystem = EventSystem.current;
+        if (eventSystem == null)
+            return;
+
+        eventSystem.SetSelectedGameObject(null);
+    }
+
+    private static void DisableButtonKeyboardNavigation(Button button)
+    {
+        if (button == null)
+            return;
+
+        Navigation navigation = button.navigation;
+        navigation.mode = Navigation.Mode.None;
+        button.navigation = navigation;
     }
 
     public void OnSearchClick()
