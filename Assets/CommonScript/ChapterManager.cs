@@ -215,6 +215,12 @@ public class ChapterManager : MonoBehaviour
             refreshGameplay: false);
     }
 
+    /// <summary>오프닝 시퀀스 등 메인 플레이 전에 모든 챕터 프리팹을 끕니다.</summary>
+    public void DeactivateAllChaptersForOpening()
+    {
+        DeactivateAllChapterPrefabs();
+    }
+
     private void DeactivateAllChapterPrefabs()
     {
         if (chapterPrefabs == null)

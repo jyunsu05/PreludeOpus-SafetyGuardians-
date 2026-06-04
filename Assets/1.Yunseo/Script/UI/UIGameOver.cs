@@ -9,6 +9,7 @@ public class UIGameOver : MonoBehaviour
 
     public void Show()
     {
+        GameManager.Instance?.ResetAllSystems();
         gameObject.SetActive(true);
     }
 
@@ -17,7 +18,7 @@ public class UIGameOver : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    /// <summary>[처음부터 다시] 버튼 OnClick — 전체 초기화 후 오프닝(또는 대체) 씬.</summary>
+    /// <summary>[처음부터 시작] — 전체 데이터 초기화 후 OpeningSequenceRoot 활성화(없으면 오프닝 씬 로드).</summary>
     public void OnRestartGame()
     {
         if (GameManager.Instance == null)
@@ -30,7 +31,7 @@ public class UIGameOver : MonoBehaviour
         GameManager.Instance.RequestRestart(isFullReset: true);
     }
 
-    /// <summary>[현재 맵 재시작] 버튼 OnClick — 챕터 데이터만 초기화(오염도 체크포인트) 후 현재 챕터 재시작.</summary>
+    /// <summary>[현재 챕터에서 시작] — 오프닝 없이 체크포인트 오염도 복구 후 현재 챕터 스폰으로 이동.</summary>
     public void OnRetryLevel()
     {
         if (GameManager.Instance == null)

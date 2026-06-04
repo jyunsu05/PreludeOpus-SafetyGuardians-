@@ -20,6 +20,7 @@ public class OpeningSequenceController : MonoBehaviour
 
     bool[] savedActiveStates;
     bool finished;
+    bool pendingReplayStart;
     bool savedCameraState;
     CameraClearFlags savedClearFlags;
     Color savedBackgroundColor;
@@ -32,11 +33,66 @@ public class OpeningSequenceController : MonoBehaviour
         if (autoCollectGameplayRoots)
             hideDuringOpening = CollectGameplayRoots();
 
+        DeactivateAllChaptersBeforeOpening();
         HideMainContent();
         ApplyBlackCameraBackground();
 
         if (crawl != null)
             crawl.ConfigureInSceneMode(this);
+    }
+
+    void OnEnable()
+    {
+        if (!pendingReplayStart)
+            return;
+
+        pendingReplayStart = false;
+        StartCrawlReplayIfReady();
+    }
+
+    /// <summary>게임오버 → 처음부터 시작 등으로 오프닝을 다시 재생할 때 호출합니다.</summary>
+    public void PrepareForReplay()
+    {
+        finished = false;
+        pendingReplayStart = true;
+
+        if (autoCollectGameplayRoots)
+            hideDuringOpening = CollectGameplayRoots();
+
+        DeactivateAllChaptersBeforeOpening();
+        HideMainContent();
+        ApplyBlackCameraBackground();
+
+        if (crawl != null)
+        {
+            if (!crawl.gameObject.activeSelf)
+                crawl.gameObject.SetActive(true);
+
+            crawl.ConfigureInSceneMode(this);
+        }
+
+        if (isActiveAndEnabled)
+        {
+            pendingReplayStart = false;
+            StartCrawlReplayIfReady();
+        }
+    }
+
+    void StartCrawlReplayIfReady()
+    {
+        if (crawl == null || !crawl.isActiveAndEnabled)
+            return;
+
+        crawl.RestartForReplay();
+    }
+
+    static void DeactivateAllChaptersBeforeOpening()
+    {
+        ChapterManager chapterManager = ChapterManager.Instance;
+        if (chapterManager == null)
+            chapterManager = FindAnyObjectByType<ChapterManager>(FindObjectsInactive.Include);
+
+        chapterManager?.DeactivateAllChaptersForOpening();
     }
 
     GameObject[] CollectGameplayRoots()
