@@ -5,6 +5,7 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 5.0f;
+
     [Header("전투씬창 UI 연결")]
     [SerializeField] private GameObject battleSceneUI;
 
@@ -17,28 +18,56 @@ public class PlayerController : MonoBehaviour
 
     [Tooltip("전투가 끝난 뒤 이 거리 이상 벗어나야 다시 전투에 들어갈 수 있습니다.")]
     [SerializeField] private float postBattleReentryDistance = 1.0f;
-    
+
     private Rigidbody2D rb;
     private SpriteRenderer spriteRenderer;
     private Coroutine postFleeGraceRoutine;
-    
+
     private Vector2 movementInput;
     private bool isBattleEntryLocked;
     private bool hasEnteredBattle;
     private Vector2 lastBattleEndedPosition;
     private bool hasLastBattleEndedPosition;
     private bool isGameManagerSubscribed;
+    // 전투 종료 직후 물리 복구가 필요한 상태인지 추적합니다.
+    // Watchdog이 이 플래그가 true일 때만 작동하도록 범위를 좁혀,
+    // 나중에 NPC 대화창·일시정지 메뉴 등이 추가되어도 물리를 강제로 켜버리는 부작용을 방지합니다.
+    private bool isWaitingForPostBattlePhysicsRecovery;
 
     private const string MonsterIdSlime = "M-001";
     private const string MonsterIdFungus = "M-002";
     private const string MonsterIdFire = "M-003";
 
-    private void Start()
+    private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
+    }
 
+    private void OnEnable()
+    {
         TrySubscribeGameManager();
+        EnsurePhysicsSimulated();
+    }
+
+    private void Start()
+    {
+        TrySubscribeGameManager();
+        EnsurePhysicsSimulated();
+    }
+
+    private void OnDisable()
+    {
+        if (postFleeGraceRoutine != null)
+            StopCoroutine(postFleeGraceRoutine);
+
+        postFleeGraceRoutine = null;
+        UnsubscribeGameManager();
+    }
+
+    private void OnDestroy()
+    {
+        UnsubscribeGameManager();
     }
 
     private void TrySubscribeGameManager()
@@ -49,19 +78,6 @@ public class PlayerController : MonoBehaviour
         GameManager.Instance.OnBattleEnded -= HandleBattleEnded;
         GameManager.Instance.OnBattleEnded += HandleBattleEnded;
         isGameManagerSubscribed = true;
-    }
-
-    private void OnDisable()
-    {
-        if (postFleeGraceRoutine != null)
-            StopCoroutine(postFleeGraceRoutine);
-
-        UnsubscribeGameManager();
-
-        postFleeGraceRoutine = null;
-        isBattleEntryLocked = false;
-        hasEnteredBattle = false;
-        hasLastBattleEndedPosition = false;
     }
 
     private void UnsubscribeGameManager()
@@ -75,60 +91,52 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        // GameManager 구독이 누락된 경우(초기화 시점 문제 등)를 위해 매 프레임 체크합니다.
         if (!isGameManagerSubscribed)
             TrySubscribeGameManager();
 
-        // 전투 UI창이 켜져 있는 동안에는 입력을 원천 차단하고 움직임을 멈춥니다.
-        bool isBattleUIOpen = battleSceneUI != null && battleSceneUI.activeInHierarchy;
-        if (isBattleUIOpen)
+        if (IsBattleActive())
         {
             movementInput = Vector2.zero;
             if (rb != null)
             {
                 rb.linearVelocity = Vector2.zero;
-                // 전투 중에는 물리 시뮬레이션을 끄기도 하지만, 여기서도 확실히 멈춰줍니다.
-                if (rb.simulated) rb.simulated = false;
+                rb.angularVelocity = 0f;
+                rb.simulated = false;
             }
+
             return;
         }
 
         // --- 물리 복구 감시자 (Watchdog) ---
-        // UI가 닫혔는데 물리 시뮬레이션만 꺼져 있는 상태라면 즉각 복구합니다.
-        if (rb != null && !rb.simulated)
+        // 전투가 막 끝난 직후에만 작동합니다. 물리 복구가 확인되면 즉시 감시를 종료합니다.
+        // (항상 작동하게 두면 NPC 대화창·일시정지 메뉴 등이 rb.simulated를 꺼도
+        //  강제로 다시 켜버려 플레이어가 멋대로 움직이는 부작용이 생깁니다.)
+        if (isWaitingForPostBattlePhysicsRecovery && rb != null)
         {
-            Debug.LogWarning("[PlayerController] 물리 시뮬레이션 복구됨 (Watchdog).");
-            rb.simulated = true;
+            if (!rb.simulated)
+            {
+                Debug.LogWarning("[PlayerController] 물리 시뮬레이션 복구됨 (Watchdog).");
+                rb.simulated = true;
+            }
+            isWaitingForPostBattlePhysicsRecovery = false;
         }
 
-        // 키보드 입력을 받아옵니다.
         movementInput.x = Input.GetAxisRaw("Horizontal");
         movementInput.y = Input.GetAxisRaw("Vertical");
         movementInput = movementInput.normalized;
 
-        // 움직이는 방향에 맞춰 캐릭터 이미지를 즉시 좌우 반전시킵니다.
         if (movementInput.x < 0)
-        {
-            spriteRenderer.flipX = false; // 원본 (왼쪽 바라봄)
-        }
+            spriteRenderer.flipX = false;
         else if (movementInput.x > 0)
-        {
-            spriteRenderer.flipX = true; // 가로 대칭 (오른쪽 바라봄)
-        }
+            spriteRenderer.flipX = true;
     }
 
     private void FixedUpdate()
     {
-        // 물리 시뮬레이션이 켜져 있을 때만 MovePosition이 작동합니다.
         if (rb != null && rb.simulated)
-        {
             rb.MovePosition(rb.position + movementInput * moveSpeed * Time.fixedDeltaTime);
-        }
     }
 
-    /// <summary>
-    /// 도망 직후 잠깐 전투 재진입을 막습니다.
-    /// </summary>
     public void BeginPostFleeGraceWindow()
     {
         if (postFleeGraceRoutine != null)
@@ -139,10 +147,38 @@ public class PlayerController : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (isBattleEntryLocked)
+        if (!CanStartBattleFromCollision(other))
             return;
 
-        if (hasEnteredBattle)
+        string resolvedMonsterId = ResolveMonsterId(other);
+        BattleEncounterContext.SetEncounteredMonsterId(resolvedMonsterId);
+
+        string colliderName = other != null && other.gameObject != null ? other.gameObject.name : "(null)";
+        Debug.Log($"[PlayerController] 배틀 충돌 감지. collider='{colliderName}', resolvedMonsterId='{resolvedMonsterId ?? "null"}'");
+
+        hasEnteredBattle = true;
+
+        if (string.IsNullOrEmpty(resolvedMonsterId))
+            Debug.LogWarning($"[PlayerController] 몬스터 ID 해석 실패: {other.gameObject.name}");
+
+        if (GameManager.Instance != null)
+            GameManager.Instance.EnterBattle();
+
+        if (battleSceneUI != null)
+            battleSceneUI.SetActive(true);
+        else
+            Debug.LogWarning("[PlayerController] battleSceneUI가 연결되지 않았습니다.");
+
+        if (mainHUD != null)
+            mainHUD.SetActive(false);
+    }
+
+    private void OnTriggerStay2D(Collider2D other)
+    {
+        if (hasEnteredBattle || isBattleEntryLocked || IsBattleActive())
+            return;
+
+        if (!IsMonsterCollider(other))
             return;
 
         if (hasLastBattleEndedPosition && rb != null)
@@ -152,50 +188,56 @@ public class PlayerController : MonoBehaviour
                 return;
         }
 
-        if (IsMonsterCollider(other))
+        OnTriggerEnter2D(other);
+    }
+
+    private bool CanStartBattleFromCollision(Collider2D other)
+    {
+        if (isBattleEntryLocked || hasEnteredBattle || IsBattleActive())
+            return false;
+
+        if (!IsMonsterCollider(other))
+            return false;
+
+        if (other == null || !other.isTrigger)
+            return false;
+
+        if (hasLastBattleEndedPosition && rb != null)
         {
-            string resolvedMonsterId = ResolveMonsterId(other);
-            BattleEncounterContext.SetEncounteredMonsterId(resolvedMonsterId);
-
-            string colliderName = other != null && other.gameObject != null ? other.gameObject.name : "(null)";
-            Debug.LogWarning($"[PlayerController] 배틀 충돌 감지. collider='{colliderName}', resolvedMonsterId='{resolvedMonsterId ?? "null"}'");
-
-            hasEnteredBattle = true;
-
-            if (string.IsNullOrEmpty(resolvedMonsterId))
-                Debug.LogWarning($"[PlayerController] 몬스터 ID 해석 실패: {other.gameObject.name}");
-
-            if (GameManager.Instance != null)
-                GameManager.Instance.EnterBattle();
-
-            if (battleSceneUI != null)
-                battleSceneUI.SetActive(true);
-            else
-                Debug.LogWarning("[PlayerController] battleSceneUI가 연결되지 않았습니다.");
-
-            if (mainHUD != null)
-                mainHUD.SetActive(false);
+            float movedDistance = Vector2.Distance(rb.position, lastBattleEndedPosition);
+            if (movedDistance < postBattleReentryDistance)
+                return false;
         }
+
+        return true;
     }
 
     private void HandleBattleEnded()
     {
         hasEnteredBattle = false;
+        EnsurePhysicsSimulated();
+
         if (rb != null)
         {
             lastBattleEndedPosition = rb.position;
             hasLastBattleEndedPosition = true;
-            
-            // 전투가 종료되면 플레이어의 물리 시뮬레이션(simulated)을 강제로 복구하여
-            // 플레이어가 굳는 현상을 완벽하게 방어(Healing)합니다.
-            rb.simulated = true;
             rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+
+            // 전투 종료 직후 물리 복구 감시 대기 상태로 진입합니다.
+            isWaitingForPostBattlePhysicsRecovery = true;
         }
         else
         {
             lastBattleEndedPosition = transform.position;
             hasLastBattleEndedPosition = true;
         }
+
+        if (battleSceneUI != null && battleSceneUI.activeSelf)
+            battleSceneUI.SetActive(false);
+
+        if (mainHUD != null && !mainHUD.activeSelf)
+            mainHUD.SetActive(true);
     }
 
     private IEnumerator PostFleeGraceRoutine()
@@ -206,9 +248,35 @@ public class PlayerController : MonoBehaviour
         postFleeGraceRoutine = null;
     }
 
+    private bool IsBattleActive()
+    {
+        if (GameManager.Instance != null)
+            return GameManager.Instance.IsInBattle;
+
+        return battleSceneUI != null && battleSceneUI.activeInHierarchy;
+    }
+
+    private void EnsurePhysicsSimulated()
+    {
+        if (rb == null)
+            return;
+
+        if (!rb.simulated)
+        {
+            rb.simulated = true;
+            Debug.LogWarning("[PlayerController] Rigidbody2D.simulated 복구됨.");
+        }
+    }
+
     private bool IsMonsterCollider(Collider2D other)
     {
         if (other == null)
+            return false;
+
+        // 아이템 픽업 컴포넌트가 붙어 있는 오브젝트는 이름과 무관하게 절대 몬스터가 아닙니다.
+        // 이 검사가 없으면 "슬라임 해독제", "불꽃 소화기"처럼 이름에 몬스터 키워드가 들어간
+        // 아이템을 몬스터로 오인해 hasEnteredBattle이 true로 굳어버리는 버그가 발생합니다.
+        if (other.GetComponent<ItemPickup>() != null)
             return false;
 
         try
@@ -218,7 +286,6 @@ public class PlayerController : MonoBehaviour
         }
         catch (UnityException)
         {
-            // Monster 태그가 아직 프로젝트에 등록되지 않은 경우를 안전하게 우회합니다.
         }
 
         return TryResolveMonsterNameHint(other, out string _);

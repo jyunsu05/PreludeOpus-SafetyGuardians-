@@ -45,6 +45,9 @@ public class MonsterController : MonoBehaviour
 
     private void OnBattleEnded()
     {
+        if (rb != null)
+            rb.simulated = true;
+
         StopMoving();
         chaseBlockedUntil = Time.time + chasePauseAfterBattle;
     }

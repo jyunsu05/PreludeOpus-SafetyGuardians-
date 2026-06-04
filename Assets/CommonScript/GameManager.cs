@@ -1,5 +1,5 @@
+using System;
 using UnityEngine;
-using System; // Action 사용을 위해 필수
 
 public class GameManager : MonoBehaviour
 {
@@ -14,7 +14,7 @@ public class GameManager : MonoBehaviour
     public event Action OnStageMonstersSpawned;
 
     private bool stageClearPending;
-    private bool isPublishingBattleEnded; // 이벤트 호출 중임을 나타내는 플래그
+    private bool isPublishingBattleEnded;
 
     private void Awake()
     {
@@ -31,39 +31,37 @@ public class GameManager : MonoBehaviour
 
     public void EnterBattle()
     {
+        if (CurrentState == GameState.Battle)
+            return;
+
         CurrentState = GameState.Battle;
         Debug.Log("[GameManager] 배틀 시작!");
         OnBattleStarted?.Invoke();
     }
 
-    // [수정됨] 배틀 종료 및 필드 복귀 메서드
     public void ReturnToField()
     {
-        // 1. 이미 종료 처리 중이라면 중복 호출 방지
         if (isPublishingBattleEnded)
         {
-            Debug.LogWarning("[GameManager] 이미 복귀 처리 중입니다. 중복 호출을 차단합니다.");
+            Debug.LogWarning("[GameManager] 배틀 종료 처리가 이미 진행 중입니다. 중복 호출을 차단합니다.");
             return;
         }
 
         isPublishingBattleEnded = true;
-        CurrentState = GameState.Field; // 상태를 먼저 필드로 변경
+        CurrentState = GameState.Field;
 
         Debug.Log("[GameManager] 필드로 복귀합니다.");
 
         try
         {
-            // 2. 이벤트 발생 (구독 중인 PlayerController 및 몬스터들에게 알림)
             OnBattleEnded?.Invoke();
         }
         catch (Exception e)
         {
-            // 이벤트 호출 중 에러가 나도 게임이 멈추지 않도록 예외 처리
-            Debug.LogError($"[GameManager] 배틀 종료 이벤트 처리 중 오류 발생: {e.Message}");
+            Debug.LogError($"[GameManager] OnBattleEnded 처리 중 오류: {e.Message}");
         }
         finally
         {
-            // 3. 어떤 상황에서도 반드시 플래그를 해제하여 다음 배틀 종료가 정상 작동하게 함
             isPublishingBattleEnded = false;
         }
     }
@@ -71,8 +69,10 @@ public class GameManager : MonoBehaviour
     public void ResetToField()
     {
         CurrentState = GameState.Field;
-        isPublishingBattleEnded = false; // 강제 초기화
+        isPublishingBattleEnded = false;
     }
+
+    public bool IsInBattle => CurrentState == GameState.Battle;
 
     public void NotifyStageCleared()
     {
