@@ -66,4 +66,28 @@ public class MonsterEncounterReset : MonoBehaviour
 
         cooldownRoutine = null;
     }
+
+    public void ForceEnableEncounterCollider()
+    {
+        if (cooldownRoutine != null)
+        {
+            StopCoroutine(cooldownRoutine);
+            cooldownRoutine = null;
+        }
+
+        if (encounterCollider != null)
+            encounterCollider.enabled = true;
+    }
+
+    public static void EnableAllEncounterCollidersInScene()
+    {
+        MonsterEncounterReset[] resets =
+            FindObjectsByType<MonsterEncounterReset>(FindObjectsInactive.Include);
+
+        for (int i = 0; i < resets.Length; i++)
+        {
+            if (resets[i] != null)
+                resets[i].ForceEnableEncounterCollider();
+        }
+    }
 }

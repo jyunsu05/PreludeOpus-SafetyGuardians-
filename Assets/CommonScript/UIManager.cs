@@ -301,6 +301,11 @@ public class UIManager : MonoBehaviour
 
     public void CloseBattleUI() => SetPanelActive(battleUIPanel, false);
 
+    public bool IsBattleUiVisible()
+    {
+        return battleUIPanel != null && battleUIPanel.activeInHierarchy;
+    }
+
     private void ResetBattleUIOnOpen()
     {
         CloseAcquisitionPopup();

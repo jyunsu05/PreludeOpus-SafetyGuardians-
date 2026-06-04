@@ -69,6 +69,8 @@ public class UIMainHUD : MonoBehaviour
     /// <summary>
     /// ★ 나중에 플레이어 스크립트가 산소 수치를 깎을 때마다 이 함수를 호출해 줄 겁니다.
     /// </summary>
+    public Slider GetOxygenBarSlider() => oxygenBarSlider;
+
     public void UpdateOxygenGauge(float currentOxygen, float maxOxygen)
     {
         if (oxygenBarSlider != null)
@@ -76,6 +78,25 @@ public class UIMainHUD : MonoBehaviour
             oxygenBarSlider.maxValue = maxOxygen;
             oxygenBarSlider.value = currentOxygen;
         }
+    }
+
+    /// <summary>PlayerOxygen 등에서 HUD 산소 슬라이더만 안전하게 갱신합니다.</summary>
+    public static bool TryUpdateOxygenGaugeGlobal(float currentOxygen, float maxOxygen)
+    {
+        UIMainHUD[] huds = FindObjectsByType<UIMainHUD>(FindObjectsInactive.Include);
+        bool updated = false;
+
+        for (int i = 0; i < huds.Length; i++)
+        {
+            UIMainHUD hud = huds[i];
+            if (hud == null || hud.GetOxygenBarSlider() == null)
+                continue;
+
+            hud.UpdateOxygenGauge(currentOxygen, maxOxygen);
+            updated = true;
+        }
+
+        return updated;
     }
 
     /// <summary>

@@ -62,9 +62,13 @@ public class GameManager : MonoBehaviour
     private Vector3 cachedOpeningPlayerPosition;
     private bool hasCachedOpeningPlayerPosition;
     private bool isFullResetOpeningInProgress;
+    private bool isFieldMovementFrozen;
 
     /// <summary>오프닝 직후 StartNewGameAfterOpening에서 BeginNewPlaySession을 호출할 예정이면 true.</summary>
     public bool IsAwaitingPostOpeningPlaySession => isFullResetOpeningInProgress;
+
+    /// <summary>산소 게임오버 등으로 필드에서 플레이어·몬스터 이동이 멈춘 상태입니다.</summary>
+    public bool IsFieldMovementFrozen => isFieldMovementFrozen;
 
     private void Awake()
     {
@@ -139,21 +143,66 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 게임오버 표시·재시작 직전에 호출. 배틀 UI·버튼·Rigidbody2D.simulated 등 런타임 상태를 정리합니다.
+    /// 산소 게임오버 UI 표시 시 호출. 전투 상태를 정리하고 플레이어·몬스터 이동을 멈춥니다.
     /// </summary>
-    public void ResetAllSystems()
+    public void EnterGameOverFreeze()
     {
+        if (isFieldMovementFrozen)
+            return;
+
         ResetToField();
         BattleEncounterContext.ClearFleeExit();
 
         UIBattleManager.ResetAllRuntimeBattleState();
         UIButtonContainer.ResetAllRuntimeButtonState();
         MonsterBattleTracker.ResetInstanceBattleTrackingState();
+        PlayerController.ResetAllFieldBattleEntryStates();
+
+        if (UIManager.Instance != null)
+            UIManager.Instance.CloseBattleUI();
+
+        isFieldMovementFrozen = true;
+        StopAllFieldMovementImmediate();
+        Debug.Log("[GameManager] 게임오버 — 필드 이동 정지");
+    }
+
+    public void ClearFieldMovementFreeze()
+    {
+        isFieldMovementFrozen = false;
+    }
+
+    /// <summary>
+    /// 게임오버 표시·재시작 직전에 호출. 배틀 UI·버튼·Rigidbody2D.simulated 등 런타임 상태를 정리합니다.
+    /// </summary>
+    public void ResetAllSystems()
+    {
+        ClearFieldMovementFreeze();
+        ResetToField();
+        BattleEncounterContext.ClearFleeExit();
+
+        UIBattleManager.ResetAllRuntimeBattleState();
+        UIButtonContainer.ResetAllRuntimeButtonState();
+        MonsterBattleTracker.ResetInstanceBattleTrackingState();
+        PlayerController.ResetAllFieldBattleEntryStates();
+        MonsterEncounterReset.EnableAllEncounterCollidersInScene();
 
         if (UIManager.Instance != null)
             UIManager.Instance.CloseBattleUI();
 
         RestoreAllSimulatedRigidbodies2D();
+    }
+
+    private static void StopAllFieldMovementImmediate()
+    {
+        PlayerController[] players =
+            FindObjectsByType<PlayerController>(FindObjectsInactive.Include);
+        for (int i = 0; i < players.Length; i++)
+            players[i]?.StopFieldMovementImmediate();
+
+        MonsterController[] monsters =
+            FindObjectsByType<MonsterController>(FindObjectsInactive.Include);
+        for (int i = 0; i < monsters.Length; i++)
+            monsters[i]?.StopFieldMovementImmediate();
     }
 
     public bool IsInBattle => CurrentState == GameState.Battle;
@@ -311,6 +360,8 @@ public class GameManager : MonoBehaviour
         UIBattleManager.ResetAllRuntimeBattleState();
         ResetRuntimePlayerState();
         RestoreAllSimulatedRigidbodies2D();
+        PlayerController.ResetAllFieldBattleEntryStates();
+        MonsterEncounterReset.EnableAllEncounterCollidersInScene();
         ApplyInitialSessionPollution();
         SyncGameplayHudAfterDataReset();
         ResetFullResetUiState();
@@ -376,21 +427,26 @@ public class GameManager : MonoBehaviour
 
         ResetRuntimePlayerState();
         RestoreAllSimulatedRigidbodies2D();
+        PlayerController.ResetAllFieldBattleEntryStates();
+        MonsterEncounterReset.EnableAllEncounterCollidersInScene();
         ApplyInitialSessionPollution();
         SyncGameplayHudAfterDataReset();
         ResetFullResetUiState();
         CloseGameplayOverlays();
-        StartCoroutine(SyncInitialPollutionHudAfterWorldActive());
+        StartCoroutine(FinalizeNewGameAfterOpeningRoutine());
 
         Debug.Log("[GameManager] 새 게임 세션 준비 완료 (Managers·Player·챕터1·몬스터·아이템)");
     }
 
-    private IEnumerator SyncInitialPollutionHudAfterWorldActive()
+    private IEnumerator FinalizeNewGameAfterOpeningRoutine()
     {
         yield return null;
+        PlayerController.ResetAllFieldBattleEntryStates();
+        MonsterEncounterReset.EnableAllEncounterCollidersInScene();
         ApplyInitialSessionPollution();
         SyncGameplayHudAfterDataReset();
     }
+
 
     private float ResolveInitialSessionPollution()
     {
@@ -822,6 +878,9 @@ public class GameManager : MonoBehaviour
             FindObjectsByType<PlayerOxygen>(FindObjectsInactive.Include);
         for (int i = 0; i < oxygenComponents.Length; i++)
             oxygenComponents[i]?.ResetOxygen();
+
+        // 산소 UI 초기화가 공장 오염도 슬라이더를 건드리지 않도록 오염도 HUD를 다시 맞춥니다.
+        SyncGameplayHudAfterDataReset();
     }
 
     private static void RestoreAllSimulatedRigidbodies2D()

@@ -54,6 +54,12 @@ public class MonsterController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (IsFieldMovementFrozen())
+        {
+            StopMoving();
+            return;
+        }
+
         if (Time.time < chaseBlockedUntil)
         {
             StopMoving();
@@ -122,8 +128,27 @@ public class MonsterController : MonoBehaviour
         return pushDirection.normalized;
     }
 
+    public void StopFieldMovementImmediate()
+    {
+        StopMoving();
+
+        if (rb != null)
+        {
+            rb.angularVelocity = 0f;
+            rb.simulated = false;
+        }
+    }
+
+    private static bool IsFieldMovementFrozen()
+    {
+        return GameManager.Instance != null && GameManager.Instance.IsFieldMovementFrozen;
+    }
+
     private void StopMoving()
     {
+        if (rb == null)
+            return;
+
         rb.linearVelocity = Vector2.zero;
     }
 }

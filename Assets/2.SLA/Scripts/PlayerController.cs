@@ -94,7 +94,7 @@ public class PlayerController : MonoBehaviour
         if (!isGameManagerSubscribed)
             TrySubscribeGameManager();
 
-        if (IsBattleActive())
+        if (IsBattleActive() || IsFieldMovementFrozen())
         {
             movementInput = Vector2.zero;
             if (rb != null)
@@ -133,8 +133,24 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (IsFieldMovementFrozen() || IsBattleActive())
+            return;
+
         if (rb != null && rb.simulated)
             rb.MovePosition(rb.position + movementInput * moveSpeed * Time.fixedDeltaTime);
+    }
+
+    /// <summary>게임오버 시 즉시 이동·입력을 멈춥니다.</summary>
+    public void StopFieldMovementImmediate()
+    {
+        movementInput = Vector2.zero;
+
+        if (rb == null)
+            return;
+
+        rb.linearVelocity = Vector2.zero;
+        rb.angularVelocity = 0f;
+        rb.simulated = false;
     }
 
     public void BeginPostFleeGraceWindow()
@@ -175,7 +191,13 @@ public class PlayerController : MonoBehaviour
 
     private void OnTriggerStay2D(Collider2D other)
     {
-        if (hasEnteredBattle || isBattleEntryLocked || IsBattleActive())
+        if (IsBattleActive() || IsFieldMovementFrozen())
+            return;
+
+        if (hasEnteredBattle && !IsBattleUiVisible())
+            hasEnteredBattle = false;
+
+        if (hasEnteredBattle || isBattleEntryLocked)
             return;
 
         if (!IsMonsterCollider(other))
@@ -193,7 +215,13 @@ public class PlayerController : MonoBehaviour
 
     private bool CanStartBattleFromCollision(Collider2D other)
     {
-        if (isBattleEntryLocked || hasEnteredBattle || IsBattleActive())
+        if (IsBattleActive() || IsFieldMovementFrozen())
+            return false;
+
+        if (hasEnteredBattle && !IsBattleUiVisible())
+            hasEnteredBattle = false;
+
+        if (isBattleEntryLocked || hasEnteredBattle)
             return false;
 
         if (!IsMonsterCollider(other))
@@ -210,6 +238,40 @@ public class PlayerController : MonoBehaviour
         }
 
         return true;
+    }
+
+    /// <summary>게임오버·처음부터 다시 시작·챕터 리셋 후 필드 전투 진입 상태를 초기화합니다.</summary>
+    public void ResetFieldBattleEntryState()
+    {
+        if (postFleeGraceRoutine != null)
+        {
+            StopCoroutine(postFleeGraceRoutine);
+            postFleeGraceRoutine = null;
+        }
+
+        hasEnteredBattle = false;
+        isBattleEntryLocked = false;
+        hasLastBattleEndedPosition = false;
+        isWaitingForPostBattlePhysicsRecovery = false;
+        EnsurePhysicsSimulated();
+
+        if (battleSceneUI != null && battleSceneUI.activeSelf)
+            battleSceneUI.SetActive(false);
+
+        if (mainHUD != null && !mainHUD.activeSelf)
+            mainHUD.SetActive(true);
+    }
+
+    public static void ResetAllFieldBattleEntryStates()
+    {
+        PlayerController[] controllers =
+            FindObjectsByType<PlayerController>(FindObjectsInactive.Include);
+
+        for (int i = 0; i < controllers.Length; i++)
+        {
+            if (controllers[i] != null)
+                controllers[i].ResetFieldBattleEntryState();
+        }
     }
 
     private void HandleBattleEnded()
@@ -253,7 +315,23 @@ public class PlayerController : MonoBehaviour
         if (GameManager.Instance != null)
             return GameManager.Instance.IsInBattle;
 
-        return battleSceneUI != null && battleSceneUI.activeInHierarchy;
+        return IsBattleUiVisible();
+    }
+
+    private static bool IsFieldMovementFrozen()
+    {
+        return GameManager.Instance != null && GameManager.Instance.IsFieldMovementFrozen;
+    }
+
+    private bool IsBattleUiVisible()
+    {
+        if (battleSceneUI != null && battleSceneUI.activeInHierarchy)
+            return true;
+
+        if (UIManager.Instance != null && UIManager.Instance.IsBattleUiVisible())
+            return true;
+
+        return false;
     }
 
     private void EnsurePhysicsSimulated()
