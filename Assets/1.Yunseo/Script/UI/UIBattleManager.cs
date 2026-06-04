@@ -29,6 +29,9 @@ public class UIBattleManager : MonoBehaviour
     private MonsterData currentMonsterData;
     private string currentMonsterId;
     private int contaminationAtBattleEntry;
+    private bool isSubscribedToBattleEnded;
+    private bool hasFinalizedContaminationForSession;
+    private bool isProcessingBattleExit;
     private PlayerController lockedPlayerController;
     private Rigidbody2D lockedPlayerRigidbody;
     private bool wasPlayerRigidbodySimulated;
@@ -44,13 +47,13 @@ public class UIBattleManager : MonoBehaviour
 
     void Awake()
     {
-        BindGameEvents();
-        ResetBattleUIState();
     }
 
     void OnEnable()
     {
-        BindGameEvents();
+        hasFinalizedContaminationForSession = false;
+        isProcessingBattleExit = false;
+        SubscribeBattleEnded();
         ResetBattleUIState();
         LoadMonsterFromData();
         LockPlayerMovementAtBattleEntry();
@@ -59,18 +62,39 @@ public class UIBattleManager : MonoBehaviour
 
     void OnDisable()
     {
-        FinalizeContaminationOnBattleClose();
-        UnlockPlayerMovement();
-        UnlockMonsterMovement();
+        UnsubscribeBattleEnded();
+        FinalizeContaminationOnce();
+        ForceRestoreFieldPhysics();
     }
 
     void OnDestroy()
     {
-        UnlockPlayerMovement();
-        UnlockMonsterMovement();
+        UnsubscribeBattleEnded();
+        ForceRestoreFieldPhysics();
+    }
 
+    /// <summary>도망 버튼 광클 방지. 성공 시 MarkFleeExit까지 처리됨.</summary>
+    public bool TryBeginFleeExit()
+    {
+        if (isProcessingBattleExit)
+        {
+            Debug.Log("[UIBattleManager] 도망 처리 중 — 추가 입력 무시.");
+            return false;
+        }
+
+        isProcessingBattleExit = true;
+        BattleEncounterContext.MarkFleeExit();
+        return true;
+    }
+
+    public void CompleteFleeExit()
+    {
         if (GameManager.Instance != null)
-            GameManager.Instance.OnBattleEnded -= HandleBattleEnded;
+            GameManager.Instance.ReturnToField();
+        else if (UIManager.Instance != null)
+            UIManager.Instance.CloseBattleUI();
+        else
+            Debug.LogError("[UIBattleManager] GameManager를 찾을 수 없습니다.");
     }
 
     public void ResetBattleUIState()
@@ -441,22 +465,63 @@ public class UIBattleManager : MonoBehaviour
         }
     }
 
-    private void BindGameEvents()
+    private void SubscribeBattleEnded()
     {
-        if (GameManager.Instance == null)
+        if (isSubscribedToBattleEnded || GameManager.Instance == null)
             return;
 
         GameManager.Instance.OnBattleEnded -= HandleBattleEnded;
         GameManager.Instance.OnBattleEnded += HandleBattleEnded;
+        isSubscribedToBattleEnded = true;
+    }
+
+    private void UnsubscribeBattleEnded()
+    {
+        if (!isSubscribedToBattleEnded || GameManager.Instance == null)
+            return;
+
+        GameManager.Instance.OnBattleEnded -= HandleBattleEnded;
+        isSubscribedToBattleEnded = false;
     }
 
     private void HandleBattleEnded()
     {
-        FinalizeContaminationOnBattleClose();
+        FinalizeContaminationOnce();
+        ForceRestoreFieldPhysics();
 
         lastResolvedEncounterMonsterId = null;
         BattleEncounterContext.SetEncounteredMonsterId(null);
-        ResetContaminationGaugeToInitial();
+        isProcessingBattleExit = false;
+    }
+
+    private void FinalizeContaminationOnce()
+    {
+        if (hasFinalizedContaminationForSession)
+            return;
+
+        hasFinalizedContaminationForSession = true;
+        FinalizeContaminationOnBattleClose();
+    }
+
+    private void ForceRestoreFieldPhysics()
+    {
+        UnlockPlayerMovement();
+        UnlockMonsterMovement();
+        RestoreAllMonsterRigidbodiesInScene();
+    }
+
+    private static void RestoreAllMonsterRigidbodiesInScene()
+    {
+        Rigidbody2D[] rigidbodies = FindObjectsByType<Rigidbody2D>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < rigidbodies.Length; i++)
+        {
+            Rigidbody2D body = rigidbodies[i];
+            if (body == null)
+                continue;
+
+            if (!body.simulated)
+                body.simulated = true;
+        }
     }
 
     private void ResetContaminationGaugeToInitial()
@@ -570,13 +635,10 @@ public class UIBattleManager : MonoBehaviour
 
     private void UnlockPlayerMovement()
     {
-        if (lockedPlayerController == null)
-            return;
-
         if (lockedPlayerRigidbody != null)
         {
             lockedPlayerRigidbody.constraints = playerConstraints;
-            lockedPlayerRigidbody.simulated = wasPlayerRigidbodySimulated;
+            lockedPlayerRigidbody.simulated = true;
             lockedPlayerRigidbody.linearVelocity = Vector2.zero;
             lockedPlayerRigidbody.angularVelocity = 0f;
         }
@@ -636,7 +698,7 @@ public class UIBattleManager : MonoBehaviour
                 continue;
 
             snapshot.rigidbody.constraints = snapshot.constraints;
-            snapshot.rigidbody.simulated = snapshot.wasSimulated;
+            snapshot.rigidbody.simulated = true;
             snapshot.rigidbody.linearVelocity = Vector2.zero;
             snapshot.rigidbody.angularVelocity = 0f;
         }

@@ -162,19 +162,36 @@ public class UIButtonContainer : MonoBehaviour
         if (isEscaping || isProcessing)
             return;
 
+        if (uiManager == null)
+            uiManager = FindAnyObjectByType<UIBattleManager>();
+
+        if (uiManager != null)
+        {
+            if (!uiManager.TryBeginFleeExit())
+                return;
+
+            isEscaping = true;
+            isProcessing = true;
+            SetBattleActionsLocked(true);
+            Debug.Log("[UIButtonContainer] 전투 이탈 시도.");
+
+            ResolveBattleUIController();
+            if (battleUIController != null)
+                battleUIController.ApplyFleePenaltyOnly();
+            else
+                Debug.LogWarning("[UIButtonContainer] BattleUIController가 없어 산소 패널티를 생략합니다.");
+
+            uiManager.CompleteFleeExit();
+            return;
+        }
+
         if (!TryBeginBattleAction("도망"))
             return;
 
         isEscaping = true;
-        Debug.Log("[UIButtonContainer] 전투 이탈 시도.");
-
+        Debug.Log("[UIButtonContainer] 전투 이탈 시도 (UIBattleManager 없음).");
         BattleEncounterContext.MarkFleeExit();
-
-        ResolveBattleUIController();
-        if (battleUIController != null)
-            battleUIController.OnFleeButtonClicked();
-        else
-            ExitBattleUI();
+        ExitBattleUI();
     }
 
     private bool TryBeginBattleAction(string actionName)
