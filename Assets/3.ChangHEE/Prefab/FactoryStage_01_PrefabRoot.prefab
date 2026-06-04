@@ -182,7 +182,7 @@ SpriteRenderer:
   m_Size: {x: 14.02, y: 11.22}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_SpriteSortPoint: 0
 --- !u!1 &1050211796440026579
 GameObject:
@@ -619,9 +619,9 @@ MonoBehaviour:
   stageLevel: 1
   spawnPointParent: {fileID: 2285446351971134329}
   monsterPrefabs:
-  - {fileID: 2076553515028474881, guid: 6d3a91b1b55ce8b4985141fbd0847867, type: 3}
-  - {fileID: 1657867238872823532, guid: ef820586575cc63418593ade9b77eb60, type: 3}
-  - {fileID: 59595000284974058, guid: c86b18a1e21a0e24ea470f079123535a, type: 3}
+  - {fileID: 8118885640346336792, guid: d979b70f191b9f940b6049bc18af3de5, type: 3}
+  - {fileID: 2932125396628927345, guid: 64edf202b6df31d48a3593a95bfba6b1, type: 3}
+  - {fileID: 304650823833005646, guid: 4d3f750d4415a434ca42f483c294044f, type: 3}
   spawnCountsByStage: 03000000040000000500000006000000070000000900000000000000
 --- !u!1 &5724406738559706194
 GameObject:

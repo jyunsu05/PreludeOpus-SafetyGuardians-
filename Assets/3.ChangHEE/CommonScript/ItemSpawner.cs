@@ -13,11 +13,6 @@ public class ItemSpawner : MonoBehaviour
 
     private readonly List<GameObject> spawnedItems = new List<GameObject>();
 
-    private void Start()
-    {
-        SpawnItemsForCurrentStage(logResult: true);
-    }
-
     public void NextFactoryStage()
     {
         if (!Application.isPlaying)
@@ -43,13 +38,34 @@ public class ItemSpawner : MonoBehaviour
         SpawnItemsForCurrentStage(logResult: true);
     }
 
+    /// <summary>챕터 리셋·처음부터 다시 시작 시 목록에 있는 스폰 아이템을 제거합니다.</summary>
+    public void ForceClearAllSpawned()
+    {
+        ClearSpawnedItems();
+    }
+
+    /// <summary>새 게임 세션: 스테이지 1부터 다시 스폰합니다.</summary>
+    public void ResetToFirstStageAndRespawn()
+    {
+        if (!Application.isPlaying)
+            return;
+
+        stageLevel = 1;
+        ClearSpawnedItems();
+        SpawnItemsForCurrentStage(logResult: true);
+    }
+
     private void SpawnItemsForCurrentStage(bool logResult)
     {
+        PruneDestroyedItems();
+
         if (itemSpawnPointParent == null)
         {
             Debug.LogWarning("Item Spawn Point Parent is not assigned.");
             return;
         }
+
+        GameManager.EnsureActiveInHierarchy(itemSpawnPointParent.gameObject);
 
         int pointCount = itemSpawnPointParent.childCount;
         if (pointCount == 0)
@@ -77,19 +93,31 @@ public class ItemSpawner : MonoBehaviour
         List<Transform> spawnPoints = GetShuffledSpawnPoints();
         List<int> itemTypeOrder = GetItemTypeOrder(count);
         int[] itemTypeCounts = new int[ItemTypeCount];
+        int spawnedCount = 0;
 
         for (int i = 0; i < count; i++)
         {
             Transform spawnPoint = spawnPoints[i];
+            if (spawnPoint == null)
+                continue;
+
             int itemType = itemTypeOrder[i];
             GameObject prefab = GetItemPrefab(itemType);
+            if (prefab == null)
+                continue;
+
             GameObject item = Instantiate(prefab, spawnPoint.position, spawnPoint.rotation);
+            if (item == null)
+                continue;
+
+            GameManager.EnsureFieldEntityVisible(item);
             spawnedItems.Add(item);
             itemTypeCounts[itemType]++;
+            spawnedCount++;
         }
 
         if (logResult)
-            LogSpawnResult(count, itemTypeCounts);
+            LogSpawnResult(spawnedCount, itemTypeCounts);
     }
 
     private int GetSpawnCountForStage()
@@ -182,6 +210,11 @@ public class ItemSpawner : MonoBehaviour
 
             itemPrefabs = fixedPrefabs;
         }
+    }
+
+    private void PruneDestroyedItems()
+    {
+        spawnedItems.RemoveAll(item => item == null);
     }
 
     private void ClearSpawnedItems()

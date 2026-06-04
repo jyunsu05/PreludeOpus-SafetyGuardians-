@@ -145,12 +145,17 @@ public class OpeningSequenceController : MonoBehaviour
 
         finished = true;
         RestoreCameraBackground();
-        RestoreMainContent();
-        EnsureChapterOneAfterOpening();
+        RestoreGameplayWorldAfterOpening();
+
         gameObject.SetActive(false);
+
+        if (GameManager.Instance != null)
+            GameManager.Instance.StartNewGameAfterOpening();
+        else
+            EnsureChapterOneAfterOpeningFallback();
     }
 
-    static void EnsureChapterOneAfterOpening()
+    static void EnsureChapterOneAfterOpeningFallback()
     {
         ChapterManager chapterManager = ChapterManager.Instance;
         if (chapterManager == null)
@@ -196,7 +201,20 @@ public class OpeningSequenceController : MonoBehaviour
             if (target == null)
                 continue;
 
-            target.SetActive(savedActiveStates[i]);
+            bool restoreActive = savedActiveStates[i];
+            if (GameManager.ShouldForceActiveAfterOpening(target.name))
+                restoreActive = true;
+
+            target.SetActive(restoreActive);
         }
+    }
+
+    /// <summary>오프닝 루트가 꺼진 뒤 메인 플레이에 필요한 루트·매니저를 반드시 켭니다.</summary>
+    void RestoreGameplayWorldAfterOpening()
+    {
+        RestoreMainContent();
+
+        if (GameManager.Instance != null && !GameManager.Instance.gameObject.activeSelf)
+            GameManager.Instance.gameObject.SetActive(true);
     }
 }

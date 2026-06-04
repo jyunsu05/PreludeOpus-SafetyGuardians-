@@ -69,13 +69,55 @@ public class MonsterBattleTracker : MonoBehaviour
         UnsubscribeGameManager();
     }
 
+    /// <summary>게임오버·챕터 재시작 등에서 전투 추적 상태를 비웁니다.</summary>
+    public void ResetBattleTrackingState()
+    {
+        purifiedThisBattle = false;
+        currentBattleMonster = null;
+        purifiedMonsterSnapshot = null;
+    }
+
+    public static void ResetInstanceBattleTrackingState()
+    {
+        if (Instance != null)
+            Instance.ResetBattleTrackingState();
+    }
+
+    /// <summary>정화 완료 후 필드 몬스터를 제거합니다(MonsterBattleTracker 없을 때 fallback).</summary>
+    public static void TryRemoveEncounteredMonsterFromField()
+    {
+        GameObject target = BattleEncounterContext.PeekEncounteredMonsterObject();
+        if (target == null)
+            return;
+
+        MonsterSpawner spawner = FindSpawnerForMonster(target);
+        spawner?.RemoveSpawnedMonster(target);
+        Destroy(target);
+
+        BattleEncounterContext.ConsumeEncounteredMonsterObject();
+        ResetInstanceBattleTrackingState();
+        Debug.Log($"[MonsterBattleTracker] 정화된 필드 몬스터를 제거했습니다: {target.name}");
+    }
+
+    private static MonsterSpawner FindSpawnerForMonster(GameObject monster)
+    {
+        if (monster == null)
+            return null;
+
+        MonsterSpawner spawner = monster.GetComponentInParent<MonsterSpawner>();
+        if (spawner != null)
+            return spawner;
+
+        return FindAnyObjectByType<MonsterSpawner>();
+    }
+
     public void RegisterBattleMonster(GameObject monster)
     {
         if (monster == null)
             return;
 
         if (purifiedThisBattle)
-            return;
+            ResetBattleTrackingState();
 
         if (currentBattleMonster == monster)
             return;
@@ -135,25 +177,10 @@ public class MonsterBattleTracker : MonoBehaviour
 
     private void OnBattleEnded()
     {
-        GameObject target = purifiedThisBattle ? purifiedMonsterSnapshot : null;
-
-        if (purifiedThisBattle && target != null)
-        {
-            if (monsterSpawner != null)
-                monsterSpawner.RemoveSpawnedMonster(target);
-
-            Destroy(target);
-            Debug.Log($"[MonsterBattleTracker] 정화된 몬스터를 공장에서 제거했습니다: {target.name}");
-        }
-        else if (purifiedThisBattle)
-        {
-            Debug.LogWarning("[MonsterBattleTracker] 정화됐지만 제거할 몬스터가 등록되지 않았습니다.");
-        }
-
-        BattleEncounterContext.ConsumeEncounteredMonsterObject();
-        currentBattleMonster = null;
-        purifiedMonsterSnapshot = null;
-        purifiedThisBattle = false;
+        if (purifiedThisBattle)
+            TryRemoveEncounteredMonsterFromField();
+        else
+            ResetBattleTrackingState();
     }
 
     private void TryFindBattleUI()

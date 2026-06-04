@@ -1,5 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class MonsterSpawner : MonoBehaviour
 {
@@ -23,11 +26,6 @@ public class MonsterSpawner : MonoBehaviour
             PruneDestroyedMonsters();
             return spawnedMonsters.Count;
         }
-    }
-
-    private void Start()
-    {
-        SpawnMonstersForCurrentStage(logResult: true);
     }
 
     public void NextFactoryStage()
@@ -55,13 +53,68 @@ public class MonsterSpawner : MonoBehaviour
         SpawnMonstersForCurrentStage(logResult: true);
     }
 
+    /// <summary>챕터 리셋·처음부터 다시 시작 시 목록에 있는 스폰 몬스터를 제거합니다.</summary>
+    public void ForceClearAllSpawned()
+    {
+        ClearSpawnedMonsters();
+    }
+
+    /// <summary>새 게임 세션: 스테이지 1부터 다시 스폰합니다.</summary>
+    public void ResetToFirstStageAndRespawn()
+    {
+        if (!Application.isPlaying)
+            return;
+
+        stageLevel = 1;
+        ClearSpawnedMonsters();
+        SpawnMonstersForCurrentStage(logResult: true);
+    }
+
+    /// <summary>FactoryStage 재생성 시 씬 인스턴스에 연결된 몬스터 프리팹 참조를 복사합니다.</summary>
+    public GameObject[] ExportMonsterPrefabReferences()
+    {
+        if (monsterPrefabs == null || monsterPrefabs.Length == 0)
+            return null;
+
+        var copy = new GameObject[monsterPrefabs.Length];
+        for (int i = 0; i < monsterPrefabs.Length; i++)
+            copy[i] = monsterPrefabs[i];
+
+        return copy;
+    }
+
+    /// <summary>프리팹 재생성 후 끊긴 몬스터 프리팹 슬롯을 복구합니다.</summary>
+    public void ImportMonsterPrefabReferences(GameObject[] sourcePrefabs)
+    {
+        if (sourcePrefabs == null || sourcePrefabs.Length == 0)
+            return;
+
+        if (HasRequiredMonsterPrefabs())
+            return;
+
+        if (monsterPrefabs == null || monsterPrefabs.Length != MonsterTypeCount)
+            monsterPrefabs = new GameObject[MonsterTypeCount];
+
+        int copyCount = Mathf.Min(MonsterTypeCount, sourcePrefabs.Length);
+        for (int i = 0; i < copyCount; i++)
+        {
+            if (monsterPrefabs[i] == null && sourcePrefabs[i] != null)
+                monsterPrefabs[i] = sourcePrefabs[i];
+        }
+    }
+
     private void SpawnMonstersForCurrentStage(bool logResult)
     {
+        PruneDestroyedMonsters();
+        EnsureMonsterPrefabsResolved(logResult);
+
         if (spawnPointParent == null)
         {
             Debug.LogWarning("Spawn Point Parent is not assigned.");
             return;
         }
+
+        GameManager.EnsureActiveInHierarchy(spawnPointParent.gameObject);
 
         int pointCount = spawnPointParent.childCount;
 
@@ -82,7 +135,9 @@ public class MonsterSpawner : MonoBehaviour
 
         if (!HasRequiredMonsterPrefabs())
         {
-            Debug.LogWarning("Monster Prefabs must contain 3 assigned prefabs.");
+            Debug.LogWarning(
+                $"[MonsterSpawner] {name}: 몬스터 프리팹 3종이 비어 있습니다. " +
+                "FactoryStage_01_PrefabRoot의 Monster Prefabs 또는 Factory Stage Prefab Sources를 확인하세요.");
             return;
         }
 
@@ -90,20 +145,32 @@ public class MonsterSpawner : MonoBehaviour
         List<Transform> spawnPoints = GetShuffledSpawnPoints();
         List<int> monsterTypeOrder = GetMonsterTypeOrder(count);
         int[] monsterTypeCounts = new int[MonsterTypeCount];
+        int spawnedCount = 0;
 
         for (int i = 0; i < count; i++)
         {
             int monsterType = monsterTypeOrder[i];
             Transform spawnPoint = spawnPoints[i];
+            if (spawnPoint == null)
+                continue;
+
             GameObject prefab = GetMonsterPrefab(monsterType);
+            if (prefab == null)
+                continue;
+
             GameObject monster = Instantiate(prefab, spawnPoint.position, spawnPoint.rotation);
+            if (monster == null)
+                continue;
+
+            GameManager.EnsureFieldEntityVisible(monster);
             EnsureBattleRegistration(monster);
             spawnedMonsters.Add(monster);
             monsterTypeCounts[monsterType]++;
+            spawnedCount++;
         }
 
         if (logResult)
-            LogSpawnResult(count, monsterTypeCounts);
+            LogSpawnResult(spawnedCount, monsterTypeCounts);
 
         OnMonstersSpawned?.Invoke();
 
@@ -176,6 +243,37 @@ public class MonsterSpawner : MonoBehaviour
         }
 
         return true;
+    }
+
+    private void EnsureMonsterPrefabsResolved(bool logResult)
+    {
+        if (HasRequiredMonsterPrefabs())
+            return;
+
+#if UNITY_EDITOR
+        string[] defaultPaths =
+        {
+            "Assets/2.SLA/Prefabs/Monsters/Monster_M001_Slime.prefab",
+            "Assets/2.SLA/Prefabs/Monsters/Monster_M002_Mold.prefab",
+            "Assets/2.SLA/Prefabs/Monsters/Monster_M003_Fire.prefab",
+        };
+
+        if (monsterPrefabs == null || monsterPrefabs.Length != MonsterTypeCount)
+            monsterPrefabs = new GameObject[MonsterTypeCount];
+
+        for (int i = 0; i < MonsterTypeCount; i++)
+        {
+            if (monsterPrefabs[i] != null)
+                continue;
+
+            GameObject loaded = AssetDatabase.LoadAssetAtPath<GameObject>(defaultPaths[i]);
+            if (loaded != null)
+                monsterPrefabs[i] = loaded;
+        }
+
+        if (logResult && HasRequiredMonsterPrefabs())
+            Debug.Log($"[MonsterSpawner] {name}: 끊긴 몬스터 프리팹 참조를 기본 경로에서 복구했습니다.");
+#endif
     }
 
     private void LogSpawnResult(int totalSpawned, int[] monsterTypeCounts)

@@ -84,7 +84,7 @@ public class UIButtonContainer : MonoBehaviour
     public static void ResetAllRuntimeButtonState()
     {
         UIButtonContainer[] containers =
-            FindObjectsByType<UIButtonContainer>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            FindObjectsByType<UIButtonContainer>(FindObjectsInactive.Include);
 
         for (int i = 0; i < containers.Length; i++)
         {

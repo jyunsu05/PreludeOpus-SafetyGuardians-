@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -20,6 +21,14 @@ public class GameManager : MonoBehaviour
 
     private const string OpeningSequenceRootObjectName = "OpeningSequenceRoot";
 
+    private static readonly string[] CoreGameplaySceneRootNames =
+    {
+        "Managers",
+        "Player",
+        "Canvas",
+        "ChapterMaps",
+    };
+
     [Header("--- 재시작 씬 설정 (인씬 오프닝이 없을 때만) ---")]
     [Tooltip("처음부터 시작(fullReset) 시 로드할 오프닝 씬")]
     [SerializeField] private string openingSceneName = "OpeningScene";
@@ -29,6 +38,14 @@ public class GameManager : MonoBehaviour
 
     [Tooltip("현재 챕터 재시작 시 활성 씬을 알 수 없을 때 사용할 기본 챕터 씬")]
     [SerializeField] private string defaultChapterSceneName = "MainGameScenes";
+
+    [Header("--- 처음부터 다시 시작 (플레이어 스폰) ---")]
+    [Tooltip("비어 있으면 Play 시작 시점의 Player 위치를 오프닝 스폰으로 사용합니다.")]
+    [SerializeField] private Transform openingPlayerSpawn;
+
+    [Header("--- 처음부터 다시 시작 (초기 오염도) ---")]
+    [Tooltip("전체 리셋·오프닝 후 새 게임에 적용할 공장 오염도 (Max 100 기준)")]
+    [SerializeField] private float initialSessionPollution = 100f;
 
     [Header("--- 공장 체크포인트 (챕터 재시작) ---")]
     [Tooltip("체크포인트가 없을 때 챕터 재시작에 적용할 기본 오염도")]
@@ -41,6 +58,13 @@ public class GameManager : MonoBehaviour
     private bool isPublishingBattleEnded;
     private bool isRestartInProgress;
     private bool isSubscribedToSceneLoaded;
+    private Coroutine inPlaceChapterRestartCoroutine;
+    private Vector3 cachedOpeningPlayerPosition;
+    private bool hasCachedOpeningPlayerPosition;
+    private bool isFullResetOpeningInProgress;
+
+    /// <summary>오프닝 직후 StartNewGameAfterOpening에서 BeginNewPlaySession을 호출할 예정이면 true.</summary>
+    public bool IsAwaitingPostOpeningPlaySession => isFullResetOpeningInProgress;
 
     private void Awake()
     {
@@ -54,6 +78,11 @@ public class GameManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
+    }
+
+    private void Start()
+    {
+        CacheOpeningPlayerSpawnPosition();
     }
 
     private void OnDestroy()
@@ -119,6 +148,7 @@ public class GameManager : MonoBehaviour
 
         UIBattleManager.ResetAllRuntimeBattleState();
         UIButtonContainer.ResetAllRuntimeButtonState();
+        MonsterBattleTracker.ResetInstanceBattleTrackingState();
 
         if (UIManager.Instance != null)
             UIManager.Instance.CloseBattleUI();
@@ -211,29 +241,10 @@ public class GameManager : MonoBehaviour
 
         try
         {
-            PerformFullReset(activateChapterImmediately: false);
-
-            ChapterManager chapterManager = ChapterManager.EnsureInstance();
-            chapterManager?.DeactivateAllChaptersForOpening();
-
-            if (!openingRoot.activeSelf)
-                openingRoot.SetActive(true);
-
-            OpeningSequenceController[] controllers =
-                openingRoot.GetComponentsInChildren<OpeningSequenceController>(true);
-            for (int i = 0; i < controllers.Length; i++)
-            {
-                OpeningSequenceController controller = controllers[i];
-                if (controller == null)
-                    continue;
-
-                if (!controller.gameObject.activeSelf)
-                    controller.gameObject.SetActive(true);
-
-                controller.PrepareForReplay();
-            }
-
-            Debug.Log("[GameManager] 처음부터 시작 — 오프닝 시퀀스 활성화 (챕터 프리팹 비활성)");
+            isFullResetOpeningInProgress = true;
+            PerformFullReset();
+            ActivateOpeningSequenceRoot(openingRoot);
+            Debug.Log("[GameManager] 처음부터 시작 — 데이터 초기화 완료 → 오프닝 연출 시작");
             return true;
         }
         catch (Exception e)
@@ -253,74 +264,518 @@ public class GameManager : MonoBehaviour
         if (chapterManager == null || chapterManager.ChapterCount == 0)
             return false;
 
+        if (inPlaceChapterRestartCoroutine != null)
+            StopCoroutine(inPlaceChapterRestartCoroutine);
+
+        inPlaceChapterRestartCoroutine = StartCoroutine(InPlaceChapterRestartRoutine(chapterManager));
+        return true;
+    }
+
+    private IEnumerator InPlaceChapterRestartRoutine(ChapterManager chapterManager)
+    {
         isRestartInProgress = true;
+        int chapterIndex = chapterManager.CurrentChapterIndex;
 
         try
         {
-            PerformChapterReset();
-            chapterManager.RestartCurrentChapter();
-            PerformPostChapterSetup();
-            Debug.Log("[GameManager] 씬 로드 없이 현재 챕터 재시작 완료");
-            return true;
+            ActivateGameplayWorldSceneRoots();
+            PerformChapterReset(chapterIndex);
         }
         catch (Exception e)
         {
-            Debug.LogError($"[GameManager] 챕터 재시작 실패: {e.Message}");
-            return false;
-        }
-        finally
-        {
+            Debug.LogError($"[GameManager] 챕터 재시작 데이터 초기화 실패: {e.Message}");
             isRestartInProgress = false;
+            inPlaceChapterRestartCoroutine = null;
+            yield break;
         }
+
+        yield return chapterManager.RebuildWorldAndBeginCurrentChapterSession();
+
+        try
+        {
+            FinalizeInPlaceChapterRestart();
+            Debug.Log($"[GameManager] 현재 챕터 {chapterIndex} — 전체 Destroy/재생성·스폰 재시작 완료");
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[GameManager] 챕터 재시작 후처리 실패: {e.Message}");
+        }
+
+        isRestartInProgress = false;
+        inPlaceChapterRestartCoroutine = null;
+    }
+
+    private void FinalizeInPlaceChapterRestart()
+    {
+        ActivateGameplayWorldSceneRoots();
+        UIBattleManager.ResetAllRuntimeBattleState();
+        ResetRuntimePlayerState();
+        RestoreAllSimulatedRigidbodies2D();
+        ApplyInitialSessionPollution();
+        SyncGameplayHudAfterDataReset();
+        ResetFullResetUiState();
+        CloseGameplayOverlays();
+
+        UIResult[] resultPanels = FindObjectsByType<UIResult>(FindObjectsInactive.Include);
+        for (int i = 0; i < resultPanels.Length; i++)
+            resultPanels[i]?.ResetStageResultState();
     }
 
     private void PerformReset(bool isFullReset)
     {
         if (isFullReset)
-            PerformFullReset(activateChapterImmediately: true);
+            PerformFullReset(destroySceneChapters: false, activateFirstChapterAfterReset: true);
         else
-            PerformChapterReset();
+        {
+            ChapterManager chapterManager = ChapterManager.EnsureInstance();
+            int chapterIndex = chapterManager != null ? chapterManager.CurrentChapterIndex : 1;
+            PerformChapterReset(chapterIndex);
+        }
     }
 
-    private void PerformFullReset(bool activateChapterImmediately)
+    /// <summary>
+    /// 처음부터 다시 시작(1단계): 모든 게임 데이터를 초기값으로 되돌리고 챕터를 제거한 뒤 오프닝을 재생합니다.
+    /// 실제 플레이 시작(챕터 1·HUD)은 오프닝 종료 후 <see cref="StartNewGameAfterOpening"/>에서 처리합니다.
+    /// </summary>
+    public void PerformFullReset()
     {
-        Debug.Log("[GameManager] 전체 데이터 초기화 (처음부터 시작)");
+        PerformFullReset(destroySceneChapters: true, activateFirstChapterAfterReset: false);
+    }
+
+    /// <summary>
+    /// 오프닝 스크롤이 끝난 뒤 호출. 초기 데이터를 다시 한 번 적용하고 챕터 1 플레이를 시작합니다.
+    /// </summary>
+    public void StartNewGameAfterOpening()
+    {
+        isFullResetOpeningInProgress = false;
+
+        Debug.Log("[GameManager] 오프닝 종료 — 초기 데이터·월드·스폰 재시작");
+
+        ActivateCoreGameplayObjects();
+        ResetToField();
+        ApplyInitialSessionData();
+        UIBattleManager.ResetAllRuntimeBattleState();
+
+        ChapterManager chapterManager = ChapterManager.EnsureInstance();
+        if (chapterManager != null)
+        {
+            if (!chapterManager.isActiveAndEnabled)
+            {
+                if (!chapterManager.gameObject.activeInHierarchy)
+                    chapterManager.gameObject.SetActive(true);
+
+                chapterManager.enabled = true;
+            }
+
+            chapterManager.BeginNewPlaySession();
+            chapterManager.TeleportPlayerToCurrentChapterSpawn();
+            chapterManager.ScheduleTeleportPlayerAfterFrame();
+        }
+        else
+            FactoryChapterController.Instance?.ResetToFirstChapter();
+
+        ResetRuntimePlayerState();
+        RestoreAllSimulatedRigidbodies2D();
+        ApplyInitialSessionPollution();
+        SyncGameplayHudAfterDataReset();
+        ResetFullResetUiState();
+        CloseGameplayOverlays();
+        StartCoroutine(SyncInitialPollutionHudAfterWorldActive());
+
+        Debug.Log("[GameManager] 새 게임 세션 준비 완료 (Managers·Player·챕터1·몬스터·아이템)");
+    }
+
+    private IEnumerator SyncInitialPollutionHudAfterWorldActive()
+    {
+        yield return null;
+        ApplyInitialSessionPollution();
+        SyncGameplayHudAfterDataReset();
+    }
+
+    private float ResolveInitialSessionPollution()
+    {
+        return initialSessionPollution > 0f
+            ? initialSessionPollution
+            : PollutionManager.DefaultInitialPollution;
+    }
+
+    private void ApplyInitialSessionPollution()
+    {
+        ApplySessionPollution(ResolveInitialSessionPollution(), "새 게임");
+    }
+
+    private void ApplySessionPollution(float pollution, string contextLabel)
+    {
+        PollutionManager manager = PollutionManager.EnsureInstance();
+        if (manager == null)
+        {
+            Debug.LogWarning(
+                $"[GameManager] PollutionManager를 찾지 못해 {contextLabel} 오염도({pollution})를 적용하지 못했습니다.");
+            return;
+        }
+
+        manager.ApplyInitialPollution(pollution);
+        Debug.Log($"[GameManager] {contextLabel} — 공장 오염도 {pollution} 적용");
+    }
+
+    /// <summary>오프닝 종료 후 Managers·Player·Canvas 등 핵심 오브젝트를 켭니다.</summary>
+    private void ActivateCoreGameplayObjects()
+    {
+        if (!gameObject.activeSelf)
+            gameObject.SetActive(true);
+
+        ActivateGameplayWorldSceneRoots();
+    }
+
+    /// <summary>비활성 씬 루트도 포함해 이름으로 루트 오브젝트를 찾습니다(GameObject.Find는 비활성을 못 찾음).</summary>
+    public static GameObject FindSceneRoot(string rootName)
+    {
+        if (string.IsNullOrEmpty(rootName))
+            return null;
+
+        Scene scene = SceneManager.GetActiveScene();
+        if (!scene.IsValid())
+            return null;
+
+        GameObject[] roots = scene.GetRootGameObjects();
+        for (int i = 0; i < roots.Length; i++)
+        {
+            GameObject root = roots[i];
+            if (root != null && root.name == rootName)
+                return root;
+        }
+
+        return null;
+    }
+
+    public static bool IsCoreGameplaySceneRootName(string objectName)
+    {
+        if (string.IsNullOrEmpty(objectName))
+            return false;
+
+        for (int i = 0; i < CoreGameplaySceneRootNames.Length; i++)
+        {
+            if (CoreGameplaySceneRootNames[i] == objectName)
+                return true;
+        }
+
+        return false;
+    }
+
+    public static bool IsFactoryStageSceneRootName(string objectName)
+    {
+        return !string.IsNullOrEmpty(objectName) && objectName.StartsWith("FactoryStage");
+    }
+
+    /// <summary>오프닝 종료 후 반드시 켤 씬 루트(Managers·FactoryStage 등)인지 판별합니다.</summary>
+    public static bool ShouldForceActiveAfterOpening(string objectName)
+    {
+        return IsCoreGameplaySceneRootName(objectName) || IsFactoryStageSceneRootName(objectName);
+    }
+
+    /// <summary>Managers·Player·Canvas·ChapterMaps 씬 루트만 켭니다. 자식은 기존 activeSelf를 유지합니다.</summary>
+    public static void ActivateCoreGameplaySceneRoots()
+    {
+        for (int i = 0; i < CoreGameplaySceneRootNames.Length; i++)
+            ActivateSceneRootOnly(CoreGameplaySceneRootNames[i]);
+    }
+
+    /// <summary>FactoryStage_* 씬 루트와 스폰에 필요한 자식까지 모두 켭니다.</summary>
+    public static void ActivateFactoryStageSceneRoots()
+    {
+        Scene scene = SceneManager.GetActiveScene();
+        if (!scene.IsValid())
+            return;
+
+        GameObject[] roots = scene.GetRootGameObjects();
+        for (int i = 0; i < roots.Length; i++)
+        {
+            GameObject root = roots[i];
+            if (root == null || !IsFactoryStageSceneRootName(root.name))
+                continue;
+
+            EnsureActiveInHierarchy(root);
+            ActivateSubtreeDeep(root.transform);
+        }
+    }
+
+    /// <summary>부모 체인·자신을 활성화해 activeInHierarchy를 보장합니다.</summary>
+    public static void EnsureActiveInHierarchy(GameObject target)
+    {
+        if (target == null)
+            return;
+
+        Transform parent = target.transform.parent;
+        while (parent != null)
+        {
+            if (!parent.gameObject.activeSelf)
+                parent.gameObject.SetActive(true);
+
+            parent = parent.parent;
+        }
+
+        if (!target.activeSelf)
+            target.SetActive(true);
+    }
+
+    /// <summary>필드 몬스터·아이템이 Game 뷰에 보이도록 활성·렌더러를 복구합니다.</summary>
+    public static void EnsureFieldEntityVisible(GameObject entity)
+    {
+        if (entity == null)
+            return;
+
+        EnsureActiveInHierarchy(entity);
+
+        SpriteRenderer[] renderers = entity.GetComponentsInChildren<SpriteRenderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            if (renderers[i] != null)
+                renderers[i].enabled = true;
+        }
+    }
+
+    private static void ActivateSubtreeDeep(Transform root)
+    {
+        if (root == null)
+            return;
+
+        for (int i = 0; i < root.childCount; i++)
+        {
+            Transform child = root.GetChild(i);
+            if (child == null)
+                continue;
+
+            if (!child.gameObject.activeSelf)
+                child.gameObject.SetActive(true);
+
+            ActivateSubtreeDeep(child);
+        }
+    }
+
+    /// <summary>필드 플레이에 필요한 씬 루트(Managers·FactoryStage 등)를 켭니다.</summary>
+    public static void ActivateGameplayWorldSceneRoots()
+    {
+        ActivateCoreGameplaySceneRoots();
+        ActivateFactoryStageSceneRoots();
+    }
+
+    private static void ActivateSceneRootOnly(string rootName)
+    {
+        GameObject root = FindSceneRoot(rootName);
+        if (root == null)
+        {
+            Debug.LogWarning(
+                $"[GameManager] 씬 루트 '{rootName}'를 찾지 못해 활성화하지 못했습니다. " +
+                "Hierarchy 최상위 이름이 일치하는지 확인하세요.");
+            return;
+        }
+
+        if (!root.activeSelf)
+            root.SetActive(true);
+    }
+
+    private void PerformFullReset(bool destroySceneChapters, bool activateFirstChapterAfterReset)
+    {
+        Debug.Log("[GameManager] PerformFullReset — 데이터 전량 초기화 후 오프닝 대기");
 
         ResetToField();
-        BattleEncounterContext.ClearFleeExit();
+        ApplyInitialSessionData();
 
+        ChapterManager chapterManager = ChapterManager.EnsureInstance();
+        if (destroySceneChapters)
+        {
+            chapterManager?.ClearAllSpawnedMonstersAndItemsInScene();
+            DestroyAllChapterObjectsInScene();
+        }
+        else
+            chapterManager?.DeactivateAllChaptersForOpening();
+
+        CloseGameplayOverlays();
+        ResetFullResetUiState();
+        ResetPlayerToOpeningSpawn();
+
+        if (activateFirstChapterAfterReset)
+        {
+            if (chapterManager != null)
+                chapterManager.ResetToFirstChapter();
+            else
+                FactoryChapterController.Instance?.ResetToFirstChapter();
+
+            SyncGameplayHudAfterDataReset();
+        }
+    }
+
+    /// <summary>오염도·인벤토리·체크포인트·챕터 저장 등 새 게임 기본값.</summary>
+    private void ApplyInitialSessionData()
+    {
+        BattleEncounterContext.ResetAll();
         ClearFactoryCheckpoint();
         ChapterManager.ClearSavedChapter();
         FactoryChapterController.ClearSavedChapter();
-        PollutionManager.Instance?.ResetPollution();
+        ApplyInitialSessionPollution();
         InventoryManager.Instance?.ResetAll();
         UIBattleManager.ResetSavedContaminationProgress();
-
-        if (activateChapterImmediately)
-        {
-            ChapterManager.EnsureInstance()?.ResetToFirstChapter();
-            FactoryChapterController.Instance?.ResetToFirstChapter();
-        }
-        else
-            ChapterManager.EnsureInstance()?.DeactivateAllChaptersForOpening();
-
-        ResetRuntimePlayerState();
-        CloseGameplayOverlays();
     }
 
-    private void PerformChapterReset()
+    private static GameObject FindPlayerIncludingInactive()
     {
-        Debug.Log("[GameManager] 챕터 데이터 부분 초기화 (현재 챕터 재시작)");
+        try
+        {
+            GameObject activePlayer = GameObject.FindGameObjectWithTag("Player");
+            if (activePlayer != null)
+                return activePlayer;
+        }
+        catch (UnityException)
+        {
+        }
+
+        PlayerController[] controllers =
+            FindObjectsByType<PlayerController>(FindObjectsInactive.Include);
+        if (controllers.Length > 0 && controllers[0] != null)
+            return controllers[0].gameObject;
+
+        return null;
+    }
+
+    private void SyncGameplayHudAfterDataReset()
+    {
+        PollutionManager pollutionManager = PollutionManager.EnsureInstance();
+        if (pollutionManager == null || UIManager.Instance == null)
+            return;
+
+        UIManager.Instance.UpdatePollutionBar(
+            pollutionManager.CurrentPollution,
+            pollutionManager.MaxPollution);
+    }
+
+    private void DestroyAllChapterObjectsInScene()
+    {
+        ChapterManager chapterManager = ChapterManager.EnsureInstance();
+        if (chapterManager != null)
+            chapterManager.DestroyAllChapterInstances();
+    }
+
+    private void ActivateOpeningSequenceRoot(GameObject openingRoot)
+    {
+        if (openingRoot == null)
+            return;
+
+        if (!openingRoot.activeSelf)
+            openingRoot.SetActive(true);
+
+        OpeningSequenceController[] controllers =
+            openingRoot.GetComponentsInChildren<OpeningSequenceController>(true);
+
+        for (int i = 0; i < controllers.Length; i++)
+        {
+            OpeningSequenceController controller = controllers[i];
+            if (controller == null)
+                continue;
+
+            if (!controller.gameObject.activeSelf)
+                controller.gameObject.SetActive(true);
+
+            controller.PrepareForReplay();
+        }
+    }
+
+    private void CacheOpeningPlayerSpawnPosition()
+    {
+        if (openingPlayerSpawn != null)
+        {
+            cachedOpeningPlayerPosition = openingPlayerSpawn.position;
+            hasCachedOpeningPlayerPosition = true;
+            return;
+        }
+
+        GameObject player = FindPlayerIncludingInactive();
+        if (player == null)
+            return;
+
+        cachedOpeningPlayerPosition = player.transform.position;
+        hasCachedOpeningPlayerPosition = true;
+    }
+
+    private void ResetPlayerToOpeningSpawn()
+    {
+        CacheOpeningPlayerSpawnPosition();
+
+        Vector3 spawnPosition = openingPlayerSpawn != null
+            ? openingPlayerSpawn.position
+            : hasCachedOpeningPlayerPosition
+                ? cachedOpeningPlayerPosition
+                : Vector3.zero;
+
+        GameObject player = FindPlayerIncludingInactive();
+        if (player == null)
+        {
+            Debug.LogWarning("[GameManager] Player 태그 오브젝트를 찾지 못해 오프닝 스폰 이동을 건너뜁니다.");
+            return;
+        }
+
+        Rigidbody2D rigidbody = player.GetComponent<Rigidbody2D>();
+        if (rigidbody != null)
+        {
+            rigidbody.simulated = false;
+            rigidbody.linearVelocity = Vector2.zero;
+            rigidbody.angularVelocity = 0f;
+        }
+
+        player.transform.position = spawnPosition;
+
+        if (rigidbody != null)
+            rigidbody.simulated = true;
+
+        ResetRuntimePlayerState();
+
+        CameraFollow cameraFollow =
+            FindAnyObjectByType<CameraFollow>(FindObjectsInactive.Include);
+        if (cameraFollow != null)
+        {
+            cameraFollow.RebindToPlayer(snapImmediately: false);
+            cameraFollow.SnapToWorldPoint(spawnPosition);
+        }
+    }
+
+    private void ResetFullResetUiState()
+    {
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.CloseAllPanels();
+            UIManager.Instance.ResetStageResult();
+        }
+
+        UIResult[] resultPanels = FindObjectsByType<UIResult>(FindObjectsInactive.Include);
+        for (int i = 0; i < resultPanels.Length; i++)
+            resultPanels[i]?.ResetStageResultState();
+    }
+
+    private void PerformChapterReset(int keepChapterIndex)
+    {
+        Debug.Log($"[GameManager] 현재 챕터 {keepChapterIndex} 재시작 — 세션 데이터 전량 초기화(챕터 번호 유지)");
 
         ResetToField();
         BattleEncounterContext.ClearFleeExit();
         stageClearPending = false;
 
-        ApplyFactoryCheckpointToPollutionManager();
+        ApplyChapterRestartSessionData(keepChapterIndex);
+        CloseGameplayOverlays();
+    }
+
+    /// <summary>처음부터 다시 시작과 동일한 데이터 초기화. 챕터 인덱스만 유지합니다.</summary>
+    private void ApplyChapterRestartSessionData(int keepChapterIndex)
+    {
+        BattleEncounterContext.ResetAll();
+        ClearFactoryCheckpoint();
+        ApplyInitialSessionPollution();
+        InventoryManager.Instance?.ResetAll();
         UIBattleManager.ResetSavedContaminationProgress();
 
-        ResetRuntimePlayerState();
-        CloseGameplayOverlays();
+        if (keepChapterIndex >= 1)
+        {
+            PlayerPrefs.SetInt(ChapterManager.CurrentChapterPrefsKey, keepChapterIndex);
+            PlayerPrefs.Save();
+        }
     }
 
     private float ResolveFactoryCheckpointPollution()
@@ -342,15 +797,15 @@ public class GameManager : MonoBehaviour
     private void ApplyFactoryCheckpointToPollutionManager()
     {
         float pollution = ResolveFactoryCheckpointPollution();
-
-        if (PollutionManager.Instance == null)
+        PollutionManager manager = PollutionManager.EnsureInstance();
+        if (manager == null)
         {
             Debug.LogWarning(
-                $"[GameManager] PollutionManager가 없어 체크포인트 오염도({pollution})를 적용하지 못했습니다.");
+                $"[GameManager] PollutionManager를 찾지 못해 체크포인트 오염도({pollution})를 적용하지 못했습니다.");
             return;
         }
 
-        PollutionManager.Instance.SetPollution(pollution);
+        manager.SetPollution(pollution);
         Debug.Log($"[GameManager] 챕터 재시작 — 체크포인트 오염도 적용: {pollution}");
     }
 
@@ -364,7 +819,7 @@ public class GameManager : MonoBehaviour
     private void ResetRuntimePlayerState()
     {
         PlayerOxygen[] oxygenComponents =
-            FindObjectsByType<PlayerOxygen>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            FindObjectsByType<PlayerOxygen>(FindObjectsInactive.Include);
         for (int i = 0; i < oxygenComponents.Length; i++)
             oxygenComponents[i]?.ResetOxygen();
     }
@@ -372,7 +827,7 @@ public class GameManager : MonoBehaviour
     private static void RestoreAllSimulatedRigidbodies2D()
     {
         Rigidbody2D[] rigidbodies =
-            FindObjectsByType<Rigidbody2D>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            FindObjectsByType<Rigidbody2D>(FindObjectsInactive.Include);
 
         for (int i = 0; i < rigidbodies.Length; i++)
         {
