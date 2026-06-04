@@ -31,7 +31,7 @@ public class UIGameOver : MonoBehaviour
         GameManager.Instance.RequestRestart(isFullReset: true);
     }
 
-    /// <summary>[현재 챕터에서 시작] — 오프닝 없이 체크포인트 오염도 복구 후 현재 챕터 스폰으로 이동.</summary>
+    /// <summary>[현재 챕터에서 시작] — 오프닝 없이 세션·월드 전량 리셋 후 현재 챕터만 재생성(처음부터 시작과 동일 패턴).</summary>
     public void OnRetryLevel()
     {
         if (GameManager.Instance == null)

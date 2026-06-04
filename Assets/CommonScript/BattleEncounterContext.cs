@@ -11,6 +11,14 @@ public static class BattleEncounterContext
 
     public static void ClearFleeExit() => fleeExitPending = false;
 
+    /// <summary>전체 리셋 시 배틀·도망·충돌 몬스터 참조를 모두 비웁니다.</summary>
+    public static void ResetAll()
+    {
+        fleeExitPending = false;
+        currentEncounteredMonsterId = null;
+        currentEncounteredMonsterObject = null;
+    }
+
     public static void SetEncounteredMonsterId(string monsterId)
     {
         currentEncounteredMonsterId = string.IsNullOrWhiteSpace(monsterId) ? null : monsterId;

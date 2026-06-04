@@ -16,34 +16,75 @@ public class CameraFollow : MonoBehaviour
 
     private Camera cam;
 
-    private void Start()
+    private void Awake()
     {
         cam = GetComponent<Camera>();
     }
 
+    private void Start()
+    {
+        if (cam == null)
+            cam = GetComponent<Camera>();
+    }
+
+    /// <summary>추적 대상을 플레이어로 다시 잡습니다.</summary>
+    public void RebindToPlayer(bool snapImmediately = true)
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+            target = player.transform;
+
+        if (snapImmediately)
+            SnapToTarget();
+    }
+
+    /// <summary>현재 추적 대상 위치로 카메라를 즉시 맞춥니다(챕터 재시작·입구 스냅).</summary>
+    public void SnapToTarget()
+    {
+        if (target == null)
+            return;
+
+        if (cam == null)
+            cam = GetComponent<Camera>();
+
+        transform.position = ComputeClampedCameraPosition(target.position);
+    }
+
+    /// <summary>월드 좌표(스폰 포인트 등) 기준으로 카메라를 즉시 맞춥니다.</summary>
+    public void SnapToWorldPoint(Vector3 worldPosition)
+    {
+        if (cam == null)
+            cam = GetComponent<Camera>();
+
+        transform.position = ComputeClampedCameraPosition(worldPosition);
+    }
+
     private void LateUpdate()
     {
-        if (target == null) return;
+        if (target == null)
+            return;
 
-        // 1. 현재 메인 카메라 화면의 월드 기준 가로/세로 반절 크기를 실시간 계산합니다.
+        Vector3 desiredPosition = ComputeClampedCameraPosition(target.position);
+        Vector3 smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed);
+        transform.position = smoothedPosition;
+    }
+
+    private Vector3 ComputeClampedCameraPosition(Vector3 focusWorldPosition)
+    {
+        if (cam == null)
+            cam = GetComponent<Camera>();
+
         float camHeight = cam.orthographicSize;
         float camWidth = camHeight * cam.aspect;
 
-        // 2. 카메라 시야가 맵 끝 경계선을 절대로 넘지 않도록 제한(Clamp)할 범위를 산출합니다.
         float minX = -mapWidthHalf + camWidth;
         float maxX = mapWidthHalf - camWidth;
         float minY = -mapHeightHalf + camHeight;
         float maxY = mapHeightHalf - camHeight;
 
-        // 맵 크기가 현재 카메라 가로세로 시야보다 좁아져 화면이 망가지는 것을 방지하는 가드
-        float clampedX = (minX < maxX) ? Mathf.Clamp(target.position.x, minX, maxX) : 0f;
-        float clampedY = (minY < maxY) ? Mathf.Clamp(target.position.y, minY, maxY) : 0f;
+        float clampedX = minX < maxX ? Mathf.Clamp(focusWorldPosition.x, minX, maxX) : 0f;
+        float clampedY = minY < maxY ? Mathf.Clamp(focusWorldPosition.y, minY, maxY) : 0f;
 
-        // 3. 카메라의 새로운 목적지 좌표를 설정합니다. (Z축은 유니티 2D 기본 카메라인 transform.position.z 값 유지)
-        Vector3 desiredPosition = new Vector3(clampedX, clampedY, transform.position.z);
-
-        // 4. Lerp를 활용해 부드러운 감속 효과를 주며 카메라의 위치를 점진적으로 이동시킵니다.
-        Vector3 smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed);
-        transform.position = smoothedPosition;
+        return new Vector3(clampedX, clampedY, transform.position.z);
     }
 }

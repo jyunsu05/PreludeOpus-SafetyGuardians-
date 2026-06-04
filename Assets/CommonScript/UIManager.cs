@@ -36,22 +36,60 @@ public class UIManager : MonoBehaviour
     }
 
     private bool gameManagerSubscribed;
+    private bool pollutionSubscribed;
     private Coroutine showStageResultRoutine;
+
+    void OnEnable()
+    {
+        TrySubscribePollutionManager();
+    }
 
     void Start()
     {
         TrySubscribeGameManager();
+        TrySubscribePollutionManager();
     }
 
     void Update()
     {
         if (!gameManagerSubscribed)
             TrySubscribeGameManager();
+
+        if (!pollutionSubscribed)
+            TrySubscribePollutionManager();
     }
 
     void OnDestroy()
     {
         UnsubscribeGameManager();
+        UnsubscribePollutionManager();
+    }
+
+    private void TrySubscribePollutionManager()
+    {
+        if (pollutionSubscribed || pollutionSlider == null)
+            return;
+
+        PollutionManager manager = PollutionManager.EnsureInstance();
+        if (manager == null)
+            return;
+
+        manager.OnPollutionChanged -= HandlePollutionChanged;
+        manager.OnPollutionChanged += HandlePollutionChanged;
+        pollutionSubscribed = true;
+
+        UpdatePollutionBar(manager.CurrentPollution, manager.MaxPollution);
+    }
+
+    private void UnsubscribePollutionManager()
+    {
+        if (!pollutionSubscribed)
+            return;
+
+        if (PollutionManager.Instance != null)
+            PollutionManager.Instance.OnPollutionChanged -= HandlePollutionChanged;
+
+        pollutionSubscribed = false;
     }
 
     private void TrySubscribeGameManager()
@@ -286,11 +324,20 @@ public class UIManager : MonoBehaviour
             mainHUD.UpdateOxygenGauge(currentOxygen, maxOxygen);
     }
 
-    // PollutionManager 등 외부에서 비율만 넘겨 호출 (UIManager는 PollutionManager를 직접 참조하지 않음)
-    public void UpdatePollutionBar(float ratio)
+    private void HandlePollutionChanged(float currentPollution, float maxPollution)
     {
-        if (pollutionSlider != null)
-            pollutionSlider.value = Mathf.Clamp01(ratio);
+        UpdatePollutionBar(currentPollution, maxPollution);
+    }
+
+    /// <summary>PollutionSlider는 0~100 절대값으로 맞춥니다(비율 0~1 아님).</summary>
+    public void UpdatePollutionBar(float currentPollution, float maxPollution)
+    {
+        if (pollutionSlider == null)
+            return;
+
+        float max = maxPollution > 0f ? maxPollution : PollutionManager.DefaultInitialPollution;
+        pollutionSlider.maxValue = max;
+        pollutionSlider.value = Mathf.Clamp(currentPollution, pollutionSlider.minValue, max);
     }
 
     // --- 범용 ---

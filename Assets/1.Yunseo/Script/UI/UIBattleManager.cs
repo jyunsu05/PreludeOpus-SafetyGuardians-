@@ -687,7 +687,7 @@ public class UIBattleManager : MonoBehaviour
     public static void ResetAllRuntimeBattleState()
     {
         UIBattleManager[] managers =
-            FindObjectsByType<UIBattleManager>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            FindObjectsByType<UIBattleManager>(FindObjectsInactive.Include);
 
         for (int i = 0; i < managers.Length; i++)
         {

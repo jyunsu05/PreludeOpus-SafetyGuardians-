@@ -96,6 +96,7 @@ public class UIAcquisitionPopup : MonoBehaviour
                 Debug.LogWarning("[UIAcquisitionPopup] InventoryManager가 없습니다!");
         }
 
+        MonsterBattleTracker.TryRemoveEncounteredMonsterFromField();
         ExitBattleUIIfNeeded();
 
         gameObject.SetActive(false);
