@@ -675,10 +675,30 @@ public class UIBattleManager : MonoBehaviour
         FinalizeContaminationOnBattleClose();
     }
 
-    private void ForceRestoreFieldPhysics()
+    /// <summary>배틀 UI 비활성·게임오버 등에서 플레이어/몬스터 물리 잠금을 해제합니다.</summary>
+    public void ForceRestoreFieldPhysics()
     {
         UnlockPlayerMovement();
         UnlockMonsterMovement();
+        RestoreAllMonsterRigidbodiesInScene();
+    }
+
+    /// <summary>씬에 존재하는 모든 UIBattleManager의 배틀 상태·물리를 초기화합니다.</summary>
+    public static void ResetAllRuntimeBattleState()
+    {
+        UIBattleManager[] managers =
+            FindObjectsByType<UIBattleManager>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+        for (int i = 0; i < managers.Length; i++)
+        {
+            UIBattleManager manager = managers[i];
+            if (manager == null)
+                continue;
+
+            manager.ExitBattle();
+            manager.ForceRestoreFieldPhysics();
+        }
+
         RestoreAllMonsterRigidbodiesInScene();
     }
 

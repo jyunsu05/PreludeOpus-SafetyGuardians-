@@ -14,7 +14,13 @@ public class GameManager : MonoBehaviour
     public event Action OnStageCleared;
     public event Action OnStageMonstersSpawned;
 
-    [Header("--- 재시작 씬 설정 ---")]
+    [Header("--- 오프닝 (처음부터 시작) ---")]
+    [Tooltip("비어 있으면 씬에서 OpeningSequenceRoot(또는 OpeningSequenceController)를 찾습니다.")]
+    [SerializeField] private GameObject openingSequenceRoot;
+
+    private const string OpeningSequenceRootObjectName = "OpeningSequenceRoot";
+
+    [Header("--- 재시작 씬 설정 (인씬 오프닝이 없을 때만) ---")]
     [Tooltip("처음부터 시작(fullReset) 시 로드할 오프닝 씬")]
     [SerializeField] private string openingSceneName = "OpeningScene";
 
@@ -103,6 +109,23 @@ public class GameManager : MonoBehaviour
         stageClearPending = false;
     }
 
+    /// <summary>
+    /// 게임오버 표시·재시작 직전에 호출. 배틀 UI·버튼·Rigidbody2D.simulated 등 런타임 상태를 정리합니다.
+    /// </summary>
+    public void ResetAllSystems()
+    {
+        ResetToField();
+        BattleEncounterContext.ClearFleeExit();
+
+        UIBattleManager.ResetAllRuntimeBattleState();
+        UIButtonContainer.ResetAllRuntimeButtonState();
+
+        if (UIManager.Instance != null)
+            UIManager.Instance.CloseBattleUI();
+
+        RestoreAllSimulatedRigidbodies2D();
+    }
+
     public bool IsInBattle => CurrentState == GameState.Battle;
 
     /// <summary>
@@ -136,6 +159,11 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        ResetAllSystems();
+
+        if (isFullReset && TryBeginFullResetInPlace())
+            return;
+
         if (!isFullReset && TryRestartCurrentChapterInPlace())
             return;
 
@@ -167,8 +195,56 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        ResetAllSystems();
+
         if (!TryRestartCurrentChapterInPlace())
             RequestRestart(isFullReset: false);
+    }
+
+    private bool TryBeginFullResetInPlace()
+    {
+        GameObject openingRoot = ResolveOpeningSequenceRoot();
+        if (openingRoot == null)
+            return false;
+
+        isRestartInProgress = true;
+
+        try
+        {
+            PerformFullReset(activateChapterImmediately: false);
+
+            ChapterManager chapterManager = ChapterManager.EnsureInstance();
+            chapterManager?.DeactivateAllChaptersForOpening();
+
+            if (!openingRoot.activeSelf)
+                openingRoot.SetActive(true);
+
+            OpeningSequenceController[] controllers =
+                openingRoot.GetComponentsInChildren<OpeningSequenceController>(true);
+            for (int i = 0; i < controllers.Length; i++)
+            {
+                OpeningSequenceController controller = controllers[i];
+                if (controller == null)
+                    continue;
+
+                if (!controller.gameObject.activeSelf)
+                    controller.gameObject.SetActive(true);
+
+                controller.PrepareForReplay();
+            }
+
+            Debug.Log("[GameManager] 처음부터 시작 — 오프닝 시퀀스 활성화 (챕터 프리팹 비활성)");
+            return true;
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[GameManager] 인씬 오프닝 전체 리셋 실패: {e.Message}");
+            return false;
+        }
+        finally
+        {
+            isRestartInProgress = false;
+        }
     }
 
     private bool TryRestartCurrentChapterInPlace()
@@ -201,12 +277,12 @@ public class GameManager : MonoBehaviour
     private void PerformReset(bool isFullReset)
     {
         if (isFullReset)
-            PerformFullReset();
+            PerformFullReset(activateChapterImmediately: true);
         else
             PerformChapterReset();
     }
 
-    private void PerformFullReset()
+    private void PerformFullReset(bool activateChapterImmediately)
     {
         Debug.Log("[GameManager] 전체 데이터 초기화 (처음부터 시작)");
 
@@ -217,10 +293,16 @@ public class GameManager : MonoBehaviour
         ChapterManager.ClearSavedChapter();
         FactoryChapterController.ClearSavedChapter();
         PollutionManager.Instance?.ResetPollution();
-        ChapterManager.EnsureInstance()?.ResetToFirstChapter();
-        FactoryChapterController.Instance?.ResetToFirstChapter();
         InventoryManager.Instance?.ResetAll();
         UIBattleManager.ResetSavedContaminationProgress();
+
+        if (activateChapterImmediately)
+        {
+            ChapterManager.EnsureInstance()?.ResetToFirstChapter();
+            FactoryChapterController.Instance?.ResetToFirstChapter();
+        }
+        else
+            ChapterManager.EnsureInstance()?.DeactivateAllChaptersForOpening();
 
         ResetRuntimePlayerState();
         CloseGameplayOverlays();
@@ -281,9 +363,37 @@ public class GameManager : MonoBehaviour
 
     private void ResetRuntimePlayerState()
     {
-        PlayerOxygen[] oxygenComponents = FindObjectsByType<PlayerOxygen>(FindObjectsInactive.Include);
+        PlayerOxygen[] oxygenComponents =
+            FindObjectsByType<PlayerOxygen>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         for (int i = 0; i < oxygenComponents.Length; i++)
             oxygenComponents[i]?.ResetOxygen();
+    }
+
+    private static void RestoreAllSimulatedRigidbodies2D()
+    {
+        Rigidbody2D[] rigidbodies =
+            FindObjectsByType<Rigidbody2D>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+        for (int i = 0; i < rigidbodies.Length; i++)
+        {
+            Rigidbody2D body = rigidbodies[i];
+            if (body != null && !body.simulated)
+                body.simulated = true;
+        }
+    }
+
+    private GameObject ResolveOpeningSequenceRoot()
+    {
+        if (openingSequenceRoot != null)
+            return openingSequenceRoot;
+
+        GameObject byName = GameObject.Find(OpeningSequenceRootObjectName);
+        if (byName != null)
+            return byName;
+
+        OpeningSequenceController controller =
+            FindAnyObjectByType<OpeningSequenceController>(FindObjectsInactive.Include);
+        return controller != null ? controller.gameObject : null;
     }
 
     private void CloseGameplayOverlays()

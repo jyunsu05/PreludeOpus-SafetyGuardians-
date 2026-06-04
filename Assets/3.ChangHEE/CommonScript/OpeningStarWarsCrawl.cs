@@ -113,6 +113,29 @@ public class OpeningStarWarsCrawl : MonoBehaviour
         transitionMode = TransitionMode.InScene;
     }
 
+    /// <summary>오프닝 루트를 다시 켤 때 크롤 연출을 처음부터 재시작합니다.</summary>
+    public void RestartForReplay()
+    {
+        if (!isActiveAndEnabled)
+        {
+            Debug.LogWarning(
+                "[OpeningStarWarsCrawl] RestartForReplay는 OpeningCanvas가 활성화된 뒤에 호출해야 합니다.");
+            return;
+        }
+
+        if (activeFadeRoutine != null)
+        {
+            StopCoroutine(activeFadeRoutine);
+            activeFadeRoutine = null;
+        }
+
+        if (exitFadeOverlay != null)
+            exitFadeOverlay.gameObject.SetActive(false);
+
+        ResetCrawl();
+        BeginEntryFade();
+    }
+
     void Awake()
     {
         canvasRect = GetComponent<RectTransform>();

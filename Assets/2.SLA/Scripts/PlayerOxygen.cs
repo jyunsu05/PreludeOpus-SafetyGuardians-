@@ -25,6 +25,9 @@ public class PlayerOxygen : MonoBehaviour
             oxygenSlider.maxValue = 1f;
             oxygenSlider.value = 1f;
         }
+
+        if (mainHUD != null && !mainHUD.activeSelf)
+            mainHUD.SetActive(true);
     }
 
     void Start()

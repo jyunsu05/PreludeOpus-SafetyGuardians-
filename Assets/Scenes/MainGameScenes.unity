@@ -1598,6 +1598,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5836bce04e5839c46ad8d5b2c1f6e767, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
+--- !u!1 &1307349470 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 880001001, guid: c7d9e1f2a3b4567890abcdef12345678, type: 3}
+  m_PrefabInstance: {fileID: 880002001}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1340325180
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2618,6 +2623,10 @@ PrefabInstance:
       propertyPath: openingSceneName
       value: OpeningSequenceRoot
       objectReference: {fileID: 0}
+    - target: {fileID: 7262544662682241796, guid: 438d90f48b866c24c8518ace47b74683, type: 3}
+      propertyPath: openingSequenceRoot
+      value: 
+      objectReference: {fileID: 1307349470}
     - target: {fileID: 7749337337835635184, guid: 438d90f48b866c24c8518ace47b74683, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

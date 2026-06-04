@@ -80,6 +80,19 @@ public class UIButtonContainer : MonoBehaviour
         uiManager.OnEscapeLockChanged -= ApplyEscapeLock;
     }
 
+    /// <summary>씬에 있는 모든 UIButtonContainer의 배틀 버튼 상태를 초기화합니다.</summary>
+    public static void ResetAllRuntimeButtonState()
+    {
+        UIButtonContainer[] containers =
+            FindObjectsByType<UIButtonContainer>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+        for (int i = 0; i < containers.Length; i++)
+        {
+            if (containers[i] != null)
+                containers[i].ResetButtonsState();
+        }
+    }
+
     public void ResetButtonsState()
     {
         isEscaping = false;
