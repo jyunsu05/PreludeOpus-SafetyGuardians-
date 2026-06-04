@@ -28,6 +28,7 @@ public class UIBattleManager : MonoBehaviour
 
     private MonsterData currentMonsterData;
     private string currentMonsterId;
+    private int contaminationAtBattleEntry;
     private PlayerController lockedPlayerController;
     private Rigidbody2D lockedPlayerRigidbody;
     private bool wasPlayerRigidbodySimulated;
@@ -58,7 +59,7 @@ public class UIBattleManager : MonoBehaviour
 
     void OnDisable()
     {
-        SaveCurrentContaminationProgress();
+        FinalizeContaminationOnBattleClose();
         UnlockPlayerMovement();
         UnlockMonsterMovement();
     }
@@ -327,6 +328,8 @@ public class UIBattleManager : MonoBehaviour
         string difficulty = string.IsNullOrEmpty(data.capture_difficulty) ? "Unknown" : data.capture_difficulty;
         int maxContamination = GetMonsterMaxContamination(data);
         int currentContamination = ResolveInitialContamination(data);
+        contaminationAtBattleEntry = currentContamination;
+        BattleEncounterContext.ClearFleeExit();
         SetMonsterBasicUI(data.name, difficulty, maxContamination, currentContamination);
 
         if (monsterImage != null)
@@ -449,9 +452,10 @@ public class UIBattleManager : MonoBehaviour
 
     private void HandleBattleEnded()
     {
+        FinalizeContaminationOnBattleClose();
+
         lastResolvedEncounterMonsterId = null;
         BattleEncounterContext.SetEncounteredMonsterId(null);
-        SaveCurrentContaminationProgress();
         ResetContaminationGaugeToInitial();
     }
 
@@ -501,6 +505,32 @@ public class UIBattleManager : MonoBehaviour
             return;
 
         contaminationProgressByMonsterId.Remove(currentMonsterId);
+    }
+
+    private void FinalizeContaminationOnBattleClose()
+    {
+        if (BattleEncounterContext.IsFleeExitPending)
+        {
+            RevertContaminationProgressAfterFlee();
+            BattleEncounterContext.ClearFleeExit();
+            return;
+        }
+
+        SaveCurrentContaminationProgress();
+    }
+
+    private void RevertContaminationProgressAfterFlee()
+    {
+        if (string.IsNullOrEmpty(currentMonsterId))
+            return;
+
+        int restored = Mathf.Max(0, contaminationAtBattleEntry);
+        contaminationProgressByMonsterId[currentMonsterId] = restored;
+
+        if (contaminationSlider != null)
+            contaminationSlider.value = Mathf.Clamp(restored, 0, contaminationSlider.maxValue);
+
+        Debug.Log($"[UIBattleManager] 도망 → 오염도 진행도 복구: {currentMonsterId} = {restored}");
     }
 
     private void SaveCurrentContaminationProgress()

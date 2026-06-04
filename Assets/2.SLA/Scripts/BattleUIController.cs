@@ -2,11 +2,7 @@ using UnityEngine;
 
 /// <summary>
 /// [도망] 버튼 전용 컨트롤러 (SLA 담당)
-/// 탐색·정화 버튼은 팀장(UIBattleManager)이 직접 담당합니다.
-///
-/// [팀장에게 요청할 Inspector 설정]
-/// - BattleScene의 [도망] 버튼 OnClick() 에 → BattleUIController.OnFleeButtonClicked() 연결
-/// - Player Oxygen 슬롯에 Player 오브젝트의 PlayerOxygen 컴포넌트 연결
+/// 실제 버튼 OnClick 진입점은 UIButtonContainer.OnEscapeClick() 입니다.
 /// </summary>
 public class BattleUIController : MonoBehaviour
 {
@@ -19,46 +15,12 @@ public class BattleUIController : MonoBehaviour
     [SerializeField] private PlayerController playerController;
 
     private bool isFleeProcessing;
-    private UnityEngine.UI.Button fleeButton;
-
-    private void Start()
-    {
-        isFleeProcessing = false;
-        CacheAndBindButton();
-        ResolveActivePlayerOxygen();
-        ResolveActivePlayerController();
-    }
 
     private void OnEnable()
     {
         isFleeProcessing = false;
-
-        CacheAndBindButton();
-
-        if (fleeButton != null)
-            fleeButton.interactable = true;
     }
 
-    private void OnDisable()
-    {
-        if (fleeButton != null)
-            fleeButton.onClick.RemoveListener(OnFleeButtonClicked);
-    }
-
-    private void CacheAndBindButton()
-    {
-        if (fleeButton == null)
-            fleeButton = GetComponent<UnityEngine.UI.Button>();
-
-        if (fleeButton == null)
-            return;
-
-        // 씬 오버라이드로 Persistent OnClick이 깨져도 런타임 바인딩으로 도망 동작을 보장합니다.
-        fleeButton.onClick.RemoveListener(OnFleeButtonClicked);
-        fleeButton.onClick.AddListener(OnFleeButtonClicked);
-    }
-
-    // [도망] 버튼 OnClick() 에 연결
     public void OnFleeButtonClicked()
     {
         if (isFleeProcessing)
@@ -66,13 +28,9 @@ public class BattleUIController : MonoBehaviour
 
         isFleeProcessing = true;
 
-        if (fleeButton != null)
-            fleeButton.interactable = false;
-
         ResolveActivePlayerOxygen();
         ResolveActivePlayerController();
 
-        // 1. 산소 패널티 즉시 차감 (컴포넌트가 있을 때만)
         if (playerOxygen != null)
             playerOxygen.ApplyFleePenalty(fleePenaltyAmount);
         else
@@ -83,7 +41,8 @@ public class BattleUIController : MonoBehaviour
         else
             Debug.LogWarning("[BattleUIController] PlayerController를 찾지 못해 도망 후 재진입 방지 시간을 적용하지 못했습니다.");
 
-        // 2. GameManager에 필드 복귀 알림 (OnBattleEnded 이벤트 발행)
+        BattleEncounterContext.MarkFleeExit();
+
         if (GameManager.Instance != null)
             GameManager.Instance.ReturnToField();
         else if (UIManager.Instance != null)

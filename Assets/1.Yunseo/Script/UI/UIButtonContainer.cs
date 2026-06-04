@@ -3,13 +3,19 @@ using UnityEngine.UI;
 
 public class UIButtonContainer : MonoBehaviour
 {
-    // Canvas에 붙어있는 전체 UI 매니저를 참조하기 위한 변수
     private UIBattleManager uiManager;
 
+    [Header("--- 배틀 액션 UI 잠금 ---")]
+    [Tooltip("비어 있으면 이 오브젝트에서 CanvasGroup을 찾습니다.")]
+    [SerializeField] private CanvasGroup actionCanvasGroup;
+
+    [Header("--- SLA 도망 로직 (선택) ---")]
+    [SerializeField] private BattleUIController battleUIController;
+
     [Header("--- 자식 액션 버튼들 ---")]
-    [SerializeField] private Button searchButton;   // 탐색 버튼
-    [SerializeField] private Button purifyButton;   // 정화 버튼
-    [SerializeField] private Button escapeButton;   // 도망 버튼
+    [SerializeField] private Button searchButton;
+    [SerializeField] private Button purifyButton;
+    [SerializeField] private Button escapeButton;
 
     [Header("--- 아이템 획득 팝업 ---")]
     [SerializeField] private UIAcquisitionPopup acquisitionPopup;
@@ -17,45 +23,51 @@ public class UIButtonContainer : MonoBehaviour
     [Header("--- 정화 설정 ---")]
     [SerializeField] private int purifyDurabilityPerUse = 10;
 
-    private bool isScanned = false; // 탐색 완료 여부 판별
-    private bool isExitRequested = false;
+    private bool isScanned;
+    private bool isProcessing;
+    private bool isEscaping;
     private string depletedItemIdThisBattle;
 
     private const string DefaultRewardItemId = "MI-101";
 
-    void Start()
+    private void Awake()
+    {
+        ResolveActionCanvasGroup();
+    }
+
+    private void Start()
     {
         uiManager = FindAnyObjectByType<UIBattleManager>();
+        ResolveBattleUIController();
 
         if (uiManager == null)
-        {
-            Debug.LogError("[UIButtonContainer] 상위 오브젝트에서 BattleUIManager를 찾을 수 없습니다!");
-        }
+            Debug.LogError("[UIButtonContainer] UIBattleManager를 찾을 수 없습니다!");
         else
-        {
             uiManager.OnContaminationEmpty += OnContaminationCleared;
-        }
 
         ResetButtonsState();
     }
 
-    void OnEnable()
+    private void OnEnable()
     {
+        ResolveActionCanvasGroup();
         ResetButtonsState();
     }
 
-    void OnDestroy()
+    private void OnDestroy()
     {
         if (uiManager != null)
             uiManager.OnContaminationEmpty -= OnContaminationCleared;
     }
 
-    // 배틀 시작 시 버튼 상태를 초기화하는 함수
     public void ResetButtonsState()
     {
         isScanned = false;
-        isExitRequested = false;
+        isProcessing = false;
+        isEscaping = false;
         depletedItemIdThisBattle = null;
+
+        SetBattleActionsLocked(false);
 
         if (searchButton != null)
         {
@@ -73,17 +85,20 @@ public class UIButtonContainer : MonoBehaviour
         }
     }
 
-    // [탐색] 버튼 클릭 이벤트
     public void OnSearchClick()
     {
+        if (isProcessing || isEscaping)
+            return;
+
         Debug.Log("[UIButtonContainer] OnSearchClick 호출됨.");
 
-        if (isScanned) return; // 중복 실행 방지
+        if (isScanned)
+            return;
 
         isScanned = true;
 
-        // 버튼 상태 전환
-        if (searchButton != null) searchButton.interactable = false;
+        if (searchButton != null)
+            searchButton.gameObject.SetActive(false);
 
         if (purifyButton != null)
         {
@@ -99,18 +114,15 @@ public class UIButtonContainer : MonoBehaviour
             uiManager.RevealScannedInfo(GetInfectionTypeText(), GetDescriptionText(), GetInventoryStatusText());
     }
 
-    // [정화] 버튼 클릭 이벤트
     public void OnPurifyClick()
     {
-        if (isExitRequested || !IsBattleActive())
-        {
-            Debug.Log("[UIButtonContainer] 전투 종료 중이므로 정화를 처리하지 않습니다.");
+        if (!TryBeginBattleAction("정화"))
             return;
-        }
 
         if (!isScanned)
         {
             Debug.LogWarning("[UIButtonContainer] 탐색이 완료되지 않아 정화할 수 없습니다.");
+            EndBattleActionProcessing();
             return;
         }
 
@@ -123,21 +135,14 @@ public class UIButtonContainer : MonoBehaviour
             if (uiManager != null)
                 uiManager.RevealScannedInfo(GetInfectionTypeText(), GetDescriptionText(), $"{requiredItemName} 없음");
 
+            EndBattleActionProcessing();
             return;
         }
 
         int consumeRequest = Mathf.Max(1, purifyDurabilityPerUse);
-        int durabilityBeforeUse = InventoryManager.Instance != null
-            ? InventoryManager.Instance.GetItemRemainingDurability(requiredItemId)
-            : 0;
-
-        int consumedDurability = InventoryManager.Instance != null
-            ? InventoryManager.Instance.ConsumeItemDurability(requiredItemId, consumeRequest)
-            : 0;
-
-        if (consumedDurability <= 0)
+        if (!TryApplyDurabilityAndContamination(requiredItemId, consumeRequest, out int consumedDurability, out int durabilityBeforeUse))
         {
-            Debug.LogWarning("[UIButtonContainer] 아이템 내구도 소모에 실패해 정화를 진행하지 않습니다.");
+            EndBattleActionProcessing();
             return;
         }
 
@@ -147,25 +152,92 @@ public class UIButtonContainer : MonoBehaviour
         Debug.Log($"[UIButtonContainer] 정화 약제를 살포합니다. 소모 내구도: {consumedDurability}");
 
         if (uiManager != null)
-        {
-            uiManager.ReduceContamination(consumedDurability);
             uiManager.RevealScannedInfo(GetInfectionTypeText(), GetDescriptionText(), GetInventoryStatusText());
-        }
+
+        EndBattleActionProcessing();
     }
 
-    // [도망] 버튼 클릭 이벤트
     public void OnEscapeClick()
     {
-        if (isExitRequested)
+        if (isEscaping || isProcessing)
             return;
 
-        isExitRequested = true;
-        if (escapeButton != null)
-            escapeButton.interactable = false;
+        if (!TryBeginBattleAction("도망"))
+            return;
 
+        isEscaping = true;
         Debug.Log("[UIButtonContainer] 전투 이탈 시도.");
 
-        ExitBattleUI();
+        BattleEncounterContext.MarkFleeExit();
+
+        ResolveBattleUIController();
+        if (battleUIController != null)
+            battleUIController.OnFleeButtonClicked();
+        else
+            ExitBattleUI();
+    }
+
+    private bool TryBeginBattleAction(string actionName)
+    {
+        if (isEscaping)
+        {
+            Debug.Log($"[UIButtonContainer] 도망 처리 중이므로 {actionName}을(를) 실행하지 않습니다.");
+            return false;
+        }
+
+        if (isProcessing)
+        {
+            Debug.Log($"[UIButtonContainer] 다른 배틀 액션이 처리 중이므로 {actionName}을(를) 실행하지 않습니다.");
+            return false;
+        }
+
+        if (!IsBattleActive())
+        {
+            Debug.Log($"[UIButtonContainer] 전투가 활성 상태가 아니므로 {actionName}을(를) 실행하지 않습니다.");
+            return false;
+        }
+
+        isProcessing = true;
+        SetBattleActionsLocked(true);
+        return true;
+    }
+
+    private void EndBattleActionProcessing()
+    {
+        if (isEscaping)
+            return;
+
+        isProcessing = false;
+        SetBattleActionsLocked(false);
+    }
+
+    private bool TryApplyDurabilityAndContamination(
+        string itemId,
+        int requestedConsume,
+        out int consumedDurability,
+        out int durabilityBeforeUse)
+    {
+        consumedDurability = 0;
+        durabilityBeforeUse = 0;
+
+        if (InventoryManager.Instance == null || uiManager == null)
+        {
+            Debug.LogWarning("[UIButtonContainer] InventoryManager 또는 UIBattleManager가 없어 정화를 진행하지 않습니다.");
+            return false;
+        }
+
+        durabilityBeforeUse = InventoryManager.Instance.GetItemRemainingDurability(itemId);
+        consumedDurability = InventoryManager.Instance.ConsumeItemDurability(itemId, requestedConsume);
+
+        if (consumedDurability <= 0)
+        {
+            Debug.LogWarning("[UIButtonContainer] 아이템 내구도 소모에 실패해 오염도를 변경하지 않습니다.");
+            consumedDurability = 0;
+            return false;
+        }
+
+        uiManager.ReduceContamination(consumedDurability);
+        return true;
     }
 
     private void ExitBattleUI()
@@ -176,14 +248,18 @@ public class UIButtonContainer : MonoBehaviour
             UIManager.Instance.CloseBattleUI();
     }
 
-    // 오염도 0 도달 시 호출 - 모든 버튼 비활성화
     private void OnContaminationCleared()
     {
-        isExitRequested = true;
+        isEscaping = true;
+        isProcessing = true;
+        SetBattleActionsLocked(true);
 
-        if (searchButton != null) searchButton.gameObject.SetActive(false);
-        if (purifyButton != null) purifyButton.gameObject.SetActive(false);
-        if (escapeButton != null) escapeButton.gameObject.SetActive(false);
+        if (searchButton != null)
+            searchButton.gameObject.SetActive(false);
+        if (purifyButton != null)
+            purifyButton.gameObject.SetActive(false);
+        if (escapeButton != null)
+            escapeButton.gameObject.SetActive(false);
 
         Debug.Log("[UIButtonContainer] 정화 완료 - 모든 버튼 비활성화.");
 
@@ -196,12 +272,40 @@ public class UIButtonContainer : MonoBehaviour
             bool shouldAddRewardToInventory = rewardItemId != depletedItemIdThisBattle;
 
             acquisitionPopup.gameObject.SetActive(true);
-            acquisitionPopup.SetupPopup(rewardItemId, 1, shouldAddRewardToInventory); // TODO: 실제 몬스터 드롭 데이터로 교체
+            acquisitionPopup.SetupPopup(rewardItemId, 1, shouldAddRewardToInventory);
         }
         else
         {
             Debug.LogWarning("[UIButtonContainer] acquisitionPopup이 연결되지 않았습니다!");
         }
+    }
+
+    private void ResolveActionCanvasGroup()
+    {
+        if (actionCanvasGroup != null)
+            return;
+
+        actionCanvasGroup = GetComponent<CanvasGroup>();
+        if (actionCanvasGroup == null)
+            actionCanvasGroup = gameObject.AddComponent<CanvasGroup>();
+    }
+
+    private void SetBattleActionsLocked(bool locked)
+    {
+        ResolveActionCanvasGroup();
+        if (actionCanvasGroup == null)
+            return;
+
+        actionCanvasGroup.interactable = !locked;
+        actionCanvasGroup.blocksRaycasts = !locked;
+    }
+
+    private void ResolveBattleUIController()
+    {
+        if (battleUIController != null && battleUIController.isActiveAndEnabled)
+            return;
+
+        battleUIController = FindAnyObjectByType<BattleUIController>(FindObjectsInactive.Include);
     }
 
     private string GetInfectionTypeText()
@@ -254,7 +358,6 @@ public class UIButtonContainer : MonoBehaviour
         if (string.IsNullOrEmpty(rewardItemId))
             return string.Empty;
 
-        // 배틀 정화 소모는 몬스터 정화 아이템(MI) 기준으로 처리합니다.
         return rewardItemId;
     }
 
@@ -300,8 +403,6 @@ public class UIButtonContainer : MonoBehaviour
         if (GameManager.Instance == null)
             return isBattleUiActive;
 
-        // 현재 프로젝트는 배틀 UI를 직접 여는 경로가 있어 GameState가 Field인 경우가 있습니다.
-        // 이때도 배틀 UI가 실제로 열려 있으면 배틀 입력을 허용합니다.
         return GameManager.Instance.CurrentState == GameManager.GameState.Battle || isBattleUiActive;
     }
 }

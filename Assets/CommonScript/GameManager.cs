@@ -3,20 +3,18 @@ using System; // Action 사용을 위해 필수
 
 public class GameManager : MonoBehaviour
 {
-    // 1. 싱글톤 패턴 (팀 프로젝트에서 접근하기 가장 쉬움)
     public static GameManager Instance { get; private set; }
 
-    // 2. 게임 상태 정의
     public enum GameState { Field, Battle }
     public GameState CurrentState { get; private set; } = GameState.Field;
 
-    // 3. 이벤트 선언 (다른 매니저들이 이 이벤트를 구독함)
     public event Action OnBattleStarted;
     public event Action OnBattleEnded;
     public event Action OnStageCleared;
     public event Action OnStageMonstersSpawned;
 
     private bool stageClearPending;
+    private bool isPublishingBattleEnded; // 이벤트 호출 중임을 나타내는 플래그
 
     private void Awake()
     {
@@ -31,29 +29,49 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // 배틀 시작 메서드
     public void EnterBattle()
     {
         CurrentState = GameState.Battle;
         Debug.Log("[GameManager] 배틀 시작!");
-        
-        // 구독하고 있는 모든 매니저(UI, Sound 등)에게 알림
         OnBattleStarted?.Invoke();
     }
 
-    // 배틀 종료(복귀) 메서드
+    // [수정됨] 배틀 종료 및 필드 복귀 메서드
     public void ReturnToField()
     {
-        CurrentState = GameState.Field;
-        Debug.Log("[GameManager] 필드로 복귀!");
-        
-        // 구독하고 있는 모든 매니저에게 알림
-        OnBattleEnded?.Invoke();
+        // 1. 이미 종료 처리 중이라면 중복 호출 방지
+        if (isPublishingBattleEnded)
+        {
+            Debug.LogWarning("[GameManager] 이미 복귀 처리 중입니다. 중복 호출을 차단합니다.");
+            return;
+        }
+
+        isPublishingBattleEnded = true;
+        CurrentState = GameState.Field; // 상태를 먼저 필드로 변경
+
+        Debug.Log("[GameManager] 필드로 복귀합니다.");
+
+        try
+        {
+            // 2. 이벤트 발생 (구독 중인 PlayerController 및 몬스터들에게 알림)
+            OnBattleEnded?.Invoke();
+        }
+        catch (Exception e)
+        {
+            // 이벤트 호출 중 에러가 나도 게임이 멈추지 않도록 예외 처리
+            Debug.LogError($"[GameManager] 배틀 종료 이벤트 처리 중 오류 발생: {e.Message}");
+        }
+        finally
+        {
+            // 3. 어떤 상황에서도 반드시 플래그를 해제하여 다음 배틀 종료가 정상 작동하게 함
+            isPublishingBattleEnded = false;
+        }
     }
 
     public void ResetToField()
     {
         CurrentState = GameState.Field;
+        isPublishingBattleEnded = false; // 강제 초기화
     }
 
     public void NotifyStageCleared()

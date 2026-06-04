@@ -1409,9 +1409,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 4779326148928543390}
-        m_TargetAssemblyTypeName: BattleUIController, Assembly-CSharp
-        m_MethodName: OnFleeButtonClicked
+      - m_Target: {fileID: 6336157620756632991}
+        m_TargetAssemblyTypeName: UIButtonContainer, Assembly-CSharp
+        m_MethodName: OnEscapeClick
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

@@ -165,6 +165,9 @@ public class PlayerController : MonoBehaviour
             if (string.IsNullOrEmpty(resolvedMonsterId))
                 Debug.LogWarning($"[PlayerController] 몬스터 ID 해석 실패: {other.gameObject.name}");
 
+            if (GameManager.Instance != null)
+                GameManager.Instance.EnterBattle();
+
             if (battleSceneUI != null)
                 battleSceneUI.SetActive(true);
             else

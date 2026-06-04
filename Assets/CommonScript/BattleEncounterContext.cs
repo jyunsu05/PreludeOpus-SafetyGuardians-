@@ -2,6 +2,14 @@ public static class BattleEncounterContext
 {
     private static string currentEncounteredMonsterId;
     private static UnityEngine.GameObject currentEncounteredMonsterObject;
+    private static bool fleeExitPending;
+
+    /// <summary>도망으로 전투가 끝날 때 true. 오염도 저장 대신 전투 진입 시점으로 되돌립니다.</summary>
+    public static void MarkFleeExit() => fleeExitPending = true;
+
+    public static bool IsFleeExitPending => fleeExitPending;
+
+    public static void ClearFleeExit() => fleeExitPending = false;
 
     public static void SetEncounteredMonsterId(string monsterId)
     {

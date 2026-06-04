@@ -80,8 +80,6 @@ public class BattleFieldReturnHelper : MonoBehaviour
 
     private void ApplyFieldUI()
     {
-        ResetBattleButtons();
-
         if (battleSceneUI != null)
             battleSceneUI.SetActive(false);
 
@@ -122,13 +120,4 @@ public class BattleFieldReturnHelper : MonoBehaviour
             popup.gameObject.SetActive(false);
     }
 
-    private void ResetBattleButtons()
-    {
-        if (battleSceneUI == null)
-            return;
-
-        var buttons = battleSceneUI.GetComponentInChildren<UIButtonContainer>(true);
-        if (buttons != null)
-            buttons.ResetButtonsState();
-    }
 }
