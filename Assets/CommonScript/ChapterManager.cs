@@ -21,6 +21,9 @@ public class ChapterManager : MonoBehaviour
     [Header("--- 저장 ---")]
     [SerializeField] private bool persistChapterIndex = true;
 
+    [Tooltip("씬 진입·에디터 Play 시 항상 챕터 1. (플레이 중 진행은 저장, 씬 재로드 이어하기는 ApplySavedChapter)")]
+    [SerializeField] private bool startFromFirstChapterOnSceneLoad = true;
+
     /// <summary>1-based 현재 챕터 번호.</summary>
     public int CurrentChapterIndex { get; private set; } = 1;
 
@@ -41,6 +44,25 @@ public class ChapterManager : MonoBehaviour
         Instance = this;
         InitializeChapters();
     }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        RemoveNullChapterPrefabSlots();
+    }
+
+    private void RemoveNullChapterPrefabSlots()
+    {
+        if (chapterPrefabs == null)
+            return;
+
+        for (int i = chapterPrefabs.Count - 1; i >= 0; i--)
+        {
+            if (chapterPrefabs[i] == null)
+                chapterPrefabs.RemoveAt(i);
+        }
+    }
+#endif
 
     private void OnDestroy()
     {
@@ -72,8 +94,19 @@ public class ChapterManager : MonoBehaviour
         ActivateChapter(chapter, savePrefs: false, isRestart: false, refreshGameplay: false);
     }
 
+    /// <summary>새 플레이 세션: 저장 챕터를 지우고 챕터 1을 활성화합니다.</summary>
+    public void BeginNewPlaySession()
+    {
+        ClearSavedChapter();
+        DeactivateAllChapterPrefabs();
+        ActivateChapter(1, savePrefs: persistChapterIndex, isRestart: false, refreshGameplay: false);
+        Debug.Log("[ChapterManager] 새 플레이 — 챕터 1부터 시작");
+    }
+
     public void ResetToFirstChapter()
     {
+        ClearSavedChapter();
+        DeactivateAllChapterPrefabs();
         ActivateChapter(1, savePrefs: true, isRestart: false, refreshGameplay: true);
     }
 
@@ -166,12 +199,13 @@ public class ChapterManager : MonoBehaviour
             return;
         }
 
-        for (int i = 0; i < chapterPrefabs.Count; i++)
+        if (startFromFirstChapterOnSceneLoad)
         {
-            GameObject chapter = chapterPrefabs[i];
-            if (chapter != null && chapter.activeSelf)
-                chapter.SetActive(false);
+            BeginNewPlaySession();
+            return;
         }
+
+        DeactivateAllChapterPrefabs();
 
         int startChapter = persistChapterIndex && PlayerPrefs.HasKey(CurrentChapterPrefsKey)
             ? PlayerPrefs.GetInt(CurrentChapterPrefsKey, 1)
@@ -179,6 +213,19 @@ public class ChapterManager : MonoBehaviour
 
         ActivateChapter(startChapter, savePrefs: !PlayerPrefs.HasKey(CurrentChapterPrefsKey), isRestart: false,
             refreshGameplay: false);
+    }
+
+    private void DeactivateAllChapterPrefabs()
+    {
+        if (chapterPrefabs == null)
+            return;
+
+        for (int i = 0; i < chapterPrefabs.Count; i++)
+        {
+            GameObject chapter = chapterPrefabs[i];
+            if (chapter != null && chapter.activeSelf)
+                chapter.SetActive(false);
+        }
     }
 
     private void ActivateChapter(int chapterIndex, bool savePrefs, bool isRestart, bool refreshGameplay)

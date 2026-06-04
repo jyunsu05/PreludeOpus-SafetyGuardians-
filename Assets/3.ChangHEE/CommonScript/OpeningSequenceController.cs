@@ -90,7 +90,17 @@ public class OpeningSequenceController : MonoBehaviour
         finished = true;
         RestoreCameraBackground();
         RestoreMainContent();
+        EnsureChapterOneAfterOpening();
         gameObject.SetActive(false);
+    }
+
+    static void EnsureChapterOneAfterOpening()
+    {
+        ChapterManager chapterManager = ChapterManager.Instance;
+        if (chapterManager == null)
+            chapterManager = FindAnyObjectByType<ChapterManager>(FindObjectsInactive.Include);
+
+        chapterManager?.BeginNewPlaySession();
     }
 
     void ApplyBlackCameraBackground()

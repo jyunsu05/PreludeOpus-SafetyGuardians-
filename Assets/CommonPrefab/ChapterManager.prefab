@@ -44,8 +44,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 272f087cbd9d9df419da93b72845d37d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ChapterManager
-  chapterPrefabs:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  chapterPrefabs: []
   persistChapterIndex: 1
+  startFromFirstChapterOnSceneLoad: 1
