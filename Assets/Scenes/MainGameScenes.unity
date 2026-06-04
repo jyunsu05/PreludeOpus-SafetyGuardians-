@@ -1137,7 +1137,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 880001001, guid: c7d9e1f2a3b4567890abcdef12345678, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 880001002, guid: c7d9e1f2a3b4567890abcdef12345678, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2716,6 +2716,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8984821113467744188, guid: 6fd4ea3eb7a6f784b88c49a9b8f7de41, type: 3}
+      propertyPath: chapterPrefabs.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8984821113467744188, guid: 6fd4ea3eb7a6f784b88c49a9b8f7de41, type: 3}
       propertyPath: 'chapterPrefabs.Array.data[0]'
       value: 
       objectReference: {fileID: 771899688}
@@ -2727,32 +2731,20 @@ PrefabInstance:
       propertyPath: 'chapterPrefabs.Array.data[2]'
       value: 
       objectReference: {fileID: 1149456879}
+    - target: {fileID: 8984821113467744188, guid: 6fd4ea3eb7a6f784b88c49a9b8f7de41, type: 3}
+      propertyPath: 'chapterPrefabs.Array.data[3]'
+      value: 
+      objectReference: {fileID: 1149456879}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6fd4ea3eb7a6f784b88c49a9b8f7de41, type: 3}
---- !u!1 &5131610698927555310 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 434213129499230545, guid: 6fd4ea3eb7a6f784b88c49a9b8f7de41, type: 3}
-  m_PrefabInstance: {fileID: 5131610698927555308}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &5131610698927555309 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1328573610219112104, guid: 6fd4ea3eb7a6f784b88c49a9b8f7de41, type: 3}
   m_PrefabInstance: {fileID: 5131610698927555308}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &5131610698927555311 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 8984821113467744188, guid: 6fd4ea3eb7a6f784b88c49a9b8f7de41, type: 3}
-  m_PrefabInstance: {fileID: 5131610698927555308}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5131610698927555310}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 272f087cbd9d9df419da93b72845d37d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ChapterManager
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
