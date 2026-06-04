@@ -197,6 +197,7 @@ MonoBehaviour:
   battleSceneUI: {fileID: 0}
   mainHUD: {fileID: 0}
   postFleeGraceDuration: 0.5
+  postBattleReentryDistance: 0.8
 --- !u!114 &7236435115061726686
 MonoBehaviour:
   m_ObjectHideFlags: 0

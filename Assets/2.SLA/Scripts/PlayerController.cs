@@ -29,6 +29,10 @@ public class PlayerController : MonoBehaviour
     private Vector2 lastBattleEndedPosition;
     private bool hasLastBattleEndedPosition;
     private bool isGameManagerSubscribed;
+    // 전투 종료 직후 물리 복구가 필요한 상태인지 추적합니다.
+    // Watchdog이 이 플래그가 true일 때만 작동하도록 범위를 좁혀,
+    // 나중에 NPC 대화창·일시정지 메뉴 등이 추가되어도 물리를 강제로 켜버리는 부작용을 방지합니다.
+    private bool isWaitingForPostBattlePhysicsRecovery;
 
     private const string MonsterIdSlime = "M-001";
     private const string MonsterIdFungus = "M-002";
@@ -103,7 +107,19 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        EnsurePhysicsSimulated();
+        // --- 물리 복구 감시자 (Watchdog) ---
+        // 전투가 막 끝난 직후에만 작동합니다. 물리 복구가 확인되면 즉시 감시를 종료합니다.
+        // (항상 작동하게 두면 NPC 대화창·일시정지 메뉴 등이 rb.simulated를 꺼도
+        //  강제로 다시 켜버려 플레이어가 멋대로 움직이는 부작용이 생깁니다.)
+        if (isWaitingForPostBattlePhysicsRecovery && rb != null)
+        {
+            if (!rb.simulated)
+            {
+                Debug.LogWarning("[PlayerController] 물리 시뮬레이션 복구됨 (Watchdog).");
+                rb.simulated = true;
+            }
+            isWaitingForPostBattlePhysicsRecovery = false;
+        }
 
         movementInput.x = Input.GetAxisRaw("Horizontal");
         movementInput.y = Input.GetAxisRaw("Vertical");
@@ -207,6 +223,9 @@ public class PlayerController : MonoBehaviour
             hasLastBattleEndedPosition = true;
             rb.linearVelocity = Vector2.zero;
             rb.angularVelocity = 0f;
+
+            // 전투 종료 직후 물리 복구 감시 대기 상태로 진입합니다.
+            isWaitingForPostBattlePhysicsRecovery = true;
         }
         else
         {
@@ -252,6 +271,12 @@ public class PlayerController : MonoBehaviour
     private bool IsMonsterCollider(Collider2D other)
     {
         if (other == null)
+            return false;
+
+        // 아이템 픽업 컴포넌트가 붙어 있는 오브젝트는 이름과 무관하게 절대 몬스터가 아닙니다.
+        // 이 검사가 없으면 "슬라임 해독제", "불꽃 소화기"처럼 이름에 몬스터 키워드가 들어간
+        // 아이템을 몬스터로 오인해 hasEnteredBattle이 true로 굳어버리는 버그가 발생합니다.
+        if (other.GetComponent<ItemPickup>() != null)
             return false;
 
         try
