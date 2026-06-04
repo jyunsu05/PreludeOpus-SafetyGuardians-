@@ -1,6 +1,8 @@
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -55,6 +57,11 @@ public class OpeningStarWarsCrawl : MonoBehaviour
     [SerializeField] string nextSceneName = "MainGameScenes";
     [SerializeField] string pressAnyKeyMessage = "아무 키나 누르세요";
     [SerializeField] float pressAnyKeyFontSize = 36f;
+    [Tooltip("오프닝 시작 시 화면이 밝아지는 시간(초). 0이면 페이드 인 없음.")]
+    [SerializeField] float entryFadeInSeconds = 1.5f;
+    [Tooltip("다음 스테이지로 넘어가기 전 화면 전체가 어두워지는 시간(초). 0이면 즉시 전환.")]
+    [SerializeField] float exitFadeOutSeconds = 1.5f;
+    [SerializeField] Color exitFadeColor = Color.black;
 
     public enum TransitionMode
     {
@@ -64,6 +71,9 @@ public class OpeningStarWarsCrawl : MonoBehaviour
 
     const string CreditsObjectName = "StoryCreditsText";
     const string PressAnyKeyObjectName = "PressAnyKeyText";
+    const string ExitFadeOverlayObjectName = "ExitFadeOverlay";
+
+    static Sprite whiteSprite;
 
     RectTransform canvasRect;
     Canvas rootCanvas;
@@ -71,6 +81,8 @@ public class OpeningStarWarsCrawl : MonoBehaviour
     TextMeshProUGUI creditsText;
     RectTransform creditsRect;
     TextMeshProUGUI pressAnyKeyText;
+    Image exitFadeOverlay;
+    CanvasGroup openingCanvasGroup;
     float creditsHeight;
     float textScrollHeight;
     float runtimeStartY;
@@ -83,6 +95,8 @@ public class OpeningStarWarsCrawl : MonoBehaviour
     bool loggedTextGone;
     float textVisuallyGoneAt = -1f;
     CrawlPhase phase = CrawlPhase.Scrolling;
+    bool openingFinished;
+    Coroutine activeFadeRoutine;
 
     const string StoryText =
         "인류는 끊임없는 발전과 풍요라는 달콤한 과실을 따기 위해, 매일같이 과학의 한계를 시험대 위에 올렸다. " +
@@ -106,11 +120,24 @@ public class OpeningStarWarsCrawl : MonoBehaviour
         EnsureFullScreenLayout();
         BuildCreditsText();
         BuildPressAnyKeyText();
+        BuildExitFadeOverlay();
+        EnsureOpeningCanvasGroup();
         ResetCrawl();
+        BeginEntryFade();
     }
 
     void Update()
     {
+        if (openingFinished)
+            return;
+
+        // 화면 연출은 예전과 동일하게 진행. 키는 스크롤 중·'아무 키나' 표시 중 언제든 다음으로 스킵.
+        if (WasAnyKeyPressed())
+        {
+            FinishOpening();
+            return;
+        }
+
         AdvanceCrawlTimer();
 
         if (phase == CrawlPhase.Scrolling)
@@ -121,9 +148,6 @@ public class OpeningStarWarsCrawl : MonoBehaviour
             pressKeyElapsed += Time.deltaTime;
             UpdatePressKeyFade();
         }
-
-        if (phase == CrawlPhase.WaitingForInput && WasAnyKeyPressed())
-            FinishOpening();
     }
 
     void AdvanceCrawlTimer()
@@ -191,6 +215,14 @@ public class OpeningStarWarsCrawl : MonoBehaviour
         Debug.Log($"[OpeningTimer] 글자 사라짐(화면상) — {crawlTimer:F1}초");
     }
 
+    bool IsCreditsVisuallyGone()
+    {
+        if (!crawlTimerStarted || creditsText == null)
+            return false;
+
+        return creditsText.color.a <= 0.05f;
+    }
+
     bool ShouldShowPressKey()
     {
         if (pressKeyAtSeconds > 0f)
@@ -203,14 +235,6 @@ public class OpeningStarWarsCrawl : MonoBehaviour
             return crawlTimer >= textVisuallyGoneAt + pressKeyDelayAfterTextGone;
 
         return false;
-    }
-
-    bool IsCreditsVisuallyGone()
-    {
-        if (!crawlTimerStarted || creditsText == null)
-            return false;
-
-        return creditsText.color.a <= 0.05f;
     }
 
     bool IsCrawlFinished()
@@ -291,6 +315,150 @@ public class OpeningStarWarsCrawl : MonoBehaviour
     }
 
     void FinishOpening()
+    {
+        if (openingFinished)
+            return;
+
+        openingFinished = true;
+        StopActiveFadeRoutine();
+
+        if (exitFadeOutSeconds <= 0f)
+        {
+            CompleteOpeningTransition();
+            return;
+        }
+
+        activeFadeRoutine = StartCoroutine(ExitFadeThenTransition());
+    }
+
+    void BeginEntryFade()
+    {
+        if (entryFadeInSeconds <= 0f)
+        {
+            SetOpeningCanvasAlpha(1f);
+            HideFadeOverlay();
+            return;
+        }
+
+        // 첫 프레임부터 카메라(스카이박스) 색이 비치지 않도록 완전 검은 막을 먼저 올립니다.
+        ShowFadeOverlay();
+        SetFadeOverlayAlpha(1f);
+        SetOpeningCanvasAlpha(0f);
+        activeFadeRoutine = StartCoroutine(EntryFadeIn());
+    }
+
+    IEnumerator EntryFadeIn()
+    {
+        // StarGlow 등 캔버스 자식이 붙은 뒤, 내용은 준비해 두고 검은 막만 걷습니다.
+        yield return null;
+
+        SetOpeningCanvasAlpha(1f);
+        ShowFadeOverlay();
+        SetFadeOverlayAlpha(1f);
+        EnsureFadeOverlayOnTop();
+
+        float duration = Mathf.Max(0.01f, entryFadeInSeconds);
+        float fadeElapsed = 0f;
+
+        while (fadeElapsed < duration)
+        {
+            fadeElapsed += Time.deltaTime;
+            float reveal = SmoothFade(fadeElapsed / duration);
+            SetFadeOverlayAlpha(1f - reveal);
+            EnsureFadeOverlayOnTop();
+            yield return null;
+        }
+
+        SetOpeningCanvasAlpha(1f);
+        HideFadeOverlay();
+        activeFadeRoutine = null;
+    }
+
+    void EnsureOpeningCanvasGroup()
+    {
+        openingCanvasGroup = GetComponent<CanvasGroup>();
+        if (openingCanvasGroup == null)
+            openingCanvasGroup = gameObject.AddComponent<CanvasGroup>();
+
+        openingCanvasGroup.interactable = true;
+        openingCanvasGroup.blocksRaycasts = false;
+    }
+
+    void SetOpeningCanvasAlpha(float alpha)
+    {
+        if (openingCanvasGroup == null)
+            return;
+
+        openingCanvasGroup.alpha = Mathf.Clamp01(alpha);
+    }
+
+    IEnumerator ExitFadeThenTransition()
+    {
+        ShowFadeOverlay();
+
+        float startAlpha = exitFadeOverlay != null ? exitFadeOverlay.color.a : 0f;
+        float duration = Mathf.Max(0.01f, exitFadeOutSeconds);
+        float fadeElapsed = 0f;
+
+        while (fadeElapsed < duration)
+        {
+            fadeElapsed += Time.deltaTime;
+            float alpha = Mathf.Lerp(startAlpha, 1f, SmoothFade(fadeElapsed / duration));
+            SetFadeOverlayAlpha(alpha);
+            yield return null;
+        }
+
+        SetFadeOverlayAlpha(1f);
+        activeFadeRoutine = null;
+        CompleteOpeningTransition();
+    }
+
+    void StopActiveFadeRoutine()
+    {
+        if (activeFadeRoutine == null)
+            return;
+
+        StopCoroutine(activeFadeRoutine);
+        activeFadeRoutine = null;
+    }
+
+    void ShowFadeOverlay()
+    {
+        if (exitFadeOverlay == null)
+            return;
+
+        exitFadeOverlay.gameObject.SetActive(true);
+        EnsureFadeOverlayOnTop();
+    }
+
+    void EnsureFadeOverlayOnTop()
+    {
+        if (exitFadeOverlay == null)
+            return;
+
+        exitFadeOverlay.transform.SetAsLastSibling();
+    }
+
+    void HideFadeOverlay()
+    {
+        if (exitFadeOverlay == null)
+            return;
+
+        SetFadeOverlayAlpha(0f);
+        exitFadeOverlay.gameObject.SetActive(false);
+    }
+
+    void SetFadeOverlayAlpha(float alpha)
+    {
+        if (exitFadeOverlay == null)
+            return;
+
+        Color color = exitFadeColor;
+        color.a = Mathf.Clamp01(alpha);
+        exitFadeOverlay.color = color;
+    }
+
+    void CompleteOpeningTransition()
     {
         if (transitionMode == TransitionMode.InScene)
         {
@@ -388,6 +556,45 @@ public class OpeningStarWarsCrawl : MonoBehaviour
         creditsRect.sizeDelta = new Vector2(textBoxWidth, creditsHeight);
     }
 
+    void BuildExitFadeOverlay()
+    {
+        Transform old = transform.Find(ExitFadeOverlayObjectName);
+        if (old != null)
+            Destroy(old.gameObject);
+
+        GameObject go = new GameObject(ExitFadeOverlayObjectName, typeof(RectTransform), typeof(Image));
+        go.transform.SetParent(transform, false);
+
+        RectTransform overlayRect = go.GetComponent<RectTransform>();
+        overlayRect.anchorMin = Vector2.zero;
+        overlayRect.anchorMax = Vector2.one;
+        overlayRect.offsetMin = Vector2.zero;
+        overlayRect.offsetMax = Vector2.zero;
+
+        exitFadeOverlay = go.GetComponent<Image>();
+        exitFadeOverlay.sprite = GetWhiteSprite();
+        exitFadeOverlay.type = Image.Type.Simple;
+        exitFadeOverlay.raycastTarget = false;
+
+        Color startColor = exitFadeColor;
+        startColor.a = 0f;
+        exitFadeOverlay.color = startColor;
+        go.SetActive(false);
+    }
+
+    static Sprite GetWhiteSprite()
+    {
+        if (whiteSprite != null)
+            return whiteSprite;
+
+        Texture2D texture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
+        texture.SetPixel(0, 0, Color.white);
+        texture.Apply();
+
+        whiteSprite = Sprite.Create(texture, new Rect(0f, 0f, 1f, 1f), new Vector2(0.5f, 0.5f));
+        return whiteSprite;
+    }
+
     void BuildPressAnyKeyText()
     {
         Transform old = transform.Find(PressAnyKeyObjectName);
@@ -454,6 +661,7 @@ public class OpeningStarWarsCrawl : MonoBehaviour
         loggedTextGone = false;
         textVisuallyGoneAt = -1f;
         phase = CrawlPhase.Scrolling;
+        openingFinished = false;
         runtimeStartY = GetBottomY() - startOffsetFromBottom;
         UpdateCreditsTransform();
 

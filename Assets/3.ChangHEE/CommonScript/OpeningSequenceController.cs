@@ -15,8 +15,14 @@ public class OpeningSequenceController : MonoBehaviour
     [SerializeField] bool autoCollectGameplayRoots = true;
     [SerializeField] GameObject[] hideDuringOpening;
 
+    [Header("Camera")]
+    [SerializeField] Camera mainCamera;
+
     bool[] savedActiveStates;
     bool finished;
+    bool savedCameraState;
+    CameraClearFlags savedClearFlags;
+    Color savedBackgroundColor;
 
     void Awake()
     {
@@ -27,6 +33,7 @@ public class OpeningSequenceController : MonoBehaviour
             hideDuringOpening = CollectGameplayRoots();
 
         HideMainContent();
+        ApplyBlackCameraBackground();
 
         if (crawl != null)
             crawl.ConfigureInSceneMode(this);
@@ -81,8 +88,35 @@ public class OpeningSequenceController : MonoBehaviour
             return;
 
         finished = true;
+        RestoreCameraBackground();
         RestoreMainContent();
         gameObject.SetActive(false);
+    }
+
+    void ApplyBlackCameraBackground()
+    {
+        if (mainCamera == null)
+            mainCamera = Camera.main;
+
+        if (mainCamera == null)
+            return;
+
+        savedClearFlags = mainCamera.clearFlags;
+        savedBackgroundColor = mainCamera.backgroundColor;
+        savedCameraState = true;
+
+        mainCamera.clearFlags = CameraClearFlags.SolidColor;
+        mainCamera.backgroundColor = Color.black;
+    }
+
+    void RestoreCameraBackground()
+    {
+        if (!savedCameraState || mainCamera == null)
+            return;
+
+        mainCamera.clearFlags = savedClearFlags;
+        mainCamera.backgroundColor = savedBackgroundColor;
+        savedCameraState = false;
     }
 
     void RestoreMainContent()
