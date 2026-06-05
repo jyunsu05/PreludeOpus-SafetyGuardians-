@@ -29,8 +29,17 @@ public class UILoading : MonoBehaviour
         if (InformationText != null)
             InformationText.gameObject.SetActive(false);
 
+        ConfigureProgressBar();
         SetProgress(0f);
         SetLoadingText("로딩중");
+    }
+
+    private void ConfigureProgressBar()
+    {
+        if (loadingProgressBar == null)
+            return;
+
+        loadingProgressBar.interactable = false;
     }
 
     void Update()
@@ -75,6 +84,7 @@ public class UILoading : MonoBehaviour
         if (loadingPanel != null)
             loadingPanel.SetActive(true);
 
+        ConfigureProgressBar();
         SetProgress(initialProgress);
         SetLoadingText(message);
     }
