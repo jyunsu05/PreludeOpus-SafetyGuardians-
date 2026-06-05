@@ -1092,6 +1092,7 @@ public class ChapterManager : MonoBehaviour
     private void ResetChapterRestartGameplayState()
     {
         GameManager.Instance?.ResetToField();
+        GameManager.Instance?.ResetPlayerOxygenOnChapterTransition();
 
         if (UIManager.Instance != null)
             UIManager.Instance.CloseBattleUI();

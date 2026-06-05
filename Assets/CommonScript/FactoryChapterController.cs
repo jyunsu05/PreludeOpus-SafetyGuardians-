@@ -149,6 +149,7 @@ public class FactoryChapterController : MonoBehaviour
     private void RefreshChapterGameplay()
     {
         GameManager.Instance?.ResetToField();
+        GameManager.Instance?.ResetPlayerOxygenOnChapterTransition();
 
         if (UIManager.Instance != null)
             UIManager.Instance.CloseBattleUI();
