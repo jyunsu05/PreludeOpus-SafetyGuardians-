@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 30b7e9dada5a50942afae680ef33c5ad
+guid: cc23ddda38b2f6541b0a54981db8e312
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 5597828272795801830
-    second: Oxygen_Slider_Gradient-Fill_0
+      213: 2818615595400108734
+    second: walk_left_0_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Oxygen_Slider_Gradient-Fill_0
+      name: walk_left_0_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 550
-        height: 309
+        x: 73
+        y: 52
+        width: 315
+        height: 393
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 6e8d1a1d72b7fad40800000000000000
-      internalID: 5597828272795801830
+      spriteID: eba133a43fbbd1720800000000000000
+      internalID: 2818615595400108734
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Oxygen_Slider_Gradient-Fill_0: 5597828272795801830
+      walk_left_0_0: 2818615595400108734
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -1,25 +1,10 @@
 fileFormatVersion: 2
-guid: 87fb528f82977304fb94a275c4ca459d
+guid: b1c6af1af610dea43aa611b51b757ef8
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -3586270328273817323
-    second: Steampunk_UI-elements_Slider_0
-  - first:
-      213: 9210386295056058453
-    second: Steampunk_UI-elements_Slider_1
-  - first:
-      213: -4894749473671422561
-    second: Steampunk_UI-elements_Slider_2
-  - first:
-      213: -3203003622201201837
-    second: Steampunk_UI-elements_Slider_3
-  - first:
-      213: 6565807247925028932
-    second: Steampunk_UI-elements_Slider_4
-  - first:
-      213: -4812278557867614865
-    second: Steampunk_UI-elements_Slider_5
+      213: 1938422632353913883
+    second: walk_right_3_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -128,67 +113,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Steampunk_UI-elements_Slider_0
+      name: walk_right_3_0
       rect:
         serializedVersion: 2
-        x: 144
-        y: 677
-        width: 1217
-        height: 201
+        x: 120
+        y: 57
+        width: 312
+        height: 388
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 51137b623220b3ec0800000000000000
-      internalID: -3586270328273817323
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Steampunk_UI-elements_Slider_1
-      rect:
-        serializedVersion: 2
-        x: 186
-        y: 403
-        width: 1146
-        height: 208
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 55841f0698dd1df70800000000000000
-      internalID: 9210386295056058453
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Steampunk_UI-elements_Slider_5
-      rect:
-        serializedVersion: 2
-        x: 1074
-        y: 76
-        width: 294
-        height: 236
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: f6d521ee52a573db0800000000000000
-      internalID: -4812278557867614865
+      spriteID: b1c580a2d19a6ea10800000000000000
+      internalID: 1938422632353913883
       vertices: []
       indices: 
       edges: []
@@ -197,7 +138,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 20ccea44466e486419fb0f6441328c6a
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -207,12 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Steampunk_UI-elements_Slider_0: -3586270328273817323
-      Steampunk_UI-elements_Slider_1: 9210386295056058453
-      Steampunk_UI-elements_Slider_2: -4894749473671422561
-      Steampunk_UI-elements_Slider_3: -3203003622201201837
-      Steampunk_UI-elements_Slider_4: 6565807247925028932
-      Steampunk_UI-elements_Slider_5: -4812278557867614865
+      walk_right_3_0: 1938422632353913883
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
