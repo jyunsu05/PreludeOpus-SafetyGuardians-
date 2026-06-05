@@ -2945,11 +2945,11 @@ PrefabInstance:
     - target: {fileID: 8984821113467744188, guid: 6fd4ea3eb7a6f784b88c49a9b8f7de41, type: 3}
       propertyPath: 'factoryStagePrefabSources.Array.data[1]'
       value: 
-      objectReference: {fileID: 537984654}
+      objectReference: {fileID: 390242818}
     - target: {fileID: 8984821113467744188, guid: 6fd4ea3eb7a6f784b88c49a9b8f7de41, type: 3}
       propertyPath: 'factoryStagePrefabSources.Array.data[2]'
       value: 
-      objectReference: {fileID: 1149456879}
+      objectReference: {fileID: 390242818}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
