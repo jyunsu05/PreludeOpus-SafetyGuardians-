@@ -332,8 +332,14 @@ public class ChapterManager : MonoBehaviour
             return false;
 
         int slot = oneBasedChapterIndex - 1;
-        if (chapterPrefabs[slot] != null)
-            return true;
+        GameObject existing = chapterPrefabs[slot];
+        if (existing != null)
+        {
+            if (existing)
+                return true;
+
+            chapterPrefabs[slot] = null;
+        }
 
         GameObject template = ResolveChapterTemplate(slot);
         if (template == null)
@@ -350,6 +356,27 @@ public class ChapterManager : MonoBehaviour
         instance.SetActive(false);
         chapterPrefabs[slot] = instance;
         return true;
+    }
+
+    private void ReinstantiateAllChapterSlotsAfterDestroy()
+    {
+        if (chapterPrefabs == null)
+            return;
+
+        for (int i = 0; i < chapterPrefabs.Count; i++)
+            EnsureChapterInstance(i + 1);
+    }
+
+    private static void ActivateChapterHierarchy(GameObject chapterRoot, bool shouldActivate)
+    {
+        if (chapterRoot == null)
+            return;
+
+        if (chapterRoot.activeSelf != shouldActivate)
+            chapterRoot.SetActive(shouldActivate);
+
+        if (shouldActivate)
+            GameManager.ActivateHierarchyDeep(chapterRoot);
     }
 
     public void ResetToFirstChapter()
@@ -439,6 +466,8 @@ public class ChapterManager : MonoBehaviour
             GameManager.ActivateFactoryStageSceneRoots();
 
             yield return null;
+
+            ReinstantiateAllChapterSlotsAfterDestroy();
 
             if (!PreparePlaySessionChapter(chapterIndex, isRestart: true))
                 yield break;
@@ -1014,8 +1043,7 @@ public class ChapterManager : MonoBehaviour
                 continue;
 
             bool shouldActivate = i + 1 == CurrentChapterIndex;
-            if (chapter.activeSelf != shouldActivate)
-                chapter.SetActive(shouldActivate);
+            ActivateChapterHierarchy(chapter, shouldActivate);
         }
 
         if (savePrefs && persistChapterIndex)
