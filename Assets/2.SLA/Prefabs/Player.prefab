@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 433014957338676636}
   - component: {fileID: 7236435115061726686}
   - component: {fileID: 8351533337805257606}
+  - component: {fileID: 4717229866792010008}
   m_Layer: 7
   m_Name: Player
   m_TagString: Player
@@ -36,7 +37,7 @@ Transform:
   m_LocalScale: {x: 0.5, y: 0.5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 4010470800858438565}
+  - {fileID: 8882326705139904439}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &6771914663786451906
@@ -108,7 +109,7 @@ Animator:
   m_GameObject: {fileID: 8262382494914530255}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: b734f9144eebf4144b0789f246793e67, type: 2}
+  m_Controller: {fileID: 9100000, guid: 67326c144280b7e4e9b6ac0e7a27c67a, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -250,7 +251,39 @@ MonoBehaviour:
   currentTargetName: 
   currentDistance: 0
   currentExclusionRadiusWorld: 0
---- !u!1001 &1463027676457136305
+--- !u!114 &4717229866792010008
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8262382494914530255}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e3e9f42724e2ed34ea043ff799af6f01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ItemArrowIndicator
+  playerTransform: {fileID: 140981729730371750}
+  arrowVisual: {fileID: 0}
+  itemTag: Item
+  detectionRange: 999
+  hideDistance: 1.25
+  exclusionRadiusMode: 0
+  exclusionCollider: {fileID: 0}
+  playerExclusionRadiusCm: 5
+  exclusionRadiusBonusCm: 40
+  arrowPaddingCm: 0
+  rotationLerpSpeed: 12
+  angleOffset: -90
+  useNearestItemSprite: 1
+  arrowDisplaySizeCm: 50
+  autoArrowVisualName: Arrow
+  copySortingFromPlayer: 1
+  sortingOrderOffset: 10
+  currentTargetName: 
+  currentDistance: 0
+  currentExclusionRadiusWorld: 0
+--- !u!1001 &6386639775014634659
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -307,8 +340,8 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b591b507e7cf6014983e07f90c79748b, type: 3}
---- !u!4 &4010470800858438565 stripped
+--- !u!4 &8882326705139904439 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2586678183922543380, guid: b591b507e7cf6014983e07f90c79748b, type: 3}
-  m_PrefabInstance: {fileID: 1463027676457136305}
+  m_PrefabInstance: {fileID: 6386639775014634659}
   m_PrefabAsset: {fileID: 0}

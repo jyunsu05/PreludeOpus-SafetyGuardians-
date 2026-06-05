@@ -1,10 +1,11 @@
 using System.Collections;
 using UnityEngine;
 
+// 스크립트가 부착될 때 2D 이동, 애니메이션, 이미지 렌더링에 필요한 필수 컴포넌트들을 자동으로 함께 부착해 주는 속성
 [RequireComponent(typeof(Rigidbody2D), typeof(Animator), typeof(SpriteRenderer))]
 public class PlayerController : MonoBehaviour
 {
-    [SerializeField] private float moveSpeed = 5.0f;
+    [SerializeField] private float moveSpeed = 5.0f; // 필드 위에서의 플레이어 이동 속도
 
     [Header("전투씬창 UI 연결")]
     [SerializeField] private GameObject battleSceneUI;
@@ -19,29 +20,34 @@ public class PlayerController : MonoBehaviour
     [Tooltip("전투가 끝난 뒤 이 거리 이상 벗어나야 다시 전투에 들어갈 수 있습니다.")]
     [SerializeField] private float postBattleReentryDistance = 1.0f;
 
+    // 캐싱용 컴포넌트 변수들
     private Rigidbody2D rb;
     private SpriteRenderer spriteRenderer;
+    private Animator animator; 
     private Coroutine postFleeGraceRoutine;
 
-    private Vector2 movementInput;
-    private bool isBattleEntryLocked;
-    private bool hasEnteredBattle;
-    private Vector2 lastBattleEndedPosition;
-    private bool hasLastBattleEndedPosition;
-    private bool isGameManagerSubscribed;
-    // 전투 종료 직후 물리 복구가 필요한 상태인지 추적합니다.
-    // Watchdog이 이 플래그가 true일 때만 작동하도록 범위를 좁혀,
-    // 나중에 NPC 대화창·일시정지 메뉴 등이 추가되어도 물리를 강제로 켜버리는 부작용을 방지합니다.
+    // 실시간 제어 상태 플래그 변수들
+    private Vector2 movementInput; // 현재 프레임에서 입력된 방향 벡터 (X, Y)
+    private bool isBattleEntryLocked; // 도망 직후 전투 진입 잠금 여부
+    private bool hasEnteredBattle; // 현재 전투 모드 진입 여부
+    private Vector2 lastBattleEndedPosition; // 마지막 전투가 종료되었을 때 플레이어의 위치
+    private bool hasLastBattleEndedPosition; // 마지막 전투 종료 위치의 기록 여부
+    private bool isGameManagerSubscribed; // GameManager 배틀 종료 이벤트 구독 상태 플래그
+    
+    // 전투 종료 직후 필드로 복귀할 때 물리(simulated) 복구가 필요한 상태인지 확인하는 와치독 제어 변수
     private bool isWaitingForPostBattlePhysicsRecovery;
 
+    // 몬스터 ID 상수 매핑
     private const string MonsterIdSlime = "M-001";
     private const string MonsterIdFungus = "M-002";
     private const string MonsterIdFire = "M-003";
 
     private void Awake()
     {
+        // 시작 시 핵심 컴포넌트들을 스크립트 메모리에 저장(캐싱)
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
+        animator = GetComponent<Animator>(); 
     }
 
     private void OnEnable()
@@ -70,6 +76,7 @@ public class PlayerController : MonoBehaviour
         UnsubscribeGameManager();
     }
 
+    // GameManager 싱글톤의 배틀 종료 이벤트를 안전하게 연결하는 예외 처리 메서드
     private void TrySubscribeGameManager()
     {
         if (isGameManagerSubscribed || GameManager.Instance == null)
@@ -80,6 +87,7 @@ public class PlayerController : MonoBehaviour
         isGameManagerSubscribed = true;
     }
 
+    // GameManager 배틀 종료 이벤트와의 연결을 해제하는 예외 처리 메서드
     private void UnsubscribeGameManager()
     {
         if (!isGameManagerSubscribed || GameManager.Instance == null)
@@ -94,23 +102,26 @@ public class PlayerController : MonoBehaviour
         if (!isGameManagerSubscribed)
             TrySubscribeGameManager();
 
+        // 1단계: 배틀 도중이거나 필드 연출 등으로 조작이 잠긴 경우 예외 처리
         if (IsBattleActive() || IsFieldMovementFrozen())
         {
-            movementInput = Vector2.zero;
+            movementInput = Vector2.zero; // 이동 입력을 0으로 초기화
             if (rb != null)
             {
-                rb.linearVelocity = Vector2.zero;
+                rb.linearVelocity = Vector2.zero; // 미끄러짐 방지를 위해 속도 초기화
                 rb.angularVelocity = 0f;
-                rb.simulated = false;
+                rb.simulated = false; // 다른 연출을 위해 일시적으로 물리 연산 차단
             }
+
+            // 캐릭터가 강제로 멈추는 타이밍에 즉시 애니메이터를 4번(Idle) 상태로 변경
+            if (animator != null) animator.SetInteger("State", 4);
 
             return;
         }
 
         // --- 물리 복구 감시자 (Watchdog) ---
-        // 전투가 막 끝난 직후에만 작동합니다. 물리 복구가 확인되면 즉시 감시를 종료합니다.
-        // (항상 작동하게 두면 NPC 대화창·일시정지 메뉴 등이 rb.simulated를 꺼도
-        //  강제로 다시 켜버려 플레이어가 멋대로 움직이는 부작용이 생깁니다.)
+        // 배틀이 종료되고 필드로 돌아온 최초 시점에 물리 연산(simulated) 상태를 복구시킵니다.
+        // 이를 통해 이벤트 도중 대화창이나 일시정지 창에서 물리가 강제로 켜지는 버그를 원천 차단합니다.
         if (isWaitingForPostBattlePhysicsRecovery && rb != null)
         {
             if (!rb.simulated)
@@ -121,14 +132,46 @@ public class PlayerController : MonoBehaviour
             isWaitingForPostBattlePhysicsRecovery = false;
         }
 
+        // 키보드 입력을 받고 대각선 속도 뻥튀기를 막기 위해 정규화(normalized) 처리
         movementInput.x = Input.GetAxisRaw("Horizontal");
         movementInput.y = Input.GetAxisRaw("Vertical");
         movementInput = movementInput.normalized;
 
-        if (movementInput.x < 0)
-            spriteRenderer.flipX = false;
-        else if (movementInput.x > 0)
-            spriteRenderer.flipX = true;
+        // ==========================================
+        // [애니메이션 상태 머신 4방향 제어 로직]
+        // ==========================================
+        if (animator != null)
+        {
+            // 이동 방향키가 하나라도 눌려 있는지 감지
+            bool isMoving = movementInput.sqrMagnitude > 0;
+
+            if (isMoving)
+            {
+                // 대각선 키 입력 시 절대값이 더 큰(조금 더 확실하게 누르고 있는) 방향을 우선 판정
+                if (Mathf.Abs(movementInput.x) > Mathf.Abs(movementInput.y))
+                {
+                    // 수평(좌우) 이동이 강한 경우
+                    if (movementInput.x < 0)
+                        animator.SetInteger("State", 0); // walk_left (0) 재생
+                    else
+                        animator.SetInteger("State", 1); // walk_right (1) 재생
+                }
+                else
+                {
+                    // 수직(상하) 이동이 강한 경우
+                    if (movementInput.y < 0)
+                        animator.SetInteger("State", 3); // 아래로 걷기 ➔ walk_forward (3) 재생
+                    else
+                        animator.SetInteger("State", 2); // 위로 걷기 ➔ walk_back (2) 재생
+                }
+            }
+            else
+            {
+                // 키를 모두 떼고 멈추면 대기 상태 번호(4) 지정 ➔ Any State의 'State == 4' 조건에 의해 즉시 Idle로 복귀
+                animator.SetInteger("State", 4);
+            }
+        }
+        // ==========================================
     }
 
     private void FixedUpdate()
@@ -136,14 +179,19 @@ public class PlayerController : MonoBehaviour
         if (IsFieldMovementFrozen() || IsBattleActive())
             return;
 
+        // 물리 프레임 주기에 맞추어 플레이어 실제 이동 연산 수행
         if (rb != null && rb.simulated)
             rb.MovePosition(rb.position + movementInput * moveSpeed * Time.fixedDeltaTime);
     }
 
-    /// <summary>게임오버 시 즉시 이동·입력을 멈춥니다.</summary>
+    /// <summary>게임오버, 맵 이동 등의 돌발 정지 타이밍에 즉시 조작과 물리를 멈춥니다.</summary>
     public void StopFieldMovementImmediate()
     {
         movementInput = Vector2.zero;
+
+        // 즉시 정지 시 애니메이터에 대기(4) 지정
+        if (animator != null) 
+            animator.SetInteger("State", 4); 
 
         if (rb == null)
             return;
@@ -153,6 +201,7 @@ public class PlayerController : MonoBehaviour
         rb.simulated = false;
     }
 
+    // 도망친 직후의 잠금 코루틴을 호출하는 허브 메서드
     public void BeginPostFleeGraceWindow()
     {
         if (postFleeGraceRoutine != null)
@@ -161,11 +210,13 @@ public class PlayerController : MonoBehaviour
         postFleeGraceRoutine = StartCoroutine(PostFleeGraceRoutine());
     }
 
+    // 몬스터 트리거 영역(Collider)에 플레이어가 처음 부딪힐 때 호출되는 배틀 트리거 처리부
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (!CanStartBattleFromCollision(other))
             return;
 
+        // 충돌한 상대 이름 분석을 통해 몬스터 ID 도출
         string resolvedMonsterId = ResolveMonsterId(other);
         BattleEncounterContext.SetEncounteredMonsterId(resolvedMonsterId);
 
@@ -177,6 +228,7 @@ public class PlayerController : MonoBehaviour
         if (string.IsNullOrEmpty(resolvedMonsterId))
             Debug.LogWarning($"[PlayerController] 몬스터 ID 해석 실패: {other.gameObject.name}");
 
+        // GameManager의 필드 상태를 배틀로 전환
         if (GameManager.Instance != null)
             GameManager.Instance.EnterBattle();
 
@@ -189,6 +241,7 @@ public class PlayerController : MonoBehaviour
             mainHUD.SetActive(false);
     }
 
+    // 트리거 영역(Collider) 안에 플레이어가 계속 머물러 있는 동안 배틀 트리거를 예외 검사하는 부분
     private void OnTriggerStay2D(Collider2D other)
     {
         if (IsBattleActive() || IsFieldMovementFrozen())
@@ -203,6 +256,7 @@ public class PlayerController : MonoBehaviour
         if (!IsMonsterCollider(other))
             return;
 
+        // 전투가 끝나고 플레이어가 움직이지 않았을 때, 연속 전투가 즉시 재실행되는 버그 방지(거리 연산 검사)
         if (hasLastBattleEndedPosition && rb != null)
         {
             float movedDistance = Vector2.Distance(rb.position, lastBattleEndedPosition);
@@ -213,6 +267,7 @@ public class PlayerController : MonoBehaviour
         OnTriggerEnter2D(other);
     }
 
+    // 충돌 상태를 기반으로 플레이어가 현재 배틀에 들어갈 자격이 되는지 정밀 검사
     private bool CanStartBattleFromCollision(Collider2D other)
     {
         if (IsBattleActive() || IsFieldMovementFrozen())
@@ -240,7 +295,7 @@ public class PlayerController : MonoBehaviour
         return true;
     }
 
-    /// <summary>게임오버·처음부터 다시 시작·챕터 리셋 후 필드 전투 진입 상태를 초기화합니다.</summary>
+    /// <summary>게임오버, 맵 재이동, 챕터 초기화 시 인카운터 제약 상태와 UI를 깔끔하게 리셋합니다.</summary>
     public void ResetFieldBattleEntryState()
     {
         if (postFleeGraceRoutine != null)
@@ -262,6 +317,7 @@ public class PlayerController : MonoBehaviour
             mainHUD.SetActive(true);
     }
 
+    // 씬 내부의 활성/비활성화 상태인 모든 플레이어 컨트롤러를 다 끌어와 한번에 리셋하는 정적 보완 함수
     public static void ResetAllFieldBattleEntryStates()
     {
         PlayerController[] controllers =
@@ -274,6 +330,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    // GameManager의 배틀 종료 통보 수신 시, 플레이어의 물리 복구 및 전투 정지 상태를 풀어주는 함수
     private void HandleBattleEnded()
     {
         hasEnteredBattle = false;
@@ -281,12 +338,12 @@ public class PlayerController : MonoBehaviour
 
         if (rb != null)
         {
-            lastBattleEndedPosition = rb.position;
+            lastBattleEndedPosition = rb.position; // 연속 전투 방지용 거리 검사의 기준이 되는 포인트 저장
             hasLastBattleEndedPosition = true;
             rb.linearVelocity = Vector2.zero;
             rb.angularVelocity = 0f;
 
-            // 전투 종료 직후 물리 복구 감시 대기 상태로 진입합니다.
+            // 전투 종료 직후 물리 상태 와치독 작동을 승인하기 위해 플래그를 true로 변경
             isWaitingForPostBattlePhysicsRecovery = true;
         }
         else
@@ -302,6 +359,7 @@ public class PlayerController : MonoBehaviour
             mainHUD.SetActive(true);
     }
 
+    // 도망친 직후 지정된 리얼타임 시간 동안 배틀 강제 잠금을 처리해 주는 비동기 코루틴
     private IEnumerator PostFleeGraceRoutine()
     {
         isBattleEntryLocked = true;
@@ -346,14 +404,13 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    // 충돌한 상대가 실제 몬스터가 맞는지 타겟 검사 및 오작동 보호 장치를 동작시키는 함수
     private bool IsMonsterCollider(Collider2D other)
     {
         if (other == null)
             return false;
 
-        // 아이템 픽업 컴포넌트가 붙어 있는 오브젝트는 이름과 무관하게 절대 몬스터가 아닙니다.
-        // 이 검사가 없으면 "슬라임 해독제", "불꽃 소화기"처럼 이름에 몬스터 키워드가 들어간
-        // 아이템을 몬스터로 오인해 hasEnteredBattle이 true로 굳어버리는 버그가 발생합니다.
+        // [오작동 보호장치] "해독제", "소화기" 등 이름에 몬스터 식별용 단어가 포함되어 있더라도, 아이템 컴포넌트(ItemPickup)가 존재하면 절대 몬스터로 판단하지 않음
         if (other.GetComponent<ItemPickup>() != null)
             return false;
 
@@ -369,6 +426,7 @@ public class PlayerController : MonoBehaviour
         return TryResolveMonsterNameHint(other, out string _);
     }
 
+    // 상대 객체 이름 텍스트 분석을 거쳐 사전에 선언된 고유 몬스터 ID를 해석 및 반환하는 메서드
     private string ResolveMonsterId(Collider2D other)
     {
         if (!TryResolveMonsterNameHint(other, out string objectName))
@@ -388,6 +446,7 @@ public class PlayerController : MonoBehaviour
         return null;
     }
 
+    // 다중 자식/부모 계층 관계 속에서 몬스터 객체 이름의 힌트를 상하로 정밀 탐색해 찾아내는 알고리즘
     private bool TryResolveMonsterNameHint(Collider2D other, out string monsterNameHint)
     {
         monsterNameHint = null;
@@ -414,6 +473,7 @@ public class PlayerController : MonoBehaviour
         return false;
     }
 
+    // 특정 문자열 패턴에 매칭되는 몬스터 단어가 포함되어 있는지 이름 규칙을 확인하는 내부 보조 함수
     private bool TryGetMatchedMonsterName(GameObject candidate, out string matchedName)
     {
         matchedName = null;
