@@ -172,6 +172,7 @@ public class MonsterBattleTracker : MonoBehaviour
 
         purifiedThisBattle = true;
         purifiedMonsterSnapshot = currentBattleMonster;
+        PollutionManager.Instance?.OnMonsterPurified();
         Debug.Log($"[MonsterBattleTracker] 몬스터 정화 성공. 대상: {purifiedMonsterSnapshot?.name ?? "없음"}");
     }
 

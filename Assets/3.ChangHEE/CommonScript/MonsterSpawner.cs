@@ -186,6 +186,21 @@ public class MonsterSpawner : MonoBehaviour
         return spawnCountsByStage[index];
     }
 
+    /// <summary>스테이지별 스폰 수 합계. 챕터 오염도 비율 계산에 사용합니다.</summary>
+    public int GetTotalSpawnCapacityAcrossStages()
+    {
+        EnsureSpawnCountsByStage();
+
+        int total = 0;
+        for (int i = 0; i < spawnCountsByStage.Length; i++)
+        {
+            if (spawnCountsByStage[i] > 0)
+                total += spawnCountsByStage[i];
+        }
+
+        return total;
+    }
+
     private List<Transform> GetShuffledSpawnPoints()
     {
         List<Transform> spawnPoints = new List<Transform>();
