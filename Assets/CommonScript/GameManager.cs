@@ -391,7 +391,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void PerformFullReset()
     {
-        PerformFullReset(destroySceneChapters: true, activateFirstChapterAfterReset: false);
+        PerformFullReset(destroySceneChapters: false, activateFirstChapterAfterReset: false);
     }
 
     /// <summary>
@@ -579,6 +579,9 @@ public class GameManager : MonoBehaviour
         GameObject activeChapter = chapterManager?.GetActiveChapterRoot();
         if (activeChapter != null)
             ActivateHierarchyDeep(activeChapter);
+
+        if (Application.isPlaying)
+            MapInitializer.RefreshActiveMapColliders();
     }
 
     /// <summary>부모 체인·자신을 활성화해 activeInHierarchy를 보장합니다.</summary>
@@ -664,11 +667,10 @@ public class GameManager : MonoBehaviour
         ApplyInitialSessionData();
 
         ChapterManager chapterManager = ChapterManager.EnsureInstance();
+        chapterManager?.ClearAllSpawnedMonstersAndItemsInScene();
+
         if (destroySceneChapters)
-        {
-            chapterManager?.ClearAllSpawnedMonstersAndItemsInScene();
             DestroyAllChapterObjectsInScene();
-        }
         else
             chapterManager?.DeactivateAllChaptersForOpening();
 

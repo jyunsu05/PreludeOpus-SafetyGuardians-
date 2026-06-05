@@ -207,6 +207,8 @@ public class ChapterManager : MonoBehaviour
     {
         GameManager.ActivateGameplayWorldSceneRoots();
 
+        EnsureAllChapterInstances();
+
         if (!EnsureChapterInstance(oneBasedChapterIndex))
         {
             Debug.LogError(
@@ -215,7 +217,7 @@ public class ChapterManager : MonoBehaviour
             return false;
         }
 
-        RestoreChapterInstanceTransform(oneBasedChapterIndex);
+        RestoreAllChapterInstanceTransforms();
         ActivateChapter(oneBasedChapterIndex, savePrefs: persistChapterIndex, isRestart: isRestart, refreshGameplay: false);
         return true;
     }
@@ -358,6 +360,16 @@ public class ChapterManager : MonoBehaviour
         return true;
     }
 
+    /// <summary>ChapterMaps 아래 챕터 1·2·3 슬롯 인스턴스가 모두 존재하도록 보장합니다(없으면 프리팹에서 생성, 기본은 비활성).</summary>
+    public void EnsureAllChapterInstances()
+    {
+        if (chapterPrefabs == null)
+            return;
+
+        for (int i = 0; i < chapterPrefabs.Count; i++)
+            EnsureChapterInstance(i + 1);
+    }
+
     private void ReinstantiateAllChapterSlotsAfterDestroy()
     {
         if (chapterPrefabs == null)
@@ -480,6 +492,7 @@ public class ChapterManager : MonoBehaviour
 
             RefreshFieldEntitiesVisibility();
             RestoreFieldPhysicsAfterChapterReset();
+            MapInitializer.RefreshActiveMapColliders();
             Debug.Log(
                 $"[ChapterManager] 챕터 {chapterIndex} — 전체 Destroy/Instantiate 후 필드 재구성 완료");
         }
@@ -616,38 +629,38 @@ public class ChapterManager : MonoBehaviour
         }
     }
 
-    private void RestoreChapterInstanceTransform(int oneBasedChapterIndex)
+    private void RestoreAllChapterInstanceTransforms()
     {
-        if (!IsValidChapterSlot(oneBasedChapterIndex) || pendingChapterRebuildSnapshots.Count == 0)
-            return;
-
-        GameObject chapter = chapterPrefabs[oneBasedChapterIndex - 1];
-        if (chapter == null)
+        if (pendingChapterRebuildSnapshots.Count == 0)
             return;
 
         for (int i = 0; i < pendingChapterRebuildSnapshots.Count; i++)
-        {
-            ChapterInstanceSnapshot snapshot = pendingChapterRebuildSnapshots[i];
-            if (snapshot.OneBasedChapterIndex != oneBasedChapterIndex)
-                continue;
+            ApplyChapterInstanceSnapshot(pendingChapterRebuildSnapshots[i]);
 
-            Transform transform = chapter.transform;
-            if (snapshot.Parent != null)
-            {
-                transform.SetParent(snapshot.Parent, false);
-                transform.SetSiblingIndex(snapshot.SiblingIndex);
-            }
+        pendingChapterRebuildSnapshots.Clear();
+    }
 
-            transform.SetPositionAndRotation(snapshot.WorldPosition, snapshot.WorldRotation);
-            transform.localScale = snapshot.LocalScale;
-
-            if (!string.IsNullOrEmpty(snapshot.Name))
-                chapter.name = snapshot.Name;
-
-            GameManager.EnsureActiveInHierarchy(chapter);
-            pendingChapterRebuildSnapshots.Clear();
+    private void ApplyChapterInstanceSnapshot(ChapterInstanceSnapshot snapshot)
+    {
+        if (!IsValidChapterSlot(snapshot.OneBasedChapterIndex))
             return;
+
+        GameObject chapter = chapterPrefabs[snapshot.OneBasedChapterIndex - 1];
+        if (chapter == null)
+            return;
+
+        Transform transform = chapter.transform;
+        if (snapshot.Parent != null)
+        {
+            transform.SetParent(snapshot.Parent, false);
+            transform.SetSiblingIndex(snapshot.SiblingIndex);
         }
+
+        transform.SetPositionAndRotation(snapshot.WorldPosition, snapshot.WorldRotation);
+        transform.localScale = snapshot.LocalScale;
+
+        if (!string.IsNullOrEmpty(snapshot.Name))
+            chapter.name = snapshot.Name;
     }
 
     private void QueueDestroyFactoryStagesForChapterRestart()
@@ -1057,6 +1070,9 @@ public class ChapterManager : MonoBehaviour
 
         TeleportPlayerToActiveChapterSpawn();
         PublishChapterLoaded(isRestart);
+
+        if (Application.isPlaying)
+            MapInitializer.RefreshActiveMapColliders();
 
         Debug.Log($"[ChapterManager] 활성 챕터: {CurrentChapterIndex} (restart={isRestart})");
     }
