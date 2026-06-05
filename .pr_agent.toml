@@ -1,0 +1,27 @@
+# PR-Agent repo config (read from the PR branch when the workflow runs).
+# See: https://github.com/Codium-ai/pr-agent/blob/main/pr_agent/settings/configuration.toml
+
+[config]
+# Attempts GitHub PR approval when /review auto_approve is used (GitHub App / PAT).
+# Note: github-actions[bot] usually cannot approve PRs; merge-ready notification uses labels + comments instead.
+enable_auto_approval = true
+
+[pr_reviewer]
+require_score_review = true
+require_security_review = true
+require_estimate_effort_to_review = true
+enable_review_labels_effort = true
+enable_review_labels_security = true
+publish_output_no_suggestions = true
+extra_instructions = """
+At the end of the review output, add a dedicated section with the exact title:
+## 머지 가능 여부 (Merge readiness)
+
+Use these rules:
+- If there are no critical bugs, security_concerns is "No" (or equivalent), score is 85 or higher (when score is shown), and key_issues_to_review is empty or only minor nits: write exactly on its own line:
+  ✅ **머지 가능**: AI 리뷰 결과, main 브랜치에 머지해도 안전하다고 판단됩니다.
+- Otherwise write:
+  ⚠️ **머지 보류**: (short bullet list of blocking reasons)
+
+Keep this section concise and actionable for the PR author.
+"""

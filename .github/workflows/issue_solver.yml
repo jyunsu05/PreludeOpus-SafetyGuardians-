@@ -1,0 +1,206 @@
+# 2단계: 라벨 ai-auto-fix 이슈를 Dispatch가 수정 후 PR 생성 (기존 pr_agent가 리뷰)
+name: AI Issue Solver
+
+on:
+  issues:
+    types: [opened, labeled]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: Optional issue number to solve (manual run)
+        required: false
+      max_issues:
+        description: Max issues per run
+        required: false
+        default: "1"
+
+concurrency:
+  group: ai-issue-solver-${{ github.event.issue.number || 'manual' }}
+  cancel-in-progress: true
+
+jobs:
+  solve-issue:
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (
+        contains(github.event.issue.labels.*.name, 'ai-auto-fix') &&
+        !contains(github.event.issue.labels.*.name, 'ai-fix-in-progress') &&
+        !contains(github.event.issue.labels.*.name, 'ai-fix-failed')
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      models: read
+    steps:
+      - name: Resolve target issue number
+        id: target
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const manual = '${{ github.event.inputs.issue_number }}';
+            const issueNumber = manual
+              ? Number(manual)
+              : context.payload.issue?.number;
+            if (!issueNumber) {
+              core.setFailed('No issue number.');
+              return;
+            }
+            core.setOutput('issue_number', String(issueNumber));
+
+      - name: Scope ai-auto-fix to this issue only
+        id: scope
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const target = Number('${{ steps.target.outputs.issue_number }}');
+            const { data: issues } = await github.rest.issues.listForRepo({
+              ...context.repo,
+              state: 'open',
+              labels: 'ai-auto-fix',
+              per_page: 100,
+            });
+            const restored = [];
+            for (const issue of issues) {
+              if (issue.number !== target) {
+                await github.rest.issues.removeLabel({
+                  ...context.repo,
+                  issue_number: issue.number,
+                  name: 'ai-auto-fix',
+                });
+                restored.push(issue.number);
+              }
+            }
+            core.setOutput('restored_issues', restored.join(','));
+
+      - name: Mark issue in progress
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue_number = Number('${{ steps.target.outputs.issue_number }}');
+            const labels = ['ai-fix-in-progress'];
+            try {
+              await github.rest.issues.getLabel({ ...context.repo, name: 'ai-fix-in-progress' });
+            } catch {
+              await github.rest.issues.createLabel({
+                ...context.repo,
+                name: 'ai-fix-in-progress',
+                color: 'f9d0c4',
+                description: 'AI solver is working on this issue',
+              });
+            }
+            await github.rest.issues.addLabels({
+              ...context.repo,
+              issue_number,
+              labels,
+            });
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number,
+              body: [
+                '🤖 **AI Issue Solver** started.',
+                '- Engine: Dispatch (`dispatch-ai`)',
+                '- Config: `.dispatchrc.json`',
+                '- A draft PR will be opened targeting `main`.',
+                '- `pr_agent` workflow will review the PR when opened.',
+              ].join('\n'),
+            });
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Solve issue with Dispatch
+        id: dispatch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          DISPATCH_NO_TELEMETRY: "1"
+        run: |
+          npx --yes dispatch-ai@beta run \
+            --label ai-auto-fix \
+            --max-issues "${{ github.event.inputs.max_issues || '1' }}" \
+            --draft \
+            --base-branch main
+
+      - name: Upload Dispatch logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dispatch-run-${{ github.run_id }}
+          path: .dispatch/
+          if-no-files-found: ignore
+
+      - name: Finish issue state
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue_number = Number('${{ steps.target.outputs.issue_number }}');
+            const restored = ('${{ steps.scope.outputs.restored_issues }}' || '')
+              .split(',')
+              .filter(Boolean)
+              .map(Number);
+            for (const n of restored) {
+              await github.rest.issues.addLabels({
+                ...context.repo,
+                issue_number: n,
+                labels: ['ai-auto-fix'],
+              });
+            }
+            const success = '${{ steps.dispatch.outcome }}' === 'success';
+            const doneLabel = success ? 'ai-fix-done' : 'ai-fix-failed';
+            const removeLabels = ['ai-fix-in-progress'];
+
+            try {
+              await github.rest.issues.getLabel({ ...context.repo, name: doneLabel });
+            } catch {
+              await github.rest.issues.createLabel({
+                ...context.repo,
+                name: doneLabel,
+                color: success ? '2da44e' : 'b60205',
+                description: success
+                  ? 'AI solver finished (check linked PR)'
+                  : 'AI solver failed — remove label and retry',
+              });
+            }
+
+            for (const name of removeLabels) {
+              try {
+                await github.rest.issues.removeLabel({
+                  ...context.repo,
+                  issue_number,
+                  name,
+                });
+              } catch (_) {}
+            }
+
+            await github.rest.issues.addLabels({
+              ...context.repo,
+              issue_number,
+              labels: [doneLabel],
+            });
+
+            const body = success
+              ? '✅ **AI Issue Solver** finished. Check the linked Pull Request and PR Agent review comments.'
+              : '❌ **AI Issue Solver** failed. See workflow logs / `.dispatch/` artifact. Remove `ai-fix-failed`, re-add `ai-auto-fix` to retry.';
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number,
+              body,
+            });

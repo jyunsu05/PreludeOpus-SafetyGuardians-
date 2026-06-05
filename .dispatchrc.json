@@ -1,0 +1,22 @@
+{
+  "engine": "github-models",
+  "model": "openai/gpt-4o",
+  "labels": ["ai-auto-fix"],
+  "exclude": [
+    "wontfix",
+    "blocked",
+    "duplicate",
+    "ai-fix-in-progress",
+    "ai-fix-failed",
+    "ai-fix-done"
+  ],
+  "maxIssues": 1,
+  "maxTurnsPerIssue": 25,
+  "branchPrefix": "ai-fix/",
+  "createDraftPRs": true,
+  "autoLabel": true,
+  "baseBranch": "main",
+  "draftThreshold": 6,
+  "concurrency": 1,
+  "timeoutPerIssue": 900000
+}

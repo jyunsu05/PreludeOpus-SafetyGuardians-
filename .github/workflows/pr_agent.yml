@@ -25,3 +25,141 @@ jobs:
           github_action_config.auto_review: "true"
           github_action_config.auto_improve: "true"
           github_action_config.pr_actions: '["opened", "synchronize"]'
+          # Merge-readiness: score, security/effort labels, merge section in review (see .pr_agent.toml)
+          config.enable_auto_approval: "true"
+          pr_reviewer.require_score_review: "true"
+          pr_reviewer.require_security_review: "true"
+          pr_reviewer.require_estimate_effort_to_review: "true"
+          pr_reviewer.enable_review_labels_effort: "true"
+          pr_reviewer.enable_review_labels_security: "true"
+          pr_reviewer.publish_output_no_suggestions: "true"
+
+  merge_ready_notify:
+    name: Notify when AI review passes (merge-ready)
+    needs: pr_agent_job
+    if: success() && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Label and comment when merge-ready
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issue_number = context.payload.pull_request.number;
+
+            const { data: pr } = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: issue_number,
+            });
+
+            const labels = (pr.labels || []).map((l) => l.name);
+            if (labels.includes('Possible security concern')) {
+              core.info('Skipped: security concern label present.');
+              return;
+            }
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number,
+              per_page: 100,
+            });
+
+            const botLogin = 'github-actions[bot]';
+            const reviewComments = comments
+              .filter(
+                (c) =>
+                  c.user?.login === botLogin &&
+                  (c.body?.includes('PR Review') ||
+                    c.body?.includes('## PR Review') ||
+                    c.body?.includes('머지 가능 여부'))
+              )
+              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+            const reviewBody = reviewComments[0]?.body || '';
+            if (!reviewBody) {
+              core.info('Skipped: no PR Agent review comment found.');
+              return;
+            }
+
+            const mergeHold = /머지\s*보류/i.test(reviewBody);
+            const mergeReadyText = /머지\s*가능/i.test(reviewBody);
+            const mergeReadyIcon = /✅\s*\*\*머지\s*가능\*\*/i.test(reviewBody);
+            const noMajorIssues = /No major issues detected/i.test(reviewBody);
+            const scoreMatch = reviewBody.match(/(?:^|\n)\s*(?:PR\s+)?score\s*[:|]\s*(\d{1,3})/im);
+            const score = scoreMatch ? Number(scoreMatch[1]) : null;
+            const scoreOk = score === null || score >= 85;
+
+            const passed =
+              !mergeHold &&
+              scoreOk &&
+              (mergeReadyIcon || (mergeReadyText && /✅/.test(reviewBody)) || noMajorIssues);
+
+            if (!passed) {
+              core.info('Skipped: AI review did not meet merge-ready criteria.');
+              if (labels.includes('ai-merge-ready')) {
+                await github.rest.issues.removeLabel({
+                  owner,
+                  repo,
+                  issue_number,
+                  name: 'ai-merge-ready',
+                }).catch(() => {});
+              }
+              return;
+            }
+
+            const labelName = 'ai-merge-ready';
+            try {
+              await github.rest.issues.getLabel({ owner, repo, name: labelName });
+            } catch {
+              await github.rest.issues.createLabel({
+                owner,
+                repo,
+                name: labelName,
+                color: '2da44e',
+                description: 'PR Agent: safe to merge to main (AI review passed)',
+              });
+            }
+
+            if (!labels.includes(labelName)) {
+              await github.rest.issues.addLabels({
+                owner,
+                repo,
+                issue_number,
+                labels: [labelName],
+              });
+            }
+
+            const marker = '<!-- ai-merge-ready-notify -->';
+            const alreadyNotified = comments.some((c) => c.body?.includes(marker));
+            if (alreadyNotified) {
+              core.info('Merge-ready notification already posted.');
+              return;
+            }
+
+            const scoreLine =
+              score !== null ? `\n- **리뷰 점수**: ${score}/100` : '';
+            const body = [
+              marker,
+              '## 🟢 AI 머지 가능 알림',
+              '',
+              'PR Agent가 코드를 검토한 결과, **main 브랜치에 머지해도 괜찮다**고 판단했습니다.',
+              '',
+              `- 라벨 \`${labelName}\` 이(가) 붙었습니다.${scoreLine}`,
+              '- 아래 **Merge pull request** 로 머지할 수 있습니다.',
+              '- GitHub **Auto-merge** 를 쓰려면 PR에서 *Enable auto-merge* 를 켜 두세요 (저장소 설정 필요).',
+              '',
+              '> ⚠️ AI 판단은 참고용입니다. 최종 머지는 담당자가 확인 후 진행하세요.',
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number,
+              body,
+            });
