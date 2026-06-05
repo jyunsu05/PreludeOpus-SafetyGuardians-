@@ -366,6 +366,7 @@ public class GameManager : MonoBehaviour
         SyncGameplayHudAfterDataReset();
         ResetFullResetUiState();
         CloseGameplayOverlays();
+        GameManager.ActivateChapterMapsHierarchy();
 
         UIResult[] resultPanels = FindObjectsByType<UIResult>(FindObjectsInactive.Include);
         for (int i = 0; i < resultPanels.Length; i++)
@@ -390,7 +391,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void PerformFullReset()
     {
-        PerformFullReset(destroySceneChapters: true, activateFirstChapterAfterReset: false);
+        PerformFullReset(destroySceneChapters: false, activateFirstChapterAfterReset: false);
     }
 
     /// <summary>
@@ -434,6 +435,7 @@ public class GameManager : MonoBehaviour
         ResetFullResetUiState();
         CloseGameplayOverlays();
         StartCoroutine(FinalizeNewGameAfterOpeningRoutine());
+        GameManager.ActivateChapterMapsHierarchy();
 
         Debug.Log("[GameManager] 새 게임 세션 준비 완료 (Managers·Player·챕터1·몬스터·아이템)");
     }
@@ -555,6 +557,33 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    /// <summary>부모 체인·자신·모든 자식을 활성화합니다(챕터 맵 Grid/Tilemap 복구용).</summary>
+    public static void ActivateHierarchyDeep(GameObject root)
+    {
+        if (root == null)
+            return;
+
+        EnsureActiveInHierarchy(root);
+        ActivateSubtreeDeep(root.transform);
+    }
+
+    /// <summary>ChapterMaps 루트와 현재 활성 챕터 맵 계층을 복구합니다.</summary>
+    public static void ActivateChapterMapsHierarchy()
+    {
+        ActivateSceneRootOnly("ChapterMaps");
+
+        ChapterManager chapterManager = ChapterManager.Instance;
+        if (chapterManager == null)
+            chapterManager = FindAnyObjectByType<ChapterManager>(FindObjectsInactive.Include);
+
+        GameObject activeChapter = chapterManager?.GetActiveChapterRoot();
+        if (activeChapter != null)
+            ActivateHierarchyDeep(activeChapter);
+
+        if (Application.isPlaying)
+            MapInitializer.RefreshActiveMapColliders();
+    }
+
     /// <summary>부모 체인·자신을 활성화해 activeInHierarchy를 보장합니다.</summary>
     public static void EnsureActiveInHierarchy(GameObject target)
     {
@@ -638,11 +667,10 @@ public class GameManager : MonoBehaviour
         ApplyInitialSessionData();
 
         ChapterManager chapterManager = ChapterManager.EnsureInstance();
+        chapterManager?.ClearAllSpawnedMonstersAndItemsInScene();
+
         if (destroySceneChapters)
-        {
-            chapterManager?.ClearAllSpawnedMonstersAndItemsInScene();
             DestroyAllChapterObjectsInScene();
-        }
         else
             chapterManager?.DeactivateAllChaptersForOpening();
 

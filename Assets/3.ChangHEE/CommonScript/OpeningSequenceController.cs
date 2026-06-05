@@ -216,5 +216,7 @@ public class OpeningSequenceController : MonoBehaviour
 
         if (GameManager.Instance != null && !GameManager.Instance.gameObject.activeSelf)
             GameManager.Instance.gameObject.SetActive(true);
+
+        GameManager.ActivateChapterMapsHierarchy();
     }
 }
