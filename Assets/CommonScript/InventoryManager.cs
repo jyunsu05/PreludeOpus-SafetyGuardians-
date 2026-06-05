@@ -133,10 +133,21 @@ public class InventoryManager : MonoBehaviour
         return itemIdSnapshot;
     }
 
-    public void ResetAll()
+    /// <summary>인벤토리의 모든 아이템을 비우고 UI를 갱신합니다.</summary>
+    public void ClearInventory()
     {
+        int removedCount = items.Count;
         items.Clear();
         itemIdSnapshot.Clear();
+
+        if (removedCount > 0)
+            Debug.Log($"[InventoryManager] 인벤토리 초기화 — {removedCount}개 아이템 제거");
+
         OnInventoryChanged?.Invoke();
+    }
+
+    public void ResetAll()
+    {
+        ClearInventory();
     }
 }

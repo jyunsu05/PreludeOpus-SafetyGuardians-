@@ -426,6 +426,7 @@ public class ChapterManager : MonoBehaviour
         try
         {
             ActivateChapter(nextIndex, savePrefs: true, isRestart: false, refreshGameplay: true);
+            InventoryManager.Instance?.ClearInventory();
             resultMessage = $"챕터 {nextIndex}(으)로 이동했습니다.";
             return true;
         }
