@@ -40,6 +40,10 @@ public class UILoading : MonoBehaviour
             return;
 
         loadingProgressBar.interactable = false;
+
+        Navigation navigation = loadingProgressBar.navigation;
+        navigation.mode = Navigation.Mode.None;
+        loadingProgressBar.navigation = navigation;
     }
 
     void Update()
