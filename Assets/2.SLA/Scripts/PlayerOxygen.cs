@@ -20,6 +20,7 @@ public class PlayerOxygen : MonoBehaviour
     private bool isOxygenGameOver;
     private UIGameOver cachedGameOverPanel;
 
+    /// <summary>산소 게이지를 최대치로 되돌리고 게임오버 상태를 해제합니다. 챕터 전환 시 호출됩니다.</summary>
     public void ResetOxygen()
     {
         isOxygenGameOver = false;

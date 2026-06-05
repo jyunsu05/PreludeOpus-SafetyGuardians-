@@ -900,6 +900,12 @@ public class GameManager : MonoBehaviour
         PlayerPrefs.Save();
     }
 
+    /// <summary>공장 챕터 전환 시 플레이어 산소 게이지를 최대치로 되돌립니다.</summary>
+    public void ResetPlayerOxygenOnChapterTransition()
+    {
+        ResetRuntimePlayerState();
+    }
+
     private void ResetRuntimePlayerState()
     {
         PlayerOxygen[] oxygenComponents =
