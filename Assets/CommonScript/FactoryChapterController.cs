@@ -82,6 +82,7 @@ public class FactoryChapterController : MonoBehaviour
 
         ApplyChapter(nextChapter, savePrefs: true);
         RefreshChapterGameplay();
+        InventoryManager.Instance?.ClearInventory();
         resultMessage = $"{chapterMapNamePrefix}{nextChapter}(으)로 이동했습니다.";
         return true;
     }
