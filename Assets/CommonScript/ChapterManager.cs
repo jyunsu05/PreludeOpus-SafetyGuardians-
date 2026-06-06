@@ -234,7 +234,7 @@ public class ChapterManager : MonoBehaviour
 
     private void SpawnFieldEntitiesForPlaySession()
     {
-        GameManager.ActivateFactoryStageSceneRoots();
+        ActivateCurrentFactoryStageRoot();
         ClearAllSpawnedMonstersAndItemsInScene();
         RespawnFactoryStageFieldEntities(resetToFirstStage: true);
         RespawnActiveChapterFieldEntities(resetToFirstStage: true);
@@ -476,7 +476,7 @@ public class ChapterManager : MonoBehaviour
             yield return null;
 
             InstantiateQueuedFactoryStages();
-            GameManager.ActivateFactoryStageSceneRoots();
+            ActivateCurrentFactoryStageRoot();
 
             yield return null;
 
@@ -729,13 +729,10 @@ public class ChapterManager : MonoBehaviour
             newRoot.transform.localRotation = data.LocalRotation;
             newRoot.transform.localScale = data.LocalScale;
             GameManager.EnsureActiveInHierarchy(newRoot);
-            GameManager.ActivateFactoryStageSceneRoots();
 
             MonsterSpawner newMonsterSpawner = newRoot.GetComponentInChildren<MonsterSpawner>(true);
             if (newMonsterSpawner != null)
                 newMonsterSpawner.ImportMonsterPrefabReferences(data.MonsterPrefabRefs);
-
-            EnsureMonsterBattleTrackerOnFactoryRoot(newRoot);
         }
 
         pendingFactoryStageRebuild.Clear();
@@ -1060,6 +1057,8 @@ public class ChapterManager : MonoBehaviour
             ActivateChapterHierarchy(chapter, shouldActivate);
         }
 
+        ActivateCurrentFactoryStageRoot();
+
         if (savePrefs && persistChapterIndex)
         {
             PlayerPrefs.SetInt(CurrentChapterPrefsKey, CurrentChapterIndex);
@@ -1118,25 +1117,10 @@ public class ChapterManager : MonoBehaviour
     /// <summary>FactoryStage_* 루트(씬 루트) 아래 스포너로 몬스터·아이템을 다시 뿌립니다.</summary>
     public void RespawnFactoryStageFieldEntities(bool resetToFirstStage)
     {
-        GameManager.ActivateFactoryStageSceneRoots();
-
-        Scene scene = gameObject.scene;
-        if (!scene.IsValid())
-            return;
-
-        int spawnerCount = 0;
-        GameObject[] roots = scene.GetRootGameObjects();
-        for (int i = 0; i < roots.Length; i++)
-        {
-            GameObject root = roots[i];
-            if (root == null || !GameManager.IsFactoryStageSceneRootName(root.name))
-                continue;
-
-            if (!root.activeSelf)
-                root.SetActive(true);
-
-            spawnerCount += RespawnSpawnersUnderRoot(root.transform, resetToFirstStage);
-        }
+        GameObject activeRoot = ActivateCurrentFactoryStageRoot();
+        int spawnerCount = activeRoot != null
+            ? RespawnSpawnersUnderRoot(activeRoot.transform, resetToFirstStage, CurrentChapterIndex)
+            : 0;
 
         if (spawnerCount == 0)
         {
@@ -1146,7 +1130,14 @@ public class ChapterManager : MonoBehaviour
         }
     }
 
-    private static int RespawnSpawnersUnderRoot(Transform root, bool resetToFirstStage)
+    private GameObject ActivateCurrentFactoryStageRoot()
+    {
+        GameObject activeRoot = GameManager.ActivateFactoryStageSceneRootForChapter(CurrentChapterIndex);
+        EnsureMonsterBattleTrackerOnFactoryRoot(activeRoot);
+        return activeRoot;
+    }
+
+    private static int RespawnSpawnersUnderRoot(Transform root, bool resetToFirstStage, int factoryStageLevel = 1)
     {
         if (root == null)
             return 0;
@@ -1163,11 +1154,9 @@ public class ChapterManager : MonoBehaviour
                 continue;
 
             GameManager.EnsureActiveInHierarchy(spawner.gameObject);
+            spawner.SetStageLevel(factoryStageLevel);
 
-            if (resetToFirstStage)
-                spawner.ResetToFirstStageAndRespawn();
-            else
-                spawner.RespawnCurrentStage();
+            spawner.RespawnCurrentStage();
 
             count++;
         }
@@ -1180,11 +1169,9 @@ public class ChapterManager : MonoBehaviour
                 continue;
 
             GameManager.EnsureActiveInHierarchy(spawner.gameObject);
+            spawner.SetStageLevel(factoryStageLevel);
 
-            if (resetToFirstStage)
-                spawner.ResetToFirstStageAndRespawn();
-            else
-                spawner.RespawnCurrentStage();
+            spawner.RespawnCurrentStage();
         }
 
         return count;

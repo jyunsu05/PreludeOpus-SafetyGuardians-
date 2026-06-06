@@ -528,7 +528,7 @@ public class GameManager : MonoBehaviour
     /// <summary>오프닝 종료 후 반드시 켤 씬 루트(Managers·FactoryStage 등)인지 판별합니다.</summary>
     public static bool ShouldForceActiveAfterOpening(string objectName)
     {
-        return IsCoreGameplaySceneRootName(objectName) || IsFactoryStageSceneRootName(objectName);
+        return IsCoreGameplaySceneRootName(objectName);
     }
 
     /// <summary>Managers·Player·Canvas·ChapterMaps 씬 루트만 켭니다. 자식은 기존 activeSelf를 유지합니다.</summary>
@@ -555,6 +555,61 @@ public class GameManager : MonoBehaviour
             EnsureActiveInHierarchy(root);
             ActivateSubtreeDeep(root.transform);
         }
+    }
+
+    /// <summary>현재 챕터 번호와 맞는 FactoryStage_* 씬 루트 하나만 켭니다.</summary>
+    public static GameObject ActivateFactoryStageSceneRootForChapter(int oneBasedChapterIndex)
+    {
+        Scene scene = SceneManager.GetActiveScene();
+        if (!scene.IsValid())
+            return null;
+
+        int targetStage = Mathf.Max(1, oneBasedChapterIndex);
+        GameObject activeRoot = null;
+        GameObject[] roots = scene.GetRootGameObjects();
+        for (int i = 0; i < roots.Length; i++)
+        {
+            GameObject root = roots[i];
+            if (root == null || !IsFactoryStageSceneRootName(root.name))
+                continue;
+
+            bool shouldActivate = GetFactoryStageNumber(root.name) == targetStage;
+            if (shouldActivate)
+            {
+                EnsureActiveInHierarchy(root);
+                ActivateSubtreeDeep(root.transform);
+                activeRoot = root;
+            }
+            else if (root.activeSelf)
+            {
+                root.SetActive(false);
+            }
+        }
+
+        return activeRoot;
+    }
+
+    private static int GetFactoryStageNumber(string objectName)
+    {
+        if (string.IsNullOrEmpty(objectName))
+            return -1;
+
+        const string prefix = "FactoryStage_";
+        int start = objectName.IndexOf(prefix, StringComparison.Ordinal);
+        if (start < 0)
+            return -1;
+
+        start += prefix.Length;
+        int end = start;
+        while (end < objectName.Length && char.IsDigit(objectName[end]))
+            end++;
+
+        if (end == start)
+            return -1;
+
+        return int.TryParse(objectName.Substring(start, end - start), out int number)
+            ? number
+            : -1;
     }
 
     /// <summary>부모 체인·자신·모든 자식을 활성화합니다(챕터 맵 Grid/Tilemap 복구용).</summary>
@@ -641,7 +696,6 @@ public class GameManager : MonoBehaviour
     public static void ActivateGameplayWorldSceneRoots()
     {
         ActivateCoreGameplaySceneRoots();
-        ActivateFactoryStageSceneRoots();
     }
 
     private static void ActivateSceneRootOnly(string rootName)

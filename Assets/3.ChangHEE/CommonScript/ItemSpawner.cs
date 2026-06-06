@@ -38,6 +38,11 @@ public class ItemSpawner : MonoBehaviour
         SpawnItemsForCurrentStage(logResult: true);
     }
 
+    public void SetStageLevel(int oneBasedStageLevel)
+    {
+        stageLevel = Mathf.Clamp(oneBasedStageLevel, 1, 7);
+    }
+
     /// <summary>챕터 리셋·처음부터 다시 시작 시 목록에 있는 스폰 아이템을 제거합니다.</summary>
     public void ForceClearAllSpawned()
     {
@@ -153,8 +158,12 @@ public class ItemSpawner : MonoBehaviour
         for (int i = 0; i < ItemTypeCount && itemTypes.Count < spawnCount; i++)
             itemTypes.Add(i);
 
+        int nextType = 0;
         while (itemTypes.Count < spawnCount)
-            itemTypes.Add(Random.Range(0, ItemTypeCount));
+        {
+            itemTypes.Add(nextType);
+            nextType = (nextType + 1) % ItemTypeCount;
+        }
 
         for (int i = 0; i < itemTypes.Count; i++)
         {
@@ -230,7 +239,7 @@ public class ItemSpawner : MonoBehaviour
 
     private void EnsureSpawnCountsByStage()
     {
-        int[] fixedCounts = { 3, 4, 5, 6, 7, 9, 0 };
+        int[] fixedCounts = { 3, 5, 9, 0, 0, 0, 0 };
 
         if (spawnCountsByStage == null || spawnCountsByStage.Length != fixedCounts.Length)
             spawnCountsByStage = new int[fixedCounts.Length];
