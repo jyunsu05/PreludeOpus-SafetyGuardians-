@@ -35,6 +35,13 @@ public class UIBattleManager : MonoBehaviour
     [Header("--- 정화 / 도망 상태 제약 ---")]
     [SerializeField] private int purifyDurabilityPerUse = 10;
 
+    [Header("--- 턴제 배틀 ---")]
+    [SerializeField] private BattleTurnController turnController;
+
+    [Header("--- 배틀 산소 UI ---")]
+    [Tooltip("배틀 씬에 만든 산소 게이지(UIBattleOxygenGauge). 비우면 자식에서 자동 탐색합니다.")]
+    [SerializeField] private UIBattleOxygenGauge battleOxygenGauge;
+
     private const string DefaultPurifyItemId = "MI-101";
 
     public bool IsScanned { get; private set; }
@@ -76,6 +83,10 @@ public class UIBattleManager : MonoBehaviour
         NotifyEscapeUnlockedForNewBattle();
         ResetBattleUIState();
         LoadMonsterFromData();
+        EnsureEnemyStatus();
+        EnsureTurnController();
+        ResolveAndBindPlayerOxygen();
+        turnController?.BeginBattle();
         LockPlayerMovementAtBattleEntry();
         LockMonsterMovementAtBattleEntry();
         DisableContaminationSliderDirectInput();
@@ -103,7 +114,18 @@ public class UIBattleManager : MonoBehaviour
         ForceRestoreFieldPhysics();
     }
 
-    public bool CanAttemptEscape => !IsPurifying && !IsEscapeLocked && !isProcessingBattleExit;
+    public bool CanAttemptEscape =>
+        !IsPurifying &&
+        !IsEscapeLocked &&
+        !isProcessingBattleExit &&
+        IsPlayerTurnActive();
+
+    public BattleTurnController TurnController => turnController;
+    public bool IsPlayerTurnActive()
+    {
+        ResolveTurnController();
+        return turnController == null || turnController.IsPlayerTurn;
+    }
 
     /// <summary>탐색 성공 — 정화 버튼을 켤 수 있는 상태로 전환합니다.</summary>
     public void NotifySearchCompleted()
@@ -118,6 +140,12 @@ public class UIBattleManager : MonoBehaviour
 
         if (IsPurifying)
             return false;
+
+        if (!IsPlayerTurnActive())
+        {
+            Debug.LogWarning("[UIBattleManager] 플레이어 턴이 아닙니다.");
+            return false;
+        }
 
         if (!IsScanned)
         {
@@ -140,8 +168,21 @@ public class UIBattleManager : MonoBehaviour
             return false;
         }
 
-        ReduceContamination(consumedDurability);
+        ResolveTurnController();
+        int basePurifyDamage = consumedDurability;
+        int finalPurifyDamage = turnController != null
+            ? turnController.CalculateAmplifiedContaminationDamage(consumedDurability)
+            : consumedDurability;
+
+        ReduceContamination(finalPurifyDamage);
         EndPurifyAttempt(unlockEscape: false);
+
+        if (GetCurrentContamination() > 0)
+        {
+            ResolveTurnController();
+            turnController?.TryResolvePlayerPurify(basePurifyDamage, finalPurifyDamage);
+        }
+
         return true;
     }
 
@@ -599,6 +640,7 @@ public class UIBattleManager : MonoBehaviour
     {
         monsterNameText.text = name;
         difficultyText.text = difficulty;
+        GetComponent<EnemyStatus>()?.ConfigureStatusText(difficultyText, difficulty);
         contaminationSlider.maxValue = maxContamination;
         contaminationSlider.value = Mathf.Clamp(currentContamination, 0, maxContamination);
     }
@@ -614,6 +656,22 @@ public class UIBattleManager : MonoBehaviour
         infectionTypeText.text = infectionType;
         descriptionText.text = description;
         inventoryStatusText.text = inventoryStatus;
+    }
+
+    public int GetCurrentContamination()
+    {
+        if (contaminationSlider == null)
+            return 0;
+
+        return Mathf.RoundToInt(contaminationSlider.value);
+    }
+
+    public int GetMaxContamination()
+    {
+        if (contaminationSlider == null)
+            return DefaultContaminationLevel;
+
+        return Mathf.RoundToInt(contaminationSlider.maxValue);
     }
 
     public void UpdateContaminationGauge(int currentContamination)
@@ -633,8 +691,64 @@ public class UIBattleManager : MonoBehaviour
         {
             ClearCurrentMonsterContamination();
             Debug.Log("[UIBattleManager] 오염도 0 도달! 정화 완료.");
+            ResolveTurnController();
+            turnController?.NotifyBattleWon();
             OnContaminationEmpty?.Invoke();
         }
+    }
+
+    private void ResolveTurnController()
+    {
+        if (turnController != null)
+            return;
+
+        turnController = GetComponent<BattleTurnController>();
+        if (turnController == null)
+            turnController = FindAnyObjectByType<BattleTurnController>(FindObjectsInactive.Include);
+    }
+
+    private void EnsureTurnController()
+    {
+        ResolveTurnController();
+        if (turnController != null)
+            return;
+
+        turnController = gameObject.AddComponent<BattleTurnController>();
+    }
+
+    private void EnsureEnemyStatus()
+    {
+        EnemyStatus status = GetComponent<EnemyStatus>();
+        if (status == null)
+            status = gameObject.AddComponent<EnemyStatus>();
+
+        status.ConfigureStatusText(difficultyText, GetDifficultyDisplayText());
+    }
+
+    private void ResolveAndBindPlayerOxygen()
+    {
+        PlayerOxygen runtimeOxygen = PlayerOxygen.ResolveRuntime();
+        turnController?.BindPlayerOxygen(runtimeOxygen);
+
+        if (battleOxygenGauge == null)
+            battleOxygenGauge = GetComponentInChildren<UIBattleOxygenGauge>(true);
+
+        UIBattleOxygenGauge[] gauges =
+            GetComponentsInChildren<UIBattleOxygenGauge>(true);
+
+        for (int i = 0; i < gauges.Length; i++)
+        {
+            if (gauges[i] != null)
+                gauges[i].BindToRuntimePlayerOxygen();
+        }
+    }
+
+    public string GetDifficultyDisplayText()
+    {
+        if (difficultyText == null)
+            return string.Empty;
+
+        return difficultyText.text;
     }
 
     private void SubscribeBattleEnded()
@@ -658,6 +772,9 @@ public class UIBattleManager : MonoBehaviour
 
     private void HandleBattleEnded()
     {
+        ResolveTurnController();
+        turnController?.NotifyBattleEnded();
+
         ExitBattle();
         FinalizeContaminationOnce();
         ForceRestoreFieldPhysics();

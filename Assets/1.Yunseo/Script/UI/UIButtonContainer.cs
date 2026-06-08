@@ -27,6 +27,7 @@ public class UIButtonContainer : MonoBehaviour
     private bool isEscaping;
     private bool wasEscapeUiActive = true;
     private string depletedItemIdThisBattle;
+    private BattleTurnController turnController;
 
     private void Awake()
     {
@@ -69,6 +70,14 @@ public class UIButtonContainer : MonoBehaviour
         uiManager.OnContaminationEmpty += OnContaminationCleared;
         uiManager.OnEscapeLockChanged -= ApplyEscapeLock;
         uiManager.OnEscapeLockChanged += ApplyEscapeLock;
+
+        ResolveTurnController();
+        if (turnController != null)
+        {
+            turnController.OnTurnPhaseChanged -= HandleTurnPhaseChanged;
+            turnController.OnTurnPhaseChanged += HandleTurnPhaseChanged;
+            HandleTurnPhaseChanged(turnController.CurrentPhase);
+        }
     }
 
     private void UnsubscribeUiManager()
@@ -78,6 +87,9 @@ public class UIButtonContainer : MonoBehaviour
 
         uiManager.OnContaminationEmpty -= OnContaminationCleared;
         uiManager.OnEscapeLockChanged -= ApplyEscapeLock;
+
+        if (turnController != null)
+            turnController.OnTurnPhaseChanged -= HandleTurnPhaseChanged;
     }
 
     /// <summary>씬에 있는 모든 UIButtonContainer의 배틀 버튼 상태를 초기화합니다.</summary>
@@ -121,7 +133,7 @@ public class UIButtonContainer : MonoBehaviour
 
     public void OnSearchClick()
     {
-        if (isEscaping || uiManager == null)
+        if (isEscaping || uiManager == null || !CanUsePlayerTurnAction())
             return;
 
         if (uiManager.IsScanned)
@@ -146,7 +158,7 @@ public class UIButtonContainer : MonoBehaviour
 
     public void OnPurifyClick()
     {
-        if (isEscaping || uiManager == null)
+        if (isEscaping || uiManager == null || !CanUsePlayerTurnAction())
             return;
 
         string itemId = uiManager.GetRequiredPurifyItemId();
@@ -180,11 +192,13 @@ public class UIButtonContainer : MonoBehaviour
             GetInfectionTypeText(),
             GetDescriptionText(),
             uiManager.BuildInventoryStatusText());
+
+        UpdateActionButtonsForPlayerTurn();
     }
 
     public void OnEscapeClick()
     {
-        if (isEscaping || uiManager == null)
+        if (isEscaping || uiManager == null || !CanUsePlayerTurnAction())
             return;
 
         if (!uiManager.CanAttemptEscape)
@@ -236,8 +250,10 @@ public class UIButtonContainer : MonoBehaviour
 
     private void ResetEscapeButtonInteractable()
     {
-        if (escapeButton != null)
-            escapeButton.interactable = true;
+        if (escapeButton == null || uiManager == null)
+            return;
+
+        escapeButton.interactable = CanUsePlayerTurnAction() && uiManager.CanAttemptEscape;
     }
 
     private GameObject ResolveEscapeUiRoot()
@@ -286,7 +302,56 @@ public class UIButtonContainer : MonoBehaviour
         if (purifyButton == null || uiManager == null)
             return;
 
-        purifyButton.interactable = uiManager.CanPurifyWithInventory();
+        purifyButton.interactable = CanUsePlayerTurnAction() && uiManager.CanPurifyWithInventory();
+    }
+
+    private void HandleTurnPhaseChanged(BattleTurnController.BattleTurnPhase phase)
+    {
+        bool isPlayerTurn = phase == BattleTurnController.BattleTurnPhase.PlayerTurn;
+        SetBattleActionsLocked(!isPlayerTurn);
+
+        if (isPlayerTurn)
+            UpdateActionButtonsForPlayerTurn();
+    }
+
+    private void UpdateActionButtonsForPlayerTurn()
+    {
+        if (uiManager == null)
+            return;
+
+        bool canAct = CanUsePlayerTurnAction();
+
+        if (searchButton != null)
+            searchButton.interactable = canAct && !uiManager.IsScanned;
+
+        UpdatePurifyButtonInteractable();
+        ResetEscapeButtonInteractable();
+    }
+
+    private bool CanUsePlayerTurnAction()
+    {
+        if (uiManager == null)
+            return false;
+
+        ResolveTurnController();
+        if (turnController != null && (!turnController.IsPlayerTurn || turnController.IsResolvingTurn))
+            return false;
+
+        return uiManager.IsPlayerTurnActive();
+    }
+
+    private void ResolveTurnController()
+    {
+        if (turnController != null)
+            return;
+
+        if (uiManager != null && uiManager.TurnController != null)
+        {
+            turnController = uiManager.TurnController;
+            return;
+        }
+
+        turnController = FindAnyObjectByType<BattleTurnController>(FindObjectsInactive.Include);
     }
 
     private void ApplyBattleKeyboardInputGuard()

@@ -10,7 +10,6 @@ public class BattleUIController : MonoBehaviour
     [SerializeField] private float fleePenaltyAmount = 15f;
 
     [Header("컴포넌트 연결")]
-    [SerializeField] private PlayerOxygen playerOxygen;
     [SerializeField] private PlayerController playerController;
 
     /// <summary>인스펙터에 직접 연결된 레거시 진입점.</summary>
@@ -47,9 +46,9 @@ public class BattleUIController : MonoBehaviour
 
     public void ApplyFleePenaltyOnly()
     {
-        ResolveActivePlayerOxygen();
         ResolveActivePlayerController();
 
+        PlayerOxygen playerOxygen = PlayerOxygen.ResolveRuntime();
         if (playerOxygen != null)
             playerOxygen.ApplyFleePenalty(fleePenaltyAmount);
         else
@@ -61,21 +60,6 @@ public class BattleUIController : MonoBehaviour
             Debug.LogWarning("[BattleUIController] PlayerController를 찾지 못해 도망 후 재진입 방지 시간을 적용하지 못했습니다.");
 
         Debug.Log("[BattleUIController] 도망 패널티 적용 완료.");
-    }
-
-    private void ResolveActivePlayerOxygen()
-    {
-        if (playerOxygen != null && playerOxygen.isActiveAndEnabled)
-            return;
-
-        PlayerOxygen found = FindAnyObjectByType<PlayerOxygen>();
-        if (found != null && found.isActiveAndEnabled)
-        {
-            playerOxygen = found;
-            return;
-        }
-
-        playerOxygen = null;
     }
 
     private void ResolveActivePlayerController()

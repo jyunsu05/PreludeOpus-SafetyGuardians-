@@ -16,7 +16,6 @@ GameObject:
   - component: {fileID: 433014957338676636}
   - component: {fileID: 7236435115061726686}
   - component: {fileID: 8351533337805257606}
-  - component: {fileID: 4717229866792010008}
   m_Layer: 7
   m_Name: Player
   m_TagString: Player
@@ -238,38 +237,6 @@ MonoBehaviour:
   hideDistance: 1.25
   exclusionRadiusMode: 0
   exclusionCollider: {fileID: 4610265001600618587}
-  playerExclusionRadiusCm: 5
-  exclusionRadiusBonusCm: 40
-  arrowPaddingCm: 0
-  rotationLerpSpeed: 12
-  angleOffset: -90
-  useNearestItemSprite: 1
-  arrowDisplaySizeCm: 50
-  autoArrowVisualName: Arrow
-  copySortingFromPlayer: 1
-  sortingOrderOffset: 10
-  currentTargetName: 
-  currentDistance: 0
-  currentExclusionRadiusWorld: 0
---- !u!114 &4717229866792010008
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8262382494914530255}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e3e9f42724e2ed34ea043ff799af6f01, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ItemArrowIndicator
-  playerTransform: {fileID: 140981729730371750}
-  arrowVisual: {fileID: 0}
-  itemTag: Item
-  detectionRange: 999
-  hideDistance: 1.25
-  exclusionRadiusMode: 0
-  exclusionCollider: {fileID: 0}
   playerExclusionRadiusCm: 5
   exclusionRadiusBonusCm: 40
   arrowPaddingCm: 0
