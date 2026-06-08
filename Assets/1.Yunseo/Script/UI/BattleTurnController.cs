@@ -385,8 +385,12 @@ public class BattleTurnController : MonoBehaviour
         MonsterActionType action = PickRandomMonsterAction();
 
         if (!IsBattleResolved())
-
-            ExecuteMonsterAction(action);
+        {
+            if (action == MonsterActionType.AttackPlayer)
+                yield return ExecuteMonsterAttackRoutine();
+            else
+                ExecuteMonsterAction(action);
+        }
 
 
 
@@ -468,7 +472,7 @@ public class BattleTurnController : MonoBehaviour
 
             case MonsterActionType.AttackPlayer:
 
-                ExecuteMonsterAttack();
+                ApplyMonsterAttackDamage();
 
                 break;
 
@@ -496,7 +500,39 @@ public class BattleTurnController : MonoBehaviour
 
 
 
-    private void ExecuteMonsterAttack()
+    private IEnumerator ExecuteMonsterAttackRoutine()
+
+    {
+
+        if (IsBattleResolved())
+
+            yield break;
+
+
+
+        if (battleManager != null)
+
+            yield return battleManager.PlayPlayerHitEffectRoutine();
+
+        else
+
+            yield return new WaitForSecondsRealtime(0.65f);
+
+
+
+        if (IsBattleResolved())
+
+            yield break;
+
+
+
+        ApplyMonsterAttackDamage();
+
+    }
+
+
+
+    private void ApplyMonsterAttackDamage()
 
     {
 
