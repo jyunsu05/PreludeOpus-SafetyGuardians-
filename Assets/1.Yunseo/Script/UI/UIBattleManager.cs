@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections;
 using System.Collections.Generic;
 using System;
 
@@ -41,7 +42,18 @@ public class UIBattleManager : MonoBehaviour
     [Tooltip("배틀 씬에 만든 산소 게이지(UIBattleOxygenGauge). 비우면 자식에서 자동 탐색합니다.")]
     [SerializeField] private UIBattleOxygenGauge battleOxygenGauge;
 
+    [Header("--- 정화 연출 ---")]
+    [Tooltip("정화 행동 시 DoPurify 트리거. 비우면 자식에서 PurificationCircle을 자동 탐색합니다.")]
+    [SerializeField] private Animator purificationCircleAnimator;
+    [Tooltip("정화 행동 시 DoPurify 트리거. 비우면 자식에서 PurificationParticles를 자동 탐색합니다.")]
+    [SerializeField] private Animator purificationParticlesAnimator;
+    [Tooltip("Circle/Particles 클립 길이(0.6초)에 맞춘 대기 시간입니다.")]
+    [SerializeField] private float purifyAnimationDuration = 0.6f;
+
     private const string DefaultPurifyItemId = "MI-101";
+    private static readonly int DoPurifyTrigger = Animator.StringToHash("DoPurify");
+
+    private Coroutine purifyAnimationRoutine;
 
     public bool IsScanned { get; private set; }
     public bool IsPurifying { get; private set; }
@@ -273,30 +285,133 @@ public class UIBattleManager : MonoBehaviour
             return false;
         }
 
-        BeginPurifySession();
-
-        hasPendingPurifyItemConsumption = true;
         appliedEffect = Mathf.Max(1, purifyEffectPerUse);
         int basePurifyDamage = appliedEffect;
         int finalPurifyDamage = turnController != null
             ? turnController.CalculateAmplifiedContaminationDamage(appliedEffect)
             : appliedEffect;
 
-        ReduceContamination(finalPurifyDamage);
+        if (purifyAnimationRoutine != null)
+            StopCoroutine(purifyAnimationRoutine);
+
+        purifyAnimationRoutine = StartCoroutine(
+            ExecutePurifyWithAnimationRoutine(basePurifyDamage, finalPurifyDamage));
+
+        return true;
+    }
+
+    private IEnumerator ExecutePurifyWithAnimationRoutine(int basePurifyDamage, int finalPurifyDamage)
+    {
+        BeginPurifySession();
+        hasPendingPurifyItemConsumption = true;
+        UIButtonContainer.SetAllBattleInputBlocked(true);
+        UIInventory.RefreshAllVisible();
+
+        SetPurifyVfxActive(true);
+        TriggerPurifyAnimation();
+
+        float waitDuration = Mathf.Max(0.01f, purifyAnimationDuration);
+        yield return new WaitForSecondsRealtime(waitDuration);
+
+        CompletePurifyAfterAnimation(basePurifyDamage, finalPurifyDamage);
+
         EndPurifyAttempt(unlockEscape: false);
+        SetPurifyVfxActive(false);
+        UIButtonContainer.SetAllBattleInputBlocked(false);
+        UIButtonContainer.RefreshAllPlayerTurnButtons();
+        UIInventory.RefreshAllVisible();
+        purifyAnimationRoutine = null;
+    }
+
+    private void CompletePurifyAfterAnimation(int basePurifyDamage, int finalPurifyDamage)
+    {
+        ReduceContamination(finalPurifyDamage);
 
         if (hasBattleWon)
         {
             turnController?.ReleasePlayerActionLock();
-            return true;
+            return;
         }
 
         if (GetCurrentContamination() > 0)
             turnController?.CommitPlayerPurifyTurn(basePurifyDamage, finalPurifyDamage);
         else
             turnController?.ReleasePlayerActionLock();
+    }
 
+    private void TriggerPurifyAnimation()
+    {
+        ResolvePurifyAnimators();
+
+        bool circleTriggered = TryTriggerPurifyAnimation(purificationCircleAnimator);
+        bool particlesTriggered = TryTriggerPurifyAnimation(purificationParticlesAnimator);
+
+        if (!circleTriggered && !particlesTriggered)
+        {
+            Debug.LogWarning(
+                "[UIBattleManager] PurificationCircle/PurificationParticles Animator가 없어 정화 연출을 건너뜁니다.");
+        }
+    }
+
+    private void SetPurifyVfxActive(bool active)
+    {
+        ResolvePurifyAnimators();
+        SetPurifyVfxObjectActive(purificationCircleAnimator, active);
+        SetPurifyVfxObjectActive(purificationParticlesAnimator, active);
+    }
+
+    private static void SetPurifyVfxObjectActive(Animator animator, bool active)
+    {
+        if (animator == null)
+            return;
+
+        GameObject vfxObject = animator.gameObject;
+        if (!active)
+        {
+            vfxObject.SetActive(false);
+            return;
+        }
+
+        vfxObject.SetActive(true);
+        animator.Rebind();
+        animator.Update(0f);
+    }
+
+    private static bool TryTriggerPurifyAnimation(Animator animator)
+    {
+        if (animator == null || !animator.isActiveAndEnabled)
+            return false;
+
+        animator.SetTrigger(DoPurifyTrigger);
         return true;
+    }
+
+    private void ResolvePurifyAnimators()
+    {
+        if (purificationCircleAnimator != null && purificationParticlesAnimator != null)
+            return;
+
+        Animator[] animators = GetComponentsInChildren<Animator>(true);
+        for (int i = 0; i < animators.Length; i++)
+        {
+            Animator candidate = animators[i];
+            if (candidate == null)
+                continue;
+
+            string objectName = candidate.gameObject.name;
+            if (purificationParticlesAnimator == null &&
+                string.Equals(objectName, "PurificationParticles", StringComparison.OrdinalIgnoreCase))
+            {
+                purificationParticlesAnimator = candidate;
+                continue;
+            }
+
+            if (purificationCircleAnimator == null &&
+                string.Equals(objectName, "PurificationCircle", StringComparison.OrdinalIgnoreCase))
+            {
+                purificationCircleAnimator = candidate;
+            }
+        }
     }
 
     private bool ExecuteOxygenItemUse(string itemId, out int appliedEffect)
@@ -408,6 +523,8 @@ public class UIBattleManager : MonoBehaviour
     /// <summary>배틀 종료·UI 비활성 시 상태/도망 잠금을 방어적으로 해제합니다.</summary>
     public void ExitBattle()
     {
+        StopPurifyAnimationRoutine();
+        SetPurifyVfxActive(false);
         ClearPendingPurifyItemConsumption();
         hasBattleWon = false;
         ResetBattleSessionState();
@@ -415,6 +532,16 @@ public class UIBattleManager : MonoBehaviour
         IsPurifying = false;
         isProcessingBattleExit = false;
         SetEscapeLocked(false);
+        UIButtonContainer.SetAllBattleInputBlocked(false);
+    }
+
+    private void StopPurifyAnimationRoutine()
+    {
+        if (purifyAnimationRoutine == null)
+            return;
+
+        StopCoroutine(purifyAnimationRoutine);
+        purifyAnimationRoutine = null;
     }
 
     /// <summary>도망 버튼 광클 방지. 성공 시 MarkFleeExit까지 처리됨.</summary>
@@ -504,6 +631,8 @@ public class UIBattleManager : MonoBehaviour
 
         if (!preserveWonGauge)
             ResetContaminationGaugeToInitial();
+
+        SetPurifyVfxActive(false);
     }
 
     public MonsterData GetCurrentMonsterData() => currentMonsterData;

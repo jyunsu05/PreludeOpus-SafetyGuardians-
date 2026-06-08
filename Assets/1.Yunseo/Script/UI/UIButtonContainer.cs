@@ -108,6 +108,18 @@ public class UIButtonContainer : MonoBehaviour
         }
     }
 
+    public static void SetAllBattleInputBlocked(bool blocked)
+    {
+        UIButtonContainer[] containers =
+            FindObjectsByType<UIButtonContainer>(FindObjectsInactive.Include);
+
+        for (int i = 0; i < containers.Length; i++)
+        {
+            if (containers[i] != null)
+                containers[i].SetBattleActionsLocked(blocked);
+        }
+    }
+
     /// <summary>씬에 있는 모든 UIButtonContainer의 배틀 버튼 상태를 초기화합니다.</summary>
     public static void ResetAllRuntimeButtonState()
     {
