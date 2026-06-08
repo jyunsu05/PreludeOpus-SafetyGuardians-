@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Serialization;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
@@ -49,6 +50,14 @@ public class UIBattleManager : MonoBehaviour
     [SerializeField] private Animator purificationParticlesAnimator;
     [Tooltip("Circle/Particles 클립 길이(0.6초)에 맞춘 대기 시간입니다.")]
     [SerializeField] private float purifyAnimationDuration = 0.6f;
+
+    [Header("--- 플레이어 피격 연출 (몬스터 공격) ---")]
+    [Tooltip("PlayerHitVfx의 BattlePlayerHitPresenter. 비우면 자식에서 자동 탐색합니다.")]
+    [FormerlySerializedAs("monsterHitPresenter")]
+    [SerializeField] private BattlePlayerHitPresenter playerHitPresenter;
+    [Tooltip("Presenter가 없을 때 사용할 피격 연출 대기 시간(초)입니다.")]
+    [FormerlySerializedAs("monsterHitAnimationDuration")]
+    [SerializeField] private float playerHitAnimationDuration = 0.65f;
 
     private const string DefaultPurifyItemId = "MI-101";
     private static readonly int DoPurifyTrigger = Animator.StringToHash("DoPurify");
@@ -310,23 +319,27 @@ public class UIBattleManager : MonoBehaviour
         SetPurifyVfxActive(true);
         TriggerPurifyAnimation();
 
-        float waitDuration = Mathf.Max(0.01f, purifyAnimationDuration);
-        yield return new WaitForSecondsRealtime(waitDuration);
+        float purifyWaitDuration = Mathf.Max(0.01f, purifyAnimationDuration);
+        yield return new WaitForSecondsRealtime(purifyWaitDuration);
+        SetPurifyVfxActive(false);
 
-        CompletePurifyAfterAnimation(basePurifyDamage, finalPurifyDamage);
+        ApplyPurifyDamage(finalPurifyDamage);
+        FinalizePurifyTurn(basePurifyDamage, finalPurifyDamage);
 
         EndPurifyAttempt(unlockEscape: false);
-        SetPurifyVfxActive(false);
         UIButtonContainer.SetAllBattleInputBlocked(false);
         UIButtonContainer.RefreshAllPlayerTurnButtons();
         UIInventory.RefreshAllVisible();
         purifyAnimationRoutine = null;
     }
 
-    private void CompletePurifyAfterAnimation(int basePurifyDamage, int finalPurifyDamage)
+    private void ApplyPurifyDamage(int finalPurifyDamage)
     {
         ReduceContamination(finalPurifyDamage);
+    }
 
+    private void FinalizePurifyTurn(int basePurifyDamage, int finalPurifyDamage)
+    {
         if (hasBattleWon)
         {
             turnController?.ReleasePlayerActionLock();
@@ -337,6 +350,32 @@ public class UIBattleManager : MonoBehaviour
             turnController?.CommitPlayerPurifyTurn(basePurifyDamage, finalPurifyDamage);
         else
             turnController?.ReleasePlayerActionLock();
+    }
+
+    /// <summary>몬스터 공격 행동 시 반투명 Hit 이미지를 잠깐 표시합니다.</summary>
+    public IEnumerator PlayPlayerHitEffectRoutine()
+    {
+        ResolvePlayerHitPresenter();
+        if (playerHitPresenter == null)
+        {
+            yield return new WaitForSecondsRealtime(Mathf.Max(0.01f, playerHitAnimationDuration));
+            yield break;
+        }
+
+        playerHitPresenter.ShowHitOverlay();
+
+        float waitDuration = Mathf.Max(0.01f, playerHitPresenter.HitOverlayDuration);
+        yield return new WaitForSecondsRealtime(waitDuration);
+
+        playerHitPresenter.HideHitOverlay();
+    }
+
+    private void ResolvePlayerHitPresenter()
+    {
+        if (playerHitPresenter != null)
+            return;
+
+        playerHitPresenter = GetComponentInChildren<BattlePlayerHitPresenter>(true);
     }
 
     private void TriggerPurifyAnimation()
@@ -525,6 +564,7 @@ public class UIBattleManager : MonoBehaviour
     {
         StopPurifyAnimationRoutine();
         SetPurifyVfxActive(false);
+        playerHitPresenter?.HideHitOverlay();
         ClearPendingPurifyItemConsumption();
         hasBattleWon = false;
         ResetBattleSessionState();
