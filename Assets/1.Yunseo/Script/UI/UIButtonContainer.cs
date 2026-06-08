@@ -162,9 +162,17 @@ public class UIButtonContainer : MonoBehaviour
         if (isEscaping || uiManager == null || !CanUsePlayerTurnAction())
             return;
 
-        if (uiManager.IsScanned)
+        if (uiManager.IsScanned || uiManager.IsSearching)
             return;
 
+        SetBattleActionsLocked(true);
+
+        if (!uiManager.TryBeginSearch(CompleteSearchAfterAnimation))
+            SetBattleActionsLocked(false);
+    }
+
+    private void CompleteSearchAfterAnimation()
+    {
         uiManager.NotifySearchCompleted();
 
         if (searchButton != null)
@@ -180,6 +188,9 @@ public class UIButtonContainer : MonoBehaviour
             GetInfectionTypeText(),
             GetDescriptionText(),
             uiManager.BuildInventoryStatusText());
+
+        SetBattleActionsLocked(false);
+        UpdateActionButtonsForPlayerTurn();
     }
 
     public void OnPurifyClick()
@@ -346,7 +357,7 @@ public class UIButtonContainer : MonoBehaviour
         bool canAct = CanUsePlayerTurnAction();
 
         if (searchButton != null)
-            searchButton.interactable = canAct && !uiManager.IsScanned;
+            searchButton.interactable = canAct && !uiManager.IsScanned && !uiManager.IsSearching;
 
         UpdatePurifyButtonInteractable();
         ResetEscapeButtonInteractable();
@@ -355,6 +366,9 @@ public class UIButtonContainer : MonoBehaviour
     private bool CanUsePlayerTurnAction()
     {
         if (uiManager == null)
+            return false;
+
+        if (uiManager.IsSearching)
             return false;
 
         ResolveTurnController();

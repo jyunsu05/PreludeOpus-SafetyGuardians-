@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Serialization;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
@@ -50,12 +51,30 @@ public class UIBattleManager : MonoBehaviour
     [Tooltip("Circle/Particles 클립 길이(0.6초)에 맞춘 대기 시간입니다.")]
     [SerializeField] private float purifyAnimationDuration = 0.6f;
 
+    [Header("--- 플레이어 피격 연출 (몬스터 공격) ---")]
+    [Tooltip("PlayerHitVfx의 BattlePlayerHitPresenter. 비우면 자식에서 자동 탐색합니다.")]
+    [FormerlySerializedAs("monsterHitPresenter")]
+    [SerializeField] private BattlePlayerHitPresenter playerHitPresenter;
+    [Tooltip("Presenter가 없을 때 사용할 피격 연출 대기 시간(초)입니다.")]
+    [FormerlySerializedAs("monsterHitAnimationDuration")]
+    [SerializeField] private float playerHitAnimationDuration = 0.65f;
+
+    [Header("--- 탐색 연출 ---")]
+    [Tooltip("SearchLens의 BattleSearchLensPresenter. 비우면 자식에서 자동 탐색합니다.")]
+    [FormerlySerializedAs("searchLensAnimator")]
+    [SerializeField] private BattleSearchLensPresenter searchLensPresenter;
+    [Tooltip("Presenter가 없을 때 사용할 탐색 연출 대기 시간(초)입니다.")]
+    [FormerlySerializedAs("searchAnimationDuration")]
+    [SerializeField] private float searchAnimationDuration = 3f;
+
     private const string DefaultPurifyItemId = "MI-101";
     private static readonly int DoPurifyTrigger = Animator.StringToHash("DoPurify");
 
     private Coroutine purifyAnimationRoutine;
+    private Coroutine searchAnimationRoutine;
 
     public bool IsScanned { get; private set; }
+    public bool IsSearching { get; private set; }
     public bool IsPurifying { get; private set; }
     public bool IsEscapeLocked { get; private set; }
     public string LastConsumedBattleItemId { get; private set; }
@@ -191,7 +210,7 @@ public class UIBattleManager : MonoBehaviour
     /// <summary>플레이어 턴이며 턴 전환 연출 중이 아닐 때만 배틀 행동을 허용합니다.</summary>
     public bool CanAcceptPlayerBattleAction()
     {
-        if (hasBattleWon || IsPurifying || isProcessingBattleExit)
+        if (hasBattleWon || IsPurifying || IsSearching || isProcessingBattleExit)
             return false;
 
         ResolveTurnController();
@@ -199,6 +218,35 @@ public class UIBattleManager : MonoBehaviour
             return false;
 
         return turnController.IsPlayerTurn && !turnController.IsResolvingTurn;
+    }
+
+    /// <summary>탐색 버튼 연출을 재생한 뒤 콜백을 호출합니다.</summary>
+    public bool TryBeginSearch(System.Action onCompleted)
+    {
+        if (IsScanned || IsSearching || !CanAcceptPlayerBattleAction())
+            return false;
+
+        StopSearchAnimationRoutine();
+        searchAnimationRoutine = StartCoroutine(ExecuteSearchAnimationRoutine(onCompleted));
+        return true;
+    }
+
+    private IEnumerator ExecuteSearchAnimationRoutine(System.Action onCompleted)
+    {
+        IsSearching = true;
+
+        ResolveSearchLensPresenter();
+        if (searchLensPresenter != null)
+            searchLensPresenter.PlaySearchAnimation();
+
+        float waitDuration = ResolveSearchAnimationDuration();
+        yield return new WaitForSecondsRealtime(waitDuration);
+
+        searchLensPresenter?.StopSearchAnimation();
+        IsSearching = false;
+        searchAnimationRoutine = null;
+
+        onCompleted?.Invoke();
     }
 
     /// <summary>탐색 성공 — 정화 버튼을 켤 수 있는 상태로 전환합니다.</summary>
@@ -310,23 +358,27 @@ public class UIBattleManager : MonoBehaviour
         SetPurifyVfxActive(true);
         TriggerPurifyAnimation();
 
-        float waitDuration = Mathf.Max(0.01f, purifyAnimationDuration);
-        yield return new WaitForSecondsRealtime(waitDuration);
+        float purifyWaitDuration = Mathf.Max(0.01f, purifyAnimationDuration);
+        yield return new WaitForSecondsRealtime(purifyWaitDuration);
+        SetPurifyVfxActive(false);
 
-        CompletePurifyAfterAnimation(basePurifyDamage, finalPurifyDamage);
+        ApplyPurifyDamage(finalPurifyDamage);
+        FinalizePurifyTurn(basePurifyDamage, finalPurifyDamage);
 
         EndPurifyAttempt(unlockEscape: false);
-        SetPurifyVfxActive(false);
         UIButtonContainer.SetAllBattleInputBlocked(false);
         UIButtonContainer.RefreshAllPlayerTurnButtons();
         UIInventory.RefreshAllVisible();
         purifyAnimationRoutine = null;
     }
 
-    private void CompletePurifyAfterAnimation(int basePurifyDamage, int finalPurifyDamage)
+    private void ApplyPurifyDamage(int finalPurifyDamage)
     {
         ReduceContamination(finalPurifyDamage);
+    }
 
+    private void FinalizePurifyTurn(int basePurifyDamage, int finalPurifyDamage)
+    {
         if (hasBattleWon)
         {
             turnController?.ReleasePlayerActionLock();
@@ -337,6 +389,49 @@ public class UIBattleManager : MonoBehaviour
             turnController?.CommitPlayerPurifyTurn(basePurifyDamage, finalPurifyDamage);
         else
             turnController?.ReleasePlayerActionLock();
+    }
+
+    /// <summary>몬스터 공격 행동 시 반투명 Hit 이미지를 잠깐 표시합니다.</summary>
+    public IEnumerator PlayPlayerHitEffectRoutine()
+    {
+        ResolvePlayerHitPresenter();
+        if (playerHitPresenter == null)
+        {
+            yield return new WaitForSecondsRealtime(Mathf.Max(0.01f, playerHitAnimationDuration));
+            yield break;
+        }
+
+        playerHitPresenter.ShowHitOverlay();
+
+        float waitDuration = Mathf.Max(0.01f, playerHitPresenter.HitOverlayDuration);
+        yield return new WaitForSecondsRealtime(waitDuration);
+
+        playerHitPresenter.HideHitOverlay();
+    }
+
+    private void ResolvePlayerHitPresenter()
+    {
+        if (playerHitPresenter != null)
+            return;
+
+        playerHitPresenter = GetComponentInChildren<BattlePlayerHitPresenter>(true);
+    }
+
+    private void ResolveSearchLensPresenter()
+    {
+        if (searchLensPresenter != null)
+            return;
+
+        searchLensPresenter = GetComponentInChildren<BattleSearchLensPresenter>(true);
+    }
+
+    private float ResolveSearchAnimationDuration()
+    {
+        ResolveSearchLensPresenter();
+        if (searchLensPresenter != null)
+            return searchLensPresenter.AnimationDuration;
+
+        return Mathf.Max(0.01f, searchAnimationDuration);
     }
 
     private void TriggerPurifyAnimation()
@@ -524,11 +619,15 @@ public class UIBattleManager : MonoBehaviour
     public void ExitBattle()
     {
         StopPurifyAnimationRoutine();
+        StopSearchAnimationRoutine();
         SetPurifyVfxActive(false);
+        searchLensPresenter?.StopSearchAnimation();
+        playerHitPresenter?.HideHitOverlay();
         ClearPendingPurifyItemConsumption();
         hasBattleWon = false;
         ResetBattleSessionState();
         IsScanned = false;
+        IsSearching = false;
         IsPurifying = false;
         isProcessingBattleExit = false;
         SetEscapeLocked(false);
@@ -542,6 +641,16 @@ public class UIBattleManager : MonoBehaviour
 
         StopCoroutine(purifyAnimationRoutine);
         purifyAnimationRoutine = null;
+    }
+
+    private void StopSearchAnimationRoutine()
+    {
+        if (searchAnimationRoutine == null)
+            return;
+
+        StopCoroutine(searchAnimationRoutine);
+        searchAnimationRoutine = null;
+        IsSearching = false;
     }
 
     /// <summary>도망 버튼 광클 방지. 성공 시 MarkFleeExit까지 처리됨.</summary>
