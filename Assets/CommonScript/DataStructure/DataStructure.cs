@@ -4,6 +4,13 @@ using System.Collections.Generic;
 public interface IIdentifiable { string GetId(); }
 public interface IDataList<T> { List<T> GetList(); }
 
+public enum ItemType
+{
+    MonsterPurification,
+    FactoryPurification,
+    General
+}
+
 [System.Serializable]
 public class ItemData : IIdentifiable
 {
@@ -14,6 +21,23 @@ public class ItemData : IIdentifiable
     public int durability;
     public string description;
     public string GetId() => id;
+
+    public ItemType GetResolvedType()
+        => ResolveItemTypeFromLabel(item_type);
+
+    public static ItemType ResolveItemTypeFromLabel(string itemTypeLabel)
+    {
+        if (string.IsNullOrEmpty(itemTypeLabel))
+            return ItemType.General;
+
+        if (itemTypeLabel.Contains("몬스터 정화"))
+            return ItemType.MonsterPurification;
+
+        if (itemTypeLabel.Contains("공장 정화"))
+            return ItemType.FactoryPurification;
+
+        return ItemType.General;
+    }
 }
 
 [System.Serializable]

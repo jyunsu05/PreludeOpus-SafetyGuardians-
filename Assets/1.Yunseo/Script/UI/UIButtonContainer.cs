@@ -178,12 +178,11 @@ public class UIButtonContainer : MonoBehaviour
         string itemId = uiManager.GetRequiredPurifyItemId();
         if (!uiManager.CanPurifyWithInventory(itemId))
         {
-            string itemName = GetItemName(itemId);
             Debug.LogWarning($"[UIButtonContainer] 정화 아이템 없음: {itemId}");
             uiManager.RevealScannedInfo(
                 GetInfectionTypeText(),
                 GetDescriptionText(),
-                $"{itemName} 없음");
+                uiManager.BuildInventoryStatusText());
             UpdatePurifyButtonInteractable();
             return;
         }

@@ -52,6 +52,114 @@ public class DataManager : MonoBehaviour
         return null;
     }
 
+    public ItemType GetItemType(string id)
+    {
+        if (string.IsNullOrEmpty(id))
+            return ItemType.General;
+
+        if (MonsterItemDict.ContainsKey(id))
+            return ItemType.MonsterPurification;
+
+        if (FactoryItemDict.ContainsKey(id))
+            return ItemType.FactoryPurification;
+
+        ItemData data = GetItemData(id);
+        if (data != null)
+            return ItemData.ResolveItemTypeFromLabel(data.item_type);
+
+        return ItemType.General;
+    }
+
+    public bool IsMonsterPurificationItem(string id)
+        => GetItemType(id) == ItemType.MonsterPurification;
+
+    public bool IsFactoryPurificationItem(string id)
+        => GetItemType(id) == ItemType.FactoryPurification;
+
+    public bool IsBattleInventoryItem(string id)
+    {
+        if (string.IsNullOrEmpty(id))
+            return false;
+
+        if (IsMonsterPurificationItem(id))
+            return true;
+
+        if (IsFactoryPurificationItem(id))
+            return !string.IsNullOrEmpty(GetMonsterItemIdForFactoryItem(id));
+
+        ItemData data = GetItemData(id);
+        return data != null &&
+               !string.IsNullOrEmpty(data.item_type) &&
+               data.item_type.Contains("산소");
+    }
+
+    public string GetMonsterItemIdForFactoryItem(string factoryItemId)
+    {
+        if (string.IsNullOrEmpty(factoryItemId) ||
+            !FactoryItemDict.TryGetValue(factoryItemId, out ItemData factoryItem))
+        {
+            return null;
+        }
+
+        foreach (ItemData monsterItem in MonsterItemDict.Values)
+        {
+            if (!string.IsNullOrEmpty(factoryItem.image_key) &&
+                factoryItem.image_key == monsterItem.image_key)
+            {
+                return monsterItem.id;
+            }
+
+            if (!string.IsNullOrEmpty(factoryItem.name) &&
+                factoryItem.name == monsterItem.name)
+            {
+                return monsterItem.id;
+            }
+        }
+
+        if (factoryItemId.StartsWith("FI-"))
+        {
+            string monsterId = "MI-" + factoryItemId.Substring(3);
+            if (MonsterItemDict.ContainsKey(monsterId))
+                return monsterId;
+        }
+
+        return null;
+    }
+
+    public bool TryGetBattleInventorySlot(
+        string inventoryItemId,
+        out string useItemId,
+        out ItemData displayData)
+    {
+        useItemId = inventoryItemId;
+        displayData = null;
+
+        if (string.IsNullOrEmpty(inventoryItemId))
+            return false;
+
+        if (IsMonsterPurificationItem(inventoryItemId))
+        {
+            displayData = GetItemData(inventoryItemId);
+            return displayData != null;
+        }
+
+        if (IsFactoryPurificationItem(inventoryItemId))
+        {
+            string monsterItemId = GetMonsterItemIdForFactoryItem(inventoryItemId);
+            if (string.IsNullOrEmpty(monsterItemId))
+                return false;
+
+            useItemId = inventoryItemId;
+            displayData = GetItemData(monsterItemId);
+            return displayData != null;
+        }
+
+        displayData = GetItemData(inventoryItemId);
+        return displayData != null &&
+               !string.IsNullOrEmpty(displayData.item_type) &&
+               displayData.item_type.Contains("산소");
+    }
+
     // 몬스터 보상 아이템 ID를 인벤토리용 공장 아이템 ID로 변환
     public string GetFactoryItemIdForInventory(string itemId)
     {

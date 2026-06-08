@@ -349,19 +349,8 @@ public class UIBattleManager : MonoBehaviour
 
     private static bool IsMonsterPurifyItem(string itemId)
     {
-        if (string.IsNullOrEmpty(itemId))
-            return false;
-
-        if (itemId.StartsWith("MI-", StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        if (DataManager.Instance == null)
-            return false;
-
-        ItemData data = DataManager.Instance.GetItemData(itemId);
-        return data != null &&
-               !string.IsNullOrEmpty(data.item_type) &&
-               data.item_type.IndexOf("몬스터 정화", StringComparison.Ordinal) >= 0;
+        return DataManager.Instance != null &&
+               DataManager.Instance.IsMonsterPurificationItem(itemId);
     }
 
     private static bool IsOxygenRecoveryItem(string itemId)
@@ -406,12 +395,13 @@ public class UIBattleManager : MonoBehaviour
             return "필요 아이템 정보 없음";
 
         string itemName = ResolveItemDisplayName(itemId);
-        if (!CanPurifyWithInventory(itemId))
+        if (InventoryManager.Instance == null)
+            return $"{itemName} 보유 0";
+
+        int count = InventoryManager.Instance.GetMonsterPurificationItemCount(itemId);
+        if (count <= 0)
             return $"{itemName} 없음";
 
-        int count = InventoryManager.Instance.HasBattleConsumableForRequirement(itemId)
-            ? InventoryManager.Instance.GetBattleConsumableCount(itemId)
-            : 0;
         return $"{itemName} 보유 {count}";
     }
 

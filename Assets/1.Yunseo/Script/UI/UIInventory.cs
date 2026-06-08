@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Serialization;
@@ -15,6 +16,18 @@ public class UIInventory : MonoBehaviour
     [SerializeField] private Button closeButton;
 
     private BattleTurnController subscribedTurnController;
+
+    private readonly struct InventorySlotEntry
+    {
+        public readonly string useItemId;
+        public readonly ItemData displayData;
+
+        public InventorySlotEntry(string useItemId, ItemData displayData)
+        {
+            this.useItemId = useItemId;
+            this.displayData = displayData;
+        }
+    }
 
     void Start()
     {
@@ -39,6 +52,9 @@ public class UIInventory : MonoBehaviour
     void OnEnable()
     {
         SubscribeBattleTurnEvents();
+
+        if (InventoryManager.Instance != null)
+            RefreshUI();
     }
 
     void OnDestroy()
@@ -80,19 +96,50 @@ public class UIInventory : MonoBehaviour
 
         ClearSlots();
 
-        foreach (string id in InventoryManager.Instance.GetItemIds())
+        foreach (InventorySlotEntry entry in BuildVisibleSlotEntries())
         {
-            if (string.IsNullOrEmpty(id))
-                continue;
-
-            ItemData data = DataManager.Instance.GetItemData(id);
-            if (data == null)
+            if (entry.displayData == null)
             {
-                Debug.LogWarning($"[UIInventory] ID {id}에 해당하는 아이템 데이터가 없습니다.");
+                Debug.LogWarning($"[UIInventory] ID {entry.useItemId}에 해당하는 아이템 데이터가 없습니다.");
                 continue;
             }
 
-            SpawnSlot(id, data);
+            SpawnSlot(entry.useItemId, entry.displayData);
+        }
+    }
+
+    private IEnumerable<InventorySlotEntry> BuildVisibleSlotEntries()
+    {
+        IReadOnlyList<string> itemIds = InventoryManager.Instance.GetItemIds();
+        bool filterForBattle = IsBattleInventoryContext();
+        var shownMonsterItemIds = new HashSet<string>();
+
+        for (int i = 0; i < itemIds.Count; i++)
+        {
+            string id = itemIds[i];
+            if (string.IsNullOrEmpty(id))
+                continue;
+
+            if (!filterForBattle)
+            {
+                ItemData data = DataManager.Instance.GetItemData(id);
+                if (data != null)
+                    yield return new InventorySlotEntry(id, data);
+
+                continue;
+            }
+
+            if (!DataManager.Instance.TryGetBattleInventorySlot(id, out string useItemId, out ItemData displayData) ||
+                displayData == null)
+            {
+                continue;
+            }
+
+            string dedupeKey = displayData.id;
+            if (!shownMonsterItemIds.Add(dedupeKey))
+                continue;
+
+            yield return new InventorySlotEntry(useItemId, displayData);
         }
     }
 
@@ -112,16 +159,31 @@ public class UIInventory : MonoBehaviour
         UIInventoryItemSceneView slot = Instantiate(prefab, contentParent);
         slot.Setup(itemId, data.name, data.description, GetItemTypeLabel(data), GetItemSprite(data));
 
-        if (IsBattleItemUseEnabled())
+        if (IsBattleInventoryContext())
             slot.ConfigureBattleUse(HandleBattleItemUseRequest, CanUseBattleItemNow);
         else
             slot.ClearBattleUse();
     }
 
-    private bool IsBattleItemUseEnabled()
+    private bool IsBattleInventoryContext()
     {
-        return GameManager.Instance != null && GameManager.Instance.IsInBattle;
+        if (GameManager.Instance != null && GameManager.Instance.IsInBattle)
+            return true;
+
+        if (UIManager.Instance != null && UIManager.Instance.IsBattleUiVisible())
+            return true;
+
+        if (ResolveBattleManager() != null)
+            return true;
+
+        BattleTurnController turnController =
+            FindAnyObjectByType<BattleTurnController>(FindObjectsInactive.Include);
+        return turnController != null &&
+               turnController.isActiveAndEnabled &&
+               turnController.gameObject.activeInHierarchy;
     }
+
+    private bool IsBattleItemUseEnabled() => IsBattleInventoryContext();
 
     private bool CanUseBattleItemNow()
     {
@@ -172,7 +234,7 @@ public class UIInventory : MonoBehaviour
 
     private void SubscribeBattleTurnEvents()
     {
-        if (!IsBattleItemUseEnabled())
+        if (!IsBattleInventoryContext())
             return;
 
         UIBattleManager battleManager = ResolveBattleManager();

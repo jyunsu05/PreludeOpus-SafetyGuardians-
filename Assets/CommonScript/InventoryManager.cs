@@ -147,6 +147,30 @@ public class InventoryManager : MonoBehaviour
         return count;
     }
 
+    /// <summary>배틀 UI용 — 몬스터 정화 아이템(MI) 보유 수만 집계합니다. 공장 정화(FI)는 제외합니다.</summary>
+    public int GetMonsterPurificationItemCount(string monsterItemId = null)
+    {
+        if (DataManager.Instance == null)
+            return 0;
+
+        if (!string.IsNullOrEmpty(monsterItemId))
+        {
+            if (!DataManager.Instance.IsMonsterPurificationItem(monsterItemId))
+                return 0;
+
+            return GetItemCount(monsterItemId);
+        }
+
+        int total = 0;
+        for (int i = 0; i < items.Count; i++)
+        {
+            if (DataManager.Instance.IsMonsterPurificationItem(items[i].id))
+                total++;
+        }
+
+        return total;
+    }
+
     public bool IsConsumableForRequirement(string consumableItemId, string requiredMonsterItemId)
     {
         if (string.IsNullOrEmpty(consumableItemId) || string.IsNullOrEmpty(requiredMonsterItemId))
