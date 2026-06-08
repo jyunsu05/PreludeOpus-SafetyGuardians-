@@ -1,9 +1,12 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class PlayerOxygen : MonoBehaviour
 {
+    private static PlayerOxygen playerInstance;
+
     [Header("산소 설정")]
     public float maxOxygen = 100f;
     public float currentOxygen;
@@ -19,6 +22,7 @@ public class PlayerOxygen : MonoBehaviour
     private bool warnedMissingGameOverPanel;
     private bool isOxygenGameOver;
     private UIGameOver cachedGameOverPanel;
+    private readonly List<UIBattleOxygenGauge> battleOxygenGauges = new List<UIBattleOxygenGauge>();
 
     /// <summary>산소 게이지를 최대치로 되돌리고 게임오버 상태를 해제합니다. 챕터 전환 시 호출됩니다.</summary>
     public void ResetOxygen()
@@ -33,8 +37,82 @@ public class PlayerOxygen : MonoBehaviour
 
     void Awake()
     {
+        RegisterAsPlayerInstanceIfNeeded();
         TryResolveOxygenSliderReference();
         TryResolveGameOverPanel();
+    }
+
+    void OnEnable()
+    {
+        RegisterAsPlayerInstanceIfNeeded();
+    }
+
+    void OnDisable()
+    {
+        if (playerInstance == this)
+            playerInstance = null;
+    }
+
+    /// <summary>씬에 존재하는 플레이어 PlayerOxygen만 찾습니다. 프리팹 에셋 참조는 무시합니다.</summary>
+    public static PlayerOxygen ResolveRuntime()
+    {
+        if (IsSceneInstance(playerInstance))
+            return playerInstance;
+
+        try
+        {
+            GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+            if (playerObject != null)
+            {
+                PlayerOxygen onPlayer = playerObject.GetComponent<PlayerOxygen>();
+                if (IsSceneInstance(onPlayer))
+                    return onPlayer;
+            }
+        }
+        catch (UnityException)
+        {
+        }
+
+        PlayerOxygen[] candidates = FindObjectsByType<PlayerOxygen>(FindObjectsInactive.Include);
+        PlayerOxygen activeOnPlayer = null;
+        PlayerOxygen activeAny = null;
+        PlayerOxygen sceneAny = null;
+
+        for (int i = 0; i < candidates.Length; i++)
+        {
+            PlayerOxygen candidate = candidates[i];
+            if (!IsSceneInstance(candidate))
+                continue;
+
+            sceneAny = candidate;
+            bool isPlayerObject = candidate.CompareTag("Player") || candidate.GetComponent<PlayerController>() != null;
+
+            if (!candidate.isActiveAndEnabled || !candidate.gameObject.activeInHierarchy)
+                continue;
+
+            activeAny = candidate;
+            if (isPlayerObject)
+                activeOnPlayer = candidate;
+        }
+
+        if (activeOnPlayer != null)
+            return activeOnPlayer;
+
+        if (activeAny != null)
+            return activeAny;
+
+        return sceneAny;
+    }
+
+    private static bool IsSceneInstance(PlayerOxygen oxygen)
+    {
+        return oxygen != null && oxygen.gameObject.scene.IsValid();
+    }
+
+    private void RegisterAsPlayerInstanceIfNeeded()
+    {
+        if (GetComponent<PlayerController>() != null || CompareTag("Player"))
+            playerInstance = this;
     }
 
     void Start()
@@ -110,7 +188,63 @@ public class PlayerOxygen : MonoBehaviour
 
     private bool ShouldPauseOxygenSimulation()
     {
-        return GameManager.Instance != null && GameManager.Instance.IsAwaitingPostOpeningPlaySession;
+        if (GameManager.Instance == null)
+            return false;
+
+        if (GameManager.Instance.IsAwaitingPostOpeningPlaySession)
+            return true;
+
+        // 배틀 중에는 필드 감소를 멈추고 턴 행동으로만 산소가 변합니다.
+        return GameManager.Instance.IsInBattle;
+    }
+
+    public void RegisterBattleOxygenGauge(UIBattleOxygenGauge gauge)
+    {
+        if (gauge == null || battleOxygenGauges.Contains(gauge))
+            return;
+
+        battleOxygenGauges.Add(gauge);
+        gauge.UpdateGauge(currentOxygen, maxOxygen);
+    }
+
+    public void UnregisterBattleOxygenGauge(UIBattleOxygenGauge gauge)
+    {
+        if (gauge == null)
+            return;
+
+        battleOxygenGauges.Remove(gauge);
+    }
+
+    /// <summary>턴제 배틀 행동으로 산소를 차감합니다. 생존 여부를 반환합니다.</summary>
+    public bool ApplyBattleOxygenCost(float amount)
+    {
+        if (isOxygenGameOver || amount <= 0f)
+            return !isOxygenGameOver;
+
+        currentOxygen -= amount;
+        currentOxygen = Mathf.Clamp(currentOxygen, 0f, maxOxygen);
+        SyncOxygenVisual();
+
+        if (currentOxygen <= 0f)
+        {
+            TriggerOxygenGameOver();
+            return false;
+        }
+
+        Debug.Log($"[PlayerOxygen] 배틀 산소 소모 -{amount:0.#} / 현재: {currentOxygen:0.#}");
+        return true;
+    }
+
+    /// <summary>몬스터 정화 성공 등 배틀 보상으로 산소를 회복합니다.</summary>
+    public void ApplyBattleOxygenRestore(float amount)
+    {
+        if (isOxygenGameOver || amount <= 0f)
+            return;
+
+        currentOxygen += amount;
+        currentOxygen = Mathf.Clamp(currentOxygen, 0f, maxOxygen);
+        SyncOxygenVisual();
+        Debug.Log($"[PlayerOxygen] 배틀 산소 회복 +{amount:0.#} / 현재: {currentOxygen:0.#}");
     }
 
     private UIGameOver TryResolveGameOverPanel()
@@ -159,8 +293,8 @@ public class PlayerOxygen : MonoBehaviour
 
     private void SyncOxygenVisual()
     {
-        if (UIMainHUD.TryUpdateOxygenGaugeGlobal(currentOxygen, maxOxygen))
-            return;
+        SyncBattleOxygenGauges();
+        UIMainHUD.TryUpdateOxygenGaugeGlobal(currentOxygen, maxOxygen);
 
         if (!IsValidOxygenSlider(oxygenSlider))
         {
@@ -171,6 +305,21 @@ public class PlayerOxygen : MonoBehaviour
 
         oxygenSlider.maxValue = maxOxygen;
         oxygenSlider.value = currentOxygen;
+    }
+
+    private void SyncBattleOxygenGauges()
+    {
+        for (int i = battleOxygenGauges.Count - 1; i >= 0; i--)
+        {
+            UIBattleOxygenGauge gauge = battleOxygenGauges[i];
+            if (gauge == null)
+            {
+                battleOxygenGauges.RemoveAt(i);
+                continue;
+            }
+
+            gauge.UpdateGauge(currentOxygen, maxOxygen);
+        }
     }
 
     private static bool IsValidOxygenSlider(Slider slider)
