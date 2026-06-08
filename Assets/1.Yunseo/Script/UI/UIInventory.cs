@@ -14,6 +14,8 @@ public class UIInventory : MonoBehaviour
     [Header("--- 닫기 버튼 ---")]
     [SerializeField] private Button closeButton;
 
+    private BattleTurnController subscribedTurnController;
+
     void Start()
     {
         EnsureReferences();
@@ -24,27 +26,51 @@ public class UIInventory : MonoBehaviour
         if (InventoryManager.Instance != null)
         {
             InventoryManager.Instance.OnInventoryChanged += RefreshUI;
-            RefreshUI(); // 시작 시 현재 인벤토리 상태 반영
+            RefreshUI();
         }
         else
         {
             Debug.LogError("[UIInventory] InventoryManager를 찾을 수 없습니다!");
         }
+
+        SubscribeBattleTurnEvents();
+    }
+
+    void OnEnable()
+    {
+        SubscribeBattleTurnEvents();
     }
 
     void OnDestroy()
     {
         if (InventoryManager.Instance != null)
             InventoryManager.Instance.OnInventoryChanged -= RefreshUI;
+
+        UnsubscribeBattleTurnEvents();
+    }
+
+    public static void RefreshAllVisible()
+    {
+        UIInventory[] inventories = FindObjectsByType<UIInventory>(FindObjectsInactive.Include);
+        for (int i = 0; i < inventories.Length; i++)
+        {
+            UIInventory inventory = inventories[i];
+            if (inventory != null && inventory.isActiveAndEnabled)
+                inventory.RefreshUI();
+        }
     }
 
     // InventoryManager 이벤트 수신 시 전체 슬롯 갱신
-    private void RefreshUI()
+    public void RefreshUI()
     {
         EnsureReferences();
 
+        if (contentParent == null)
+            return;
+
         if (InventoryManager.Instance == null || DataManager.Instance == null)
         {
+            ClearSlots();
             if (InventoryManager.Instance == null)
                 Debug.LogError("[UIInventory] InventoryManager가 씬에 없습니다. 캔버스 밖 빈 오브젝트에 InventoryManager 스크립트를 붙여주세요.");
             if (DataManager.Instance == null)
@@ -56,20 +82,22 @@ public class UIInventory : MonoBehaviour
 
         foreach (string id in InventoryManager.Instance.GetItemIds())
         {
-            ItemData data = DataManager.Instance.GetItemData(id);
+            if (string.IsNullOrEmpty(id))
+                continue;
 
+            ItemData data = DataManager.Instance.GetItemData(id);
             if (data == null)
             {
                 Debug.LogWarning($"[UIInventory] ID {id}에 해당하는 아이템 데이터가 없습니다.");
                 continue;
             }
 
-            SpawnSlot(data);
+            SpawnSlot(id, data);
         }
     }
 
     // 슬롯 1개 생성
-    private void SpawnSlot(ItemData data)
+    private void SpawnSlot(string itemId, ItemData data)
     {
         UIInventoryItemSceneView[] prefabCandidates = GetItemViewCandidates();
 
@@ -82,7 +110,99 @@ public class UIInventory : MonoBehaviour
         // TODO: 나중에 아이템 타입별로 프리팹 선택 로직 추가 예정
         UIInventoryItemSceneView prefab = prefabCandidates[0];
         UIInventoryItemSceneView slot = Instantiate(prefab, contentParent);
-        slot.Setup(data.name, data.description, GetItemTypeLabel(data), GetItemSprite(data));
+        slot.Setup(itemId, data.name, data.description, GetItemTypeLabel(data), GetItemSprite(data));
+
+        if (IsBattleItemUseEnabled())
+            slot.ConfigureBattleUse(HandleBattleItemUseRequest, CanUseBattleItemNow);
+        else
+            slot.ClearBattleUse();
+    }
+
+    private bool IsBattleItemUseEnabled()
+    {
+        return GameManager.Instance != null && GameManager.Instance.IsInBattle;
+    }
+
+    private bool CanUseBattleItemNow()
+    {
+        UIBattleManager battleManager = ResolveBattleManager();
+        return battleManager != null && battleManager.CanAcceptPlayerBattleAction();
+    }
+
+    private void HandleBattleItemUseRequest(string itemId)
+    {
+        if (string.IsNullOrEmpty(itemId))
+            return;
+
+        UIBattleManager battleManager = ResolveBattleManager();
+        if (battleManager == null)
+        {
+            Debug.LogWarning("[UIInventory] 배틀 중 아이템 사용 — UIBattleManager를 찾지 못했습니다.");
+            return;
+        }
+
+        if (!battleManager.UseItem(itemId))
+            return;
+
+        if (battleManager.IsScanned)
+        {
+            battleManager.RevealScannedInfo(
+                battleManager.GetInfectionTypeDisplayText(),
+                battleManager.GetDescriptionDisplayText(),
+                battleManager.BuildInventoryStatusText());
+        }
+    }
+
+    private UIBattleManager ResolveBattleManager()
+    {
+        UIBattleManager primary = UIBattleManager.TryGetPrimaryActive();
+        if (primary != null)
+            return primary;
+
+        UIButtonContainer buttonContainer = FindAnyObjectByType<UIButtonContainer>(FindObjectsInactive.Include);
+        if (buttonContainer != null)
+        {
+            UIBattleManager fromContainer = buttonContainer.GetComponentInParent<UIBattleManager>();
+            if (fromContainer != null && fromContainer.enabled)
+                return fromContainer;
+        }
+
+        return null;
+    }
+
+    private void SubscribeBattleTurnEvents()
+    {
+        if (!IsBattleItemUseEnabled())
+            return;
+
+        UIBattleManager battleManager = ResolveBattleManager();
+        BattleTurnController turnController = battleManager != null ? battleManager.TurnController : null;
+        if (turnController == null)
+            turnController = FindAnyObjectByType<BattleTurnController>(FindObjectsInactive.Include);
+
+        if (turnController == null || turnController == subscribedTurnController)
+            return;
+
+        UnsubscribeBattleTurnEvents();
+        subscribedTurnController = turnController;
+        subscribedTurnController.OnTurnPhaseChanged += HandleBattleTurnPhaseChanged;
+    }
+
+    private void UnsubscribeBattleTurnEvents()
+    {
+        if (subscribedTurnController == null)
+            return;
+
+        subscribedTurnController.OnTurnPhaseChanged -= HandleBattleTurnPhaseChanged;
+        subscribedTurnController = null;
+    }
+
+    private void HandleBattleTurnPhaseChanged(BattleTurnController.BattleTurnPhase phase)
+    {
+        if (!isActiveAndEnabled)
+            return;
+
+        RefreshUI();
     }
 
     private UIInventoryItemSceneView[] GetItemViewCandidates()

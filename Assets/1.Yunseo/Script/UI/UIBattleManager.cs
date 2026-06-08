@@ -32,11 +32,10 @@ public class UIBattleManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI descriptionText;       // 정화 방법 : 정화 방법 설명
     [SerializeField] private TextMeshProUGUI inventoryStatusText;   // 인벤토리 상황 : 아이템 보유
 
-    [Header("--- 정화 / 도망 상태 제약 ---")]
-    [SerializeField] private int purifyDurabilityPerUse = 10;
-
     [Header("--- 턴제 배틀 ---")]
     [SerializeField] private BattleTurnController turnController;
+    [Tooltip("정화 아이템 1회 사용 시 오염도 감소량. 아이템은 즉시 삭제되지만 턴당 효과는 이 값을 사용합니다.")]
+    [SerializeField] private int purifyEffectPerUse = 10;
 
     [Header("--- 배틀 산소 UI ---")]
     [Tooltip("배틀 씬에 만든 산소 게이지(UIBattleOxygenGauge). 비우면 자식에서 자동 탐색합니다.")]
@@ -47,6 +46,9 @@ public class UIBattleManager : MonoBehaviour
     public bool IsScanned { get; private set; }
     public bool IsPurifying { get; private set; }
     public bool IsEscapeLocked { get; private set; }
+    public string LastConsumedBattleItemId { get; private set; }
+    public bool HasPendingPurifyItemConsumption => hasPendingPurifyItemConsumption;
+    public bool HasBattleWon => hasBattleWon;
 
     /// <summary>true면 도망 UI를 숨깁니다(UIButtonContainer가 SetActive 처리).</summary>
     public event Action<bool> OnEscapeLockChanged;
@@ -62,6 +64,9 @@ public class UIBattleManager : MonoBehaviour
     private bool wasPlayerRigidbodySimulated;
     private RigidbodyConstraints2D playerConstraints;
     private readonly List<MonsterPhysicsSnapshot> lockedMonsters = new List<MonsterPhysicsSnapshot>();
+    private static bool isProcessingPlayerItemUse;
+    private bool hasPendingPurifyItemConsumption;
+    private bool hasBattleWon;
 
     private sealed class MonsterPhysicsSnapshot
     {
@@ -72,6 +77,53 @@ public class UIBattleManager : MonoBehaviour
 
     void Awake()
     {
+        DisableNestedDuplicateManagers();
+    }
+
+    private void DisableNestedDuplicateManagers()
+    {
+        if (!IsPrimaryBattleManagerHost())
+        {
+            enabled = false;
+            return;
+        }
+
+        UIBattleManager[] managers = GetComponentsInChildren<UIBattleManager>(true);
+        for (int i = 0; i < managers.Length; i++)
+        {
+            UIBattleManager candidate = managers[i];
+            if (candidate == null || candidate == this)
+                continue;
+
+            Debug.LogWarning(
+                $"[UIBattleManager] 중복 매니저 제거: {candidate.gameObject.name}. " +
+                "턴제 배틀은 UIBattlescene 루트 매니저만 사용합니다.");
+            Destroy(candidate.gameObject);
+        }
+    }
+
+    private bool IsPrimaryBattleManagerHost() =>
+        gameObject.name == "UIBattlescene";
+
+    public static UIBattleManager TryGetPrimaryActive()
+    {
+        UIBattleManager[] managers = FindObjectsByType<UIBattleManager>(FindObjectsInactive.Include);
+        UIBattleManager fallback = null;
+
+        for (int i = 0; i < managers.Length; i++)
+        {
+            UIBattleManager manager = managers[i];
+            if (manager == null || !manager.isActiveAndEnabled || !manager.enabled)
+                continue;
+
+            if (manager.gameObject.name == "UIBattlescene")
+                return manager;
+
+            if (fallback == null)
+                fallback = manager;
+        }
+
+        return fallback;
     }
 
     void OnEnable()
@@ -121,10 +173,20 @@ public class UIBattleManager : MonoBehaviour
         IsPlayerTurnActive();
 
     public BattleTurnController TurnController => turnController;
-    public bool IsPlayerTurnActive()
+
+    public bool IsPlayerTurnActive() => CanAcceptPlayerBattleAction();
+
+    /// <summary>플레이어 턴이며 턴 전환 연출 중이 아닐 때만 배틀 행동을 허용합니다.</summary>
+    public bool CanAcceptPlayerBattleAction()
     {
+        if (hasBattleWon || IsPurifying || isProcessingBattleExit)
+            return false;
+
         ResolveTurnController();
-        return turnController == null || turnController.IsPlayerTurn;
+        if (turnController == null)
+            return false;
+
+        return turnController.IsPlayerTurn && !turnController.IsResolvingTurn;
     }
 
     /// <summary>탐색 성공 — 정화 버튼을 켤 수 있는 상태로 전환합니다.</summary>
@@ -133,71 +195,191 @@ public class UIBattleManager : MonoBehaviour
         IsScanned = true;
     }
 
-    /// <summary>정화 버튼(OnClickPurify) — 아이템 확인 후 정화 시작 시 도망을 즉시 잠급니다.</summary>
-    public bool OnClickPurify(out int consumedDurability)
+    /// <summary>배틀 인벤토리 슬롯/정화 버튼 공통 — 정화는 효과만 즉시 적용하고 아이템 차감은 승리 시 처리합니다.</summary>
+    public bool UseItem(string itemId)
     {
-        consumedDurability = 0;
+        if (isProcessingPlayerItemUse)
+            return false;
+
+        if (string.IsNullOrEmpty(itemId) || !CanAcceptPlayerBattleAction())
+            return false;
+
+        ResolveTurnController();
+        if (turnController == null || !turnController.TryLockPlayerAction())
+            return false;
+
+        isProcessingPlayerItemUse = true;
+        bool succeeded;
+        try
+        {
+            if (IsPurifyConsumableForCurrentMonster(itemId))
+                succeeded = ExecutePurifyItemUse(itemId, out _);
+            else if (IsOxygenRecoveryItem(itemId))
+                succeeded = ExecuteOxygenItemUse(itemId, out _);
+            else
+            {
+                turnController.ReleasePlayerActionLock();
+                Debug.LogWarning($"[UIBattleManager] 배틀에서 사용할 수 없는 아이템: {itemId}");
+                return false;
+            }
+
+            if (succeeded)
+                RefreshBattleUiAfterPlayerAction();
+            else
+                turnController.ReleasePlayerActionLock();
+
+            return succeeded;
+        }
+        finally
+        {
+            isProcessingPlayerItemUse = false;
+        }
+    }
+
+    /// <summary>정화 버튼 — 인벤토리 UseItem()과 동일한 턴제 흐름을 사용합니다.</summary>
+    public bool OnClickPurify(out int appliedEffect)
+    {
+        appliedEffect = 0;
+        string itemId = GetRequiredPurifyItemId();
+
+        if (!UseItem(itemId))
+            return false;
+
+        appliedEffect = Mathf.Max(1, purifyEffectPerUse);
+        return true;
+    }
+
+    private bool ExecutePurifyItemUse(string itemId, out int appliedEffect)
+    {
+        appliedEffect = 0;
 
         if (IsPurifying)
             return false;
 
-        if (!IsPlayerTurnActive())
-        {
-            Debug.LogWarning("[UIBattleManager] 플레이어 턴이 아닙니다.");
-            return false;
-        }
-
         if (!IsScanned)
         {
-            Debug.LogWarning("[UIBattleManager] 탐색 전에는 정화할 수 없습니다.");
+            Debug.LogWarning("[UIBattleManager] 탐색 전에는 정화 아이템을 사용할 수 없습니다.");
             return false;
         }
 
-        string itemId = GetRequiredPurifyItemId();
-        if (!CanPurifyWithInventory(itemId))
+        if (string.IsNullOrEmpty(itemId) || !CanPurifyWithInventory(itemId))
             return false;
+
+        string requiredItemId = GetRequiredPurifyItemId();
+        if (InventoryManager.Instance == null ||
+            !InventoryManager.Instance.IsConsumableForRequirement(itemId, requiredItemId))
+        {
+            Debug.LogWarning($"[UIBattleManager] 이 몬스터에는 {requiredItemId} 아이템이 필요합니다.");
+            return false;
+        }
 
         BeginPurifySession();
 
-        int consumeRequest = Mathf.Max(1, purifyDurabilityPerUse);
-        consumedDurability = InventoryManager.Instance.ConsumeItemDurability(itemId, consumeRequest);
-        if (consumedDurability <= 0)
-        {
-            Debug.LogWarning("[UIBattleManager] 아이템 내구도 소모 실패 — 정화를 취소합니다.");
-            EndPurifyAttempt(unlockEscape: true);
-            return false;
-        }
-
-        ResolveTurnController();
-        int basePurifyDamage = consumedDurability;
+        hasPendingPurifyItemConsumption = true;
+        appliedEffect = Mathf.Max(1, purifyEffectPerUse);
+        int basePurifyDamage = appliedEffect;
         int finalPurifyDamage = turnController != null
-            ? turnController.CalculateAmplifiedContaminationDamage(consumedDurability)
-            : consumedDurability;
+            ? turnController.CalculateAmplifiedContaminationDamage(appliedEffect)
+            : appliedEffect;
 
         ReduceContamination(finalPurifyDamage);
         EndPurifyAttempt(unlockEscape: false);
 
-        if (GetCurrentContamination() > 0)
+        if (hasBattleWon)
         {
-            ResolveTurnController();
-            turnController?.TryResolvePlayerPurify(basePurifyDamage, finalPurifyDamage);
+            turnController?.ReleasePlayerActionLock();
+            return true;
         }
 
+        if (GetCurrentContamination() > 0)
+            turnController?.CommitPlayerPurifyTurn(basePurifyDamage, finalPurifyDamage);
+        else
+            turnController?.ReleasePlayerActionLock();
+
+        return true;
+    }
+
+    private bool ExecuteOxygenItemUse(string itemId, out int appliedEffect)
+    {
+        appliedEffect = 0;
+
+        if (InventoryManager.Instance == null || !InventoryManager.Instance.HasItem(itemId))
+            return false;
+
+        if (!InventoryManager.Instance.TryConsumeBattleItem(itemId, out appliedEffect))
+            return false;
+
+        LastConsumedBattleItemId = itemId;
+        PlayerOxygen playerOxygen = PlayerOxygen.ResolveRuntime();
+        if (playerOxygen != null)
+            playerOxygen.ApplyBattleOxygenRestore(appliedEffect);
+
+        turnController?.CommitPlayerSupportItem(itemId, appliedEffect);
+        Debug.Log($"[UIBattleManager] 산소 회복 아이템 사용: {itemId} (+{appliedEffect})");
         return true;
     }
 
     public bool CanPurifyWithInventory(string itemId = null)
     {
-        if (string.IsNullOrEmpty(itemId))
-            itemId = GetRequiredPurifyItemId();
+        string requiredItemId = GetRequiredPurifyItemId();
+        if (InventoryManager.Instance == null || string.IsNullOrEmpty(requiredItemId))
+            return false;
 
+        if (string.IsNullOrEmpty(itemId) ||
+            string.Equals(itemId, requiredItemId, StringComparison.Ordinal))
+        {
+            return InventoryManager.Instance.HasBattleConsumableForRequirement(requiredItemId);
+        }
+
+        return InventoryManager.Instance.IsConsumableForRequirement(itemId, requiredItemId);
+    }
+
+    private bool IsPurifyConsumableForCurrentMonster(string itemId)
+    {
         if (InventoryManager.Instance == null || string.IsNullOrEmpty(itemId))
             return false;
 
-        if (!InventoryManager.Instance.HasItem(itemId))
+        string requiredItemId = GetRequiredPurifyItemId();
+        if (InventoryManager.Instance.IsConsumableForRequirement(itemId, requiredItemId))
+            return true;
+
+        return string.Equals(itemId, requiredItemId, StringComparison.Ordinal) &&
+               InventoryManager.Instance.HasBattleConsumableForRequirement(requiredItemId);
+    }
+
+    private static bool IsMonsterPurifyItem(string itemId)
+    {
+        if (string.IsNullOrEmpty(itemId))
             return false;
 
-        return InventoryManager.Instance.GetItemRemainingDurability(itemId) > 0;
+        if (itemId.StartsWith("MI-", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (DataManager.Instance == null)
+            return false;
+
+        ItemData data = DataManager.Instance.GetItemData(itemId);
+        return data != null &&
+               !string.IsNullOrEmpty(data.item_type) &&
+               data.item_type.IndexOf("몬스터 정화", StringComparison.Ordinal) >= 0;
+    }
+
+    private static bool IsOxygenRecoveryItem(string itemId)
+    {
+        if (string.IsNullOrEmpty(itemId) || DataManager.Instance == null)
+            return false;
+
+        ItemData data = DataManager.Instance.GetItemData(itemId);
+        if (data == null || string.IsNullOrEmpty(data.item_type))
+            return false;
+
+        return data.item_type.IndexOf("산소", StringComparison.Ordinal) >= 0;
+    }
+
+    private static void RefreshBattleUiAfterPlayerAction()
+    {
+        UIInventory.RefreshAllVisible();
+        UIButtonContainer.RefreshAllPlayerTurnButtons();
     }
 
     public string GetRequiredPurifyItemId()
@@ -227,13 +409,18 @@ public class UIBattleManager : MonoBehaviour
         if (!CanPurifyWithInventory(itemId))
             return $"{itemName} 없음";
 
-        int remaining = InventoryManager.Instance.GetItemRemainingDurability(itemId);
-        return $"{itemName} 보유 {remaining}";
+        int count = InventoryManager.Instance.HasBattleConsumableForRequirement(itemId)
+            ? InventoryManager.Instance.GetBattleConsumableCount(itemId)
+            : 0;
+        return $"{itemName} 보유 {count}";
     }
 
     /// <summary>배틀 종료·UI 비활성 시 상태/도망 잠금을 방어적으로 해제합니다.</summary>
     public void ExitBattle()
     {
+        ClearPendingPurifyItemConsumption();
+        hasBattleWon = false;
+        ResetBattleSessionState();
         IsScanned = false;
         IsPurifying = false;
         isProcessingBattleExit = false;
@@ -312,6 +499,12 @@ public class UIBattleManager : MonoBehaviour
 
     public void ResetBattleUIState()
     {
+        bool preserveWonGauge = hasBattleWon;
+
+        ClearPendingPurifyItemConsumption();
+        hasBattleWon = false;
+        LastConsumedBattleItemId = null;
+
         if (scanInfoPanel != null)
             scanInfoPanel.SetActive(false);
 
@@ -319,10 +512,29 @@ public class UIBattleManager : MonoBehaviour
         if (descriptionText != null) descriptionText.text = string.Empty;
         if (inventoryStatusText != null) inventoryStatusText.text = string.Empty;
 
-        ResetContaminationGaugeToInitial();
+        if (!preserveWonGauge)
+            ResetContaminationGaugeToInitial();
     }
 
     public MonsterData GetCurrentMonsterData() => currentMonsterData;
+
+    public string GetInfectionTypeDisplayText()
+    {
+        if (currentMonsterData == null)
+            return "감염물질 이름";
+
+        return !string.IsNullOrEmpty(currentMonsterData.infection_type)
+            ? currentMonsterData.infection_type
+            : currentMonsterData.name;
+    }
+
+    public string GetDescriptionDisplayText()
+    {
+        if (currentMonsterData == null || string.IsNullOrEmpty(currentMonsterData.description))
+            return "정화 방법 설명";
+
+        return currentMonsterData.description;
+    }
 
     public void SetMonsterById(string monsterId)
     {
@@ -653,9 +865,14 @@ public class UIBattleManager : MonoBehaviour
             scanInfoPanel.SetActive(true);
         }
 
-        infectionTypeText.text = infectionType;
-        descriptionText.text = description;
-        inventoryStatusText.text = inventoryStatus;
+        if (infectionTypeText != null)
+            infectionTypeText.text = infectionType ?? string.Empty;
+
+        if (descriptionText != null)
+            descriptionText.text = description ?? string.Empty;
+
+        if (inventoryStatusText != null)
+            inventoryStatusText.text = inventoryStatus ?? string.Empty;
     }
 
     public int GetCurrentContamination()
@@ -681,28 +898,103 @@ public class UIBattleManager : MonoBehaviour
 
     public void ReduceContamination(int amount)
     {
-        if (contaminationSlider == null) return;
+        if (contaminationSlider == null || hasBattleWon)
+            return;
 
         contaminationSlider.value = Mathf.Max(0, contaminationSlider.value - amount);
         CacheCurrentMonsterContamination((int)contaminationSlider.value);
         Debug.Log($"[UIBattleManager] 오염도 감소: {contaminationSlider.value}");
 
         if (contaminationSlider.value <= 0)
+            HandleContaminationCleared();
+    }
+
+    private void HandleContaminationCleared()
+    {
+        OnBattleWin();
+    }
+
+    /// <summary>오염도 0 달성 시 호출. 승리 처리 후 정화 아이템 1개를 실제 차감합니다.</summary>
+    public void OnBattleWin()
+    {
+        if (hasBattleWon)
+            return;
+
+        hasBattleWon = true;
+
+        ResolveTurnController();
+        turnController?.NotifyBattleWon();
+
+        ClearCurrentMonsterContamination();
+        if (contaminationSlider != null)
+            contaminationSlider.value = 0;
+
+        Debug.Log("[UIBattleManager] 오염도 0 도달! 정화 완료.");
+
+        CommitPendingPurifyItemOnBattleWin();
+        OnContaminationEmpty?.Invoke();
+    }
+
+    public void ResetMonsterBattleStatus()
+    {
+        ResetBattleSessionState();
+    }
+
+    /// <summary>배틀씬 종료·새 전투 진입 시 몬스터 전투 버프/디버프를 초기화합니다.</summary>
+    public void ResetBattleSessionState()
+    {
+        ResetEnemyStatusForBattle();
+    }
+
+    private void ResetEnemyStatusForBattle()
+    {
+        EnemyStatus status = GetComponent<EnemyStatus>();
+        if (status == null)
+            status = GetComponentInChildren<EnemyStatus>(true);
+
+        if (status != null)
+            status.ResetForBattle(GetDifficultyDisplayText());
+    }
+
+    private void CommitPendingPurifyItemOnBattleWin()
+    {
+        if (!hasPendingPurifyItemConsumption || InventoryManager.Instance == null)
         {
-            ClearCurrentMonsterContamination();
-            Debug.Log("[UIBattleManager] 오염도 0 도달! 정화 완료.");
-            ResolveTurnController();
-            turnController?.NotifyBattleWon();
-            OnContaminationEmpty?.Invoke();
+            ClearPendingPurifyItemConsumption();
+            return;
         }
+
+        string requiredItemId = GetRequiredPurifyItemId();
+        if (InventoryManager.Instance.TryConsumeBattleItemForRequirement(
+                requiredItemId, out _, out string consumedItemId))
+        {
+            LastConsumedBattleItemId = consumedItemId;
+            Debug.Log($"[UIBattleManager] 승리 확정 — 정화 아이템 차감: {consumedItemId}");
+            UIInventory.RefreshAllVisible();
+        }
+        else
+        {
+            Debug.LogWarning(
+                $"[UIBattleManager] 승리했지만 정화 아이템 차감 실패 — 요구 ID: {requiredItemId}");
+        }
+
+        ClearPendingPurifyItemConsumption();
+    }
+
+    private void ClearPendingPurifyItemConsumption()
+    {
+        hasPendingPurifyItemConsumption = false;
     }
 
     private void ResolveTurnController()
     {
-        if (turnController != null)
+        if (turnController != null && turnController.isActiveAndEnabled)
             return;
 
         turnController = GetComponent<BattleTurnController>();
+        if (turnController == null)
+            turnController = GetComponentInChildren<BattleTurnController>(true);
+
         if (turnController == null)
             turnController = FindAnyObjectByType<BattleTurnController>(FindObjectsInactive.Include);
     }
@@ -714,6 +1006,7 @@ public class UIBattleManager : MonoBehaviour
             return;
 
         turnController = gameObject.AddComponent<BattleTurnController>();
+        Debug.LogWarning("[UIBattleManager] BattleTurnController가 없어 루트에 새로 추가했습니다.");
     }
 
     private void EnsureEnemyStatus()
@@ -774,7 +1067,6 @@ public class UIBattleManager : MonoBehaviour
     {
         ResolveTurnController();
         turnController?.NotifyBattleEnded();
-
         ExitBattle();
         FinalizeContaminationOnce();
         ForceRestoreFieldPhysics();

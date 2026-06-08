@@ -108,6 +108,162 @@ public class InventoryManager : MonoBehaviour
         return items[index].remainingDurability;
     }
 
+    public int GetItemCount(string id)
+    {
+        if (string.IsNullOrEmpty(id))
+            return 0;
+
+        int count = 0;
+        for (int i = 0; i < items.Count; i++)
+        {
+            if (items[i].id == id)
+                count++;
+        }
+
+        return count;
+    }
+
+    public bool HasBattleConsumableForRequirement(string requiredMonsterItemId)
+    {
+        return FindBattleConsumableIndex(requiredMonsterItemId) >= 0;
+    }
+
+    public int GetBattleConsumableCount(string requiredMonsterItemId)
+    {
+        if (string.IsNullOrEmpty(requiredMonsterItemId))
+            return 0;
+
+        int count = GetItemCount(requiredMonsterItemId);
+        if (DataManager.Instance == null)
+            return count;
+
+        string factoryEquivalent = DataManager.Instance.GetFactoryItemIdForInventory(requiredMonsterItemId);
+        if (!string.IsNullOrEmpty(factoryEquivalent) &&
+            !string.Equals(factoryEquivalent, requiredMonsterItemId, StringComparison.Ordinal))
+        {
+            count += GetItemCount(factoryEquivalent);
+        }
+
+        return count;
+    }
+
+    public bool IsConsumableForRequirement(string consumableItemId, string requiredMonsterItemId)
+    {
+        if (string.IsNullOrEmpty(consumableItemId) || string.IsNullOrEmpty(requiredMonsterItemId))
+            return false;
+
+        if (!HasItem(consumableItemId))
+            return false;
+
+        if (string.Equals(consumableItemId, requiredMonsterItemId, StringComparison.Ordinal))
+            return true;
+
+        if (DataManager.Instance == null)
+            return false;
+
+        string factoryEquivalent = DataManager.Instance.GetFactoryItemIdForInventory(requiredMonsterItemId);
+        return string.Equals(consumableItemId, factoryEquivalent, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// 몬스터 요구 아이템(MI) 또는 대응 공장 아이템(FI) 중 인벤토리 첫 번째 1개만 소모합니다.
+    /// </summary>
+    public bool TryConsumeBattleItemForRequirement(string requiredMonsterItemId, out int effectPower, out string consumedItemId)
+    {
+        effectPower = 0;
+        consumedItemId = null;
+
+        int index = FindBattleConsumableIndex(requiredMonsterItemId);
+        if (index < 0)
+            return false;
+
+        int countBefore = items.Count;
+        InventoryItemInstance item = items[index];
+        consumedItemId = item.id;
+        effectPower = Mathf.Max(1, ResolveBattleEffectPower(item));
+        items.RemoveAt(index);
+
+        Debug.Log(
+            $"[InventoryManager] 배틀 아이템 1개 소모: {consumedItemId} " +
+            $"(요구 {requiredMonsterItemId}, 효과 {effectPower}, 남은 슬롯 {items.Count}/{countBefore - 1})");
+        OnInventoryChanged?.Invoke();
+        return true;
+    }
+
+    /// <summary>
+    /// 배틀씬 1회성 소모. 지정 ID의 첫 번째 인스턴스 1개만 제거합니다.
+    /// </summary>
+    public bool TryConsumeBattleItem(string id, out int effectPower)
+    {
+        effectPower = 0;
+
+        if (string.IsNullOrEmpty(id))
+            return false;
+
+        int index = items.FindIndex(x => x.id == id);
+        if (index < 0)
+            return false;
+
+        int countBefore = items.Count;
+        InventoryItemInstance item = items[index];
+        effectPower = Mathf.Max(1, ResolveBattleEffectPower(item));
+        items.RemoveAt(index);
+
+        Debug.Log(
+            $"[InventoryManager] 배틀 아이템 1개 소모: {id} " +
+            $"(효과 {effectPower}, 남은 슬롯 {items.Count}/{countBefore - 1})");
+        OnInventoryChanged?.Invoke();
+        return true;
+    }
+
+    private int FindBattleConsumableIndex(string requiredMonsterItemId)
+    {
+        if (string.IsNullOrEmpty(requiredMonsterItemId))
+            return -1;
+
+        for (int i = 0; i < items.Count; i++)
+        {
+            if (items[i].id == requiredMonsterItemId)
+                return i;
+        }
+
+        if (DataManager.Instance == null)
+            return -1;
+
+        string factoryEquivalent = DataManager.Instance.GetFactoryItemIdForInventory(requiredMonsterItemId);
+        if (string.IsNullOrEmpty(factoryEquivalent) ||
+            string.Equals(factoryEquivalent, requiredMonsterItemId, StringComparison.Ordinal))
+        {
+            return -1;
+        }
+
+        for (int i = 0; i < items.Count; i++)
+        {
+            if (items[i].id == factoryEquivalent)
+                return i;
+        }
+
+        return -1;
+    }
+
+    private int ResolveBattleEffectPower(InventoryItemInstance item)
+    {
+        if (item == null)
+            return 0;
+
+        if (item.remainingDurability > 0)
+            return item.remainingDurability;
+
+        if (DataManager.Instance == null || string.IsNullOrEmpty(item.id))
+            return 0;
+
+        ItemData data = DataManager.Instance.GetItemData(item.id);
+        if (data != null && data.durability > 0)
+            return data.durability;
+
+        return 1;
+    }
+
     // amount만큼 내구도를 소모하고 실제 소모량을 반환합니다.
     public int ConsumeItemDurability(string id, int amount)
     {

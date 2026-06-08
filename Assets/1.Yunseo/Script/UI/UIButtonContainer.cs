@@ -58,7 +58,10 @@ public class UIButtonContainer : MonoBehaviour
     private void EnsureUiManagerSubscribed()
     {
         if (uiManager == null)
-            uiManager = FindAnyObjectByType<UIBattleManager>();
+            uiManager = GetComponentInParent<UIBattleManager>();
+
+        if (uiManager == null || !uiManager.enabled)
+            uiManager = UIBattleManager.TryGetPrimaryActive();
 
         if (uiManager == null)
         {
@@ -90,6 +93,19 @@ public class UIButtonContainer : MonoBehaviour
 
         if (turnController != null)
             turnController.OnTurnPhaseChanged -= HandleTurnPhaseChanged;
+    }
+
+    /// <summary>턴 전환 후 모든 배틀 액션 버튼 상태를 갱신합니다.</summary>
+    public static void RefreshAllPlayerTurnButtons()
+    {
+        UIButtonContainer[] containers =
+            FindObjectsByType<UIButtonContainer>(FindObjectsInactive.Include);
+
+        for (int i = 0; i < containers.Length; i++)
+        {
+            if (containers[i] != null && containers[i].isActiveAndEnabled)
+                containers[i].UpdateActionButtonsForPlayerTurn();
+        }
     }
 
     /// <summary>씬에 있는 모든 UIButtonContainer의 배틀 버튼 상태를 초기화합니다.</summary>
@@ -126,8 +142,6 @@ public class UIButtonContainer : MonoBehaviour
         wasEscapeUiActive = true;
         SetEscapeUiVisible(true);
         ResetEscapeButtonInteractable();
-
-        uiManager?.ExitBattle();
         ApplyBattleKeyboardInputGuard();
     }
 
@@ -174,16 +188,11 @@ public class UIButtonContainer : MonoBehaviour
             return;
         }
 
-        int durabilityBeforeUse = InventoryManager.Instance.GetItemRemainingDurability(itemId);
-
-        if (!uiManager.OnClickPurify(out int consumedDurability))
+        if (!uiManager.OnClickPurify(out _))
         {
             UpdatePurifyButtonInteractable();
             return;
         }
-
-        if (durabilityBeforeUse > 0 && consumedDurability >= durabilityBeforeUse)
-            depletedItemIdThisBattle = itemId;
 
         if (purifyButton != null)
             purifyButton.interactable = uiManager.CanPurifyWithInventory(itemId);
@@ -192,8 +201,6 @@ public class UIButtonContainer : MonoBehaviour
             GetInfectionTypeText(),
             GetDescriptionText(),
             uiManager.BuildInventoryStatusText());
-
-        UpdateActionButtonsForPlayerTurn();
     }
 
     public void OnEscapeClick()
@@ -237,7 +244,11 @@ public class UIButtonContainer : MonoBehaviour
         if (DataManager.Instance != null)
             rewardItemId = DataManager.Instance.GetFactoryItemIdForInventory(rewardItemId);
 
-        bool shouldAddRewardToInventory = rewardItemId != depletedItemIdThisBattle;
+        string consumedItemId = uiManager != null ? uiManager.LastConsumedBattleItemId : null;
+        depletedItemIdThisBattle = consumedItemId;
+
+        bool shouldAddRewardToInventory = string.IsNullOrEmpty(consumedItemId) ||
+                                          rewardItemId != consumedItemId;
         acquisitionPopup.gameObject.SetActive(true);
         acquisitionPopup.SetupPopup(rewardItemId, 1, shouldAddRewardToInventory);
     }
@@ -308,13 +319,15 @@ public class UIButtonContainer : MonoBehaviour
     private void HandleTurnPhaseChanged(BattleTurnController.BattleTurnPhase phase)
     {
         bool isPlayerTurn = phase == BattleTurnController.BattleTurnPhase.PlayerTurn;
-        SetBattleActionsLocked(!isPlayerTurn);
+        bool isResolving = turnController != null && turnController.IsResolvingTurn;
+        SetBattleActionsLocked(!isPlayerTurn || isResolving);
+        UIInventory.RefreshAllVisible();
 
-        if (isPlayerTurn)
+        if (isPlayerTurn && !isResolving)
             UpdateActionButtonsForPlayerTurn();
     }
 
-    private void UpdateActionButtonsForPlayerTurn()
+    public void UpdateActionButtonsForPlayerTurn()
     {
         if (uiManager == null)
             return;

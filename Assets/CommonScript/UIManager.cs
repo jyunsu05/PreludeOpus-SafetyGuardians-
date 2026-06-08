@@ -315,7 +315,10 @@ public class UIManager : MonoBehaviour
 
         UIBattleManager battleManager = battleUIPanel.GetComponentInChildren<UIBattleManager>(true);
         if (battleManager != null)
+        {
             battleManager.ResetBattleUIState();
+            battleManager.ResetMonsterBattleStatus();
+        }
 
         UIButtonContainer buttonContainer = battleUIPanel.GetComponentInChildren<UIButtonContainer>(true);
         if (buttonContainer != null)
