@@ -53,6 +53,11 @@ public class MonsterSpawner : MonoBehaviour
         SpawnMonstersForCurrentStage(logResult: true);
     }
 
+    public void SetStageLevel(int oneBasedStageLevel)
+    {
+        stageLevel = Mathf.Clamp(oneBasedStageLevel, 1, 7);
+    }
+
     /// <summary>챕터 리셋·처음부터 다시 시작 시 목록에 있는 스폰 몬스터를 제거합니다.</summary>
     public void ForceClearAllSpawned()
     {
@@ -211,8 +216,12 @@ public class MonsterSpawner : MonoBehaviour
         for (int i = 0; i < MonsterTypeCount && monsterTypes.Count < spawnCount; i++)
             monsterTypes.Add(i);
 
+        int nextType = 0;
         while (monsterTypes.Count < spawnCount)
-            monsterTypes.Add(Random.Range(0, MonsterTypeCount));
+        {
+            monsterTypes.Add(nextType);
+            nextType = (nextType + 1) % MonsterTypeCount;
+        }
 
         for (int i = 0; i < monsterTypes.Count; i++)
         {
@@ -350,7 +359,7 @@ public class MonsterSpawner : MonoBehaviour
 
     private void EnsureSpawnCountsByStage()
     {
-        int[] fixedCounts = { 3, 4, 5, 6, 7, 9, 0 };
+        int[] fixedCounts = { 3, 5, 9, 0, 0, 0, 0 };
 
         if (spawnCountsByStage == null || spawnCountsByStage.Length != fixedCounts.Length)
             spawnCountsByStage = new int[fixedCounts.Length];

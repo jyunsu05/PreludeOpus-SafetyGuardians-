@@ -168,12 +168,12 @@ public class FactoryChapterController : MonoBehaviour
     private static void RespawnSpawnersInScene()
     {
         MonsterSpawner[] monsterSpawners =
-            FindObjectsByType<MonsterSpawner>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            FindObjectsByType<MonsterSpawner>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
         for (int i = 0; i < monsterSpawners.Length; i++)
             monsterSpawners[i]?.RespawnCurrentStage();
 
         ItemSpawner[] itemSpawners =
-            FindObjectsByType<ItemSpawner>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            FindObjectsByType<ItemSpawner>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
         for (int i = 0; i < itemSpawners.Length; i++)
             itemSpawners[i]?.RespawnCurrentStage();
     }

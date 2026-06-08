@@ -248,12 +248,13 @@ public class PollutionManager : MonoBehaviour
 
     private void HandleChapterLoaded(ChapterLoadedEventArgs args)
     {
-        BeginChapterPollutionTracking(resetPollutionToMax: !args.IsRestart);
+        BeginChapterPollutionTracking(resetPollutionToMax: true);
     }
 
     private void HandleStageMonstersSpawned()
     {
         RefreshChapterMonsterQuota();
+        NotifyPollutionChanged();
     }
 
     private void TrySubscribeChapterManager()

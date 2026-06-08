@@ -25,6 +25,13 @@ public class MonsterBattleTracker : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
+            if (!Instance.isActiveAndEnabled)
+            {
+                Destroy(Instance);
+                Instance = this;
+                return;
+            }
+
             Destroy(this);
             return;
         }
