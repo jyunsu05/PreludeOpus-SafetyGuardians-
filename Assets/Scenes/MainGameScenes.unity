@@ -5842,7 +5842,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1557433726174073833, guid: 670e2a2f4876d9b43af120ca18810067, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1802623979999114019, guid: 670e2a2f4876d9b43af120ca18810067, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -5892,6 +5892,10 @@ PrefabInstance:
       propertyPath: purificationParticlesAnimator
       value: 
       objectReference: {fileID: 1118055746}
+    - target: {fileID: 4720928751124264155, guid: 670e2a2f4876d9b43af120ca18810067, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5228653180113165303, guid: 670e2a2f4876d9b43af120ca18810067, type: 3}
       propertyPath: m_SizeDelta.x
       value: 1819.2
