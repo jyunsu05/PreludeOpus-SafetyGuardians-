@@ -6,6 +6,18 @@ public class InventoryManager : MonoBehaviour
 {
     public static InventoryManager Instance { get; private set; }
 
+    public readonly struct StackedInventoryItem
+    {
+        public readonly string itemId;
+        public readonly int count;
+
+        public StackedInventoryItem(string itemId, int count)
+        {
+            this.itemId = itemId;
+            this.count = count;
+        }
+    }
+
     private class InventoryItemInstance
     {
         public string id;
@@ -15,6 +27,7 @@ public class InventoryManager : MonoBehaviour
     // 현재 인벤토리에 들어있는 아이템 인스턴스 리스트
     private readonly List<InventoryItemInstance> items = new List<InventoryItemInstance>();
     private readonly List<string> itemIdSnapshot = new List<string>();
+    private readonly List<StackedInventoryItem> stackedSnapshot = new List<StackedInventoryItem>();
 
     // 인벤토리 변화 시 UI에 알리는 이벤트
     public event Action OnInventoryChanged;
@@ -131,6 +144,35 @@ public class InventoryManager : MonoBehaviour
             itemIdSnapshot.Add(item.id);
 
         return itemIdSnapshot;
+    }
+
+    /// <summary>동일 Item ID를 하나로 묶은 스택 목록을 반환합니다.</summary>
+    public IReadOnlyList<StackedInventoryItem> GetStackedItems()
+    {
+        stackedSnapshot.Clear();
+
+        if (items.Count == 0)
+            return stackedSnapshot;
+
+        var countsById = new Dictionary<string, int>();
+        var orderedIds = new List<string>();
+
+        foreach (InventoryItemInstance item in items)
+        {
+            if (countsById.ContainsKey(item.id))
+            {
+                countsById[item.id]++;
+                continue;
+            }
+
+            countsById[item.id] = 1;
+            orderedIds.Add(item.id);
+        }
+
+        foreach (string id in orderedIds)
+            stackedSnapshot.Add(new StackedInventoryItem(id, countsById[id]));
+
+        return stackedSnapshot;
     }
 
     /// <summary>인벤토리의 모든 아이템을 비우고 UI를 갱신합니다.</summary>

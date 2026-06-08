@@ -12,8 +12,10 @@ public class UIResult : MonoBehaviour
         [SerializeField] private GameObject root;
         [SerializeField] private TextMeshProUGUI text;
         [SerializeField] private Image image;
+        [Tooltip("아이콘 우측 하단 수량 텍스트 (미연결 시 Image 하위 CountText를 자동 탐색)")]
+        [SerializeField] private TextMeshProUGUI countText;
 
-        public void Setup(string content, Sprite sprite)
+        public void Setup(string content, Sprite sprite, int count = 1)
         {
             if (root != null)
                 root.SetActive(true);
@@ -26,6 +28,8 @@ public class UIResult : MonoBehaviour
                 image.sprite = sprite;
                 image.enabled = sprite != null;
             }
+
+            UpdateCount(count);
         }
 
         public void Hide()
@@ -44,6 +48,72 @@ public class UIResult : MonoBehaviour
                 image.sprite = null;
                 image.enabled = false;
             }
+
+            UpdateCount(1);
+        }
+
+        private void UpdateCount(int count)
+        {
+            TextMeshProUGUI countLabel = ResolveCountText();
+            if (countLabel == null)
+                return;
+
+            if (count <= 1)
+            {
+                countLabel.gameObject.SetActive(false);
+                countLabel.text = string.Empty;
+                return;
+            }
+
+            countLabel.gameObject.SetActive(true);
+            countLabel.text = $"x{count}";
+        }
+
+        private TextMeshProUGUI ResolveCountText()
+        {
+            if (countText != null)
+                return countText;
+
+            if (image == null)
+                return null;
+
+            Transform countTransform = image.transform.Find("CountText");
+            if (countTransform != null)
+                countText = countTransform.GetComponent<TextMeshProUGUI>();
+
+            if (countText != null)
+                return countText;
+
+            countText = CreateCountText();
+            return countText;
+        }
+
+        private TextMeshProUGUI CreateCountText()
+        {
+            if (image == null)
+                return null;
+
+            var countObject = new GameObject("CountText", typeof(RectTransform));
+            countObject.transform.SetParent(image.transform, false);
+
+            RectTransform rect = countObject.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(1f, 0f);
+            rect.anchorMax = new Vector2(1f, 0f);
+            rect.pivot = new Vector2(1f, 0f);
+            rect.anchoredPosition = new Vector2(-6f, 6f);
+            rect.sizeDelta = new Vector2(72f, 36f);
+
+            TextMeshProUGUI label = countObject.AddComponent<TextMeshProUGUI>();
+            if (text != null && text.font != null)
+                label.font = text.font;
+
+            label.fontSize = 28f;
+            label.alignment = TextAlignmentOptions.BottomRight;
+            label.color = Color.white;
+            label.raycastTarget = false;
+            label.text = string.Empty;
+            countObject.SetActive(false);
+            return label;
         }
     }
 
@@ -104,19 +174,13 @@ public class UIResult : MonoBehaviour
 
         if (fillItemsFromInventory && InventoryManager.Instance != null)
         {
-            IReadOnlyList<string> itemIds = InventoryManager.Instance.GetItemIds();
-            if (itemIds.Count > 0)
-            {
-                string[] ids = new string[itemIds.Count];
-                for (int i = 0; i < itemIds.Count; i++)
-                    ids[i] = itemIds[i];
+            IReadOnlyList<InventoryManager.StackedInventoryItem> stackedItems =
+                InventoryManager.Instance.GetStackedItems();
 
-                SetupItemsById(ids);
-            }
+            if (stackedItems.Count > 0)
+                SetupStackedItems(stackedItems);
             else
-            {
                 ClearItems();
-            }
         }
 
         Show();
@@ -205,7 +269,7 @@ public class UIResult : MonoBehaviour
             resultText.text = text;
     }
 
-    public void SetupItem(int index, string text, Sprite image = null)
+    public void SetupItem(int index, string text, Sprite image = null, int count = 1)
     {
         if (itemDisplays == null || index < 0 || index >= itemDisplays.Length)
         {
@@ -213,10 +277,10 @@ public class UIResult : MonoBehaviour
             return;
         }
 
-        itemDisplays[index].Setup(text, image);
+        itemDisplays[index].Setup(text, image, count);
     }
 
-    public void SetupItemById(int index, string itemId)
+    public void SetupItemById(int index, string itemId, int count = 1)
     {
         string resolvedId = ResolveItemId(itemId);
         ItemData data = DataManager.Instance != null
@@ -225,7 +289,7 @@ public class UIResult : MonoBehaviour
 
         string text = data != null ? data.name : resolvedId;
         Sprite image = GetItemSprite(data);
-        SetupItem(index, text, image);
+        SetupItem(index, text, image, count);
     }
 
     public void SetupItemsById(string[] itemIds)
@@ -240,6 +304,24 @@ public class UIResult : MonoBehaviour
             SetupItemById(i, itemIds[i]);
 
         for (int i = count; i < itemDisplays.Length; i++)
+            itemDisplays[i].Hide();
+    }
+
+    public void SetupStackedItems(IReadOnlyList<InventoryManager.StackedInventoryItem> stackedItems)
+    {
+        ClearItems();
+
+        if (itemDisplays == null || itemDisplays.Length == 0 || stackedItems == null)
+            return;
+
+        int displayCount = Mathf.Min(itemDisplays.Length, stackedItems.Count);
+        for (int i = 0; i < displayCount; i++)
+        {
+            InventoryManager.StackedInventoryItem stackedItem = stackedItems[i];
+            SetupItemById(i, stackedItem.itemId, stackedItem.count);
+        }
+
+        for (int i = displayCount; i < itemDisplays.Length; i++)
             itemDisplays[i].Hide();
     }
 
@@ -260,7 +342,7 @@ public class UIResult : MonoBehaviour
         {
             string text = texts != null ? texts[i] : string.Empty;
             Sprite image = images != null ? images[i] : null;
-            itemDisplays[i].Setup(text, image);
+            itemDisplays[i].Setup(text, image, 1);
         }
 
         for (int i = count; i < itemDisplays.Length; i++)
