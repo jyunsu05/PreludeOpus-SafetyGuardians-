@@ -21,11 +21,15 @@ public class BattleDamageCalculator
         if (baseDamage <= 0)
             return 0;
 
-        float multiplier = enemyStatus != null
+        float vulnerabilityMultiplier = enemyStatus != null
             ? enemyStatus.GetContaminationDamageTakenMultiplier(contaminationDamageBonusPerCaptureStack)
             : 1f;
 
-        return Mathf.Max(1, Mathf.RoundToInt(baseDamage * multiplier));
+        float purifyReductionMultiplier = enemyStatus != null
+            ? enemyStatus.GetPlayerPurifyDamageMultiplier()
+            : 1f;
+
+        return Mathf.Max(1, Mathf.RoundToInt(baseDamage * vulnerabilityMultiplier * purifyReductionMultiplier));
     }
 
     public float CalculateMonsterOxygenDamage(EnemyStatus enemyStatus)
@@ -39,8 +43,10 @@ public class BattleDamageCalculator
 
     public float GetContaminationDamageMultiplier(EnemyStatus enemyStatus)
     {
-        return enemyStatus != null
-            ? enemyStatus.GetContaminationDamageTakenMultiplier(contaminationDamageBonusPerCaptureStack)
-            : 1f;
+        if (enemyStatus == null)
+            return 1f;
+
+        return enemyStatus.GetContaminationDamageTakenMultiplier(contaminationDamageBonusPerCaptureStack)
+               * enemyStatus.GetPlayerPurifyDamageMultiplier();
     }
 }

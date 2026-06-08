@@ -384,9 +384,9 @@ MonoBehaviour:
   infectionTypeText: {fileID: 5596169578632724980}
   descriptionText: {fileID: 3696527288333901640}
   inventoryStatusText: {fileID: 5609759022619555845}
-  purifyDurabilityPerUse: 10
   turnController: {fileID: 1657685625664848699}
-  playerOxygen: {fileID: 0}
+  purifyEffectPerUse: 10
+  battleOxygenGauge: {fileID: 0}
 --- !u!114 &2433052342639462050
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -400,7 +400,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BattleUIController
   fleePenaltyAmount: 15
-  playerOxygen: {fileID: 0}
   playerController: {fileID: 0}
 --- !u!1 &1524161233231441479
 GameObject:
@@ -1831,8 +1830,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -140.25, y: -84.29987}
-  m_SizeDelta: {x: 625.9, y: 55.154}
+  m_AnchoredPosition: {x: -22.1149, y: -84.29987}
+  m_SizeDelta: {x: 862.1702, y: 55.154}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &3692872663254109848
 GameObject:
@@ -2117,8 +2116,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -588.8059, y: -140}
-  m_SizeDelta: {x: 634.188, y: 50}
+  m_AnchoredPosition: {x: -472.33472, y: -156.65549}
+  m_SizeDelta: {x: 867.1304, y: 36.689}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8758904321031032781
 CanvasRenderer:
@@ -2579,7 +2578,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -198.7, y: 0}
+  m_AnchoredPosition: {x: -312, y: 0}
   m_SizeDelta: {x: 224, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5609562616943910298
@@ -3650,9 +3649,9 @@ MonoBehaviour:
   infectionTypeText: {fileID: 5596169578632724980}
   descriptionText: {fileID: 3696527288333901640}
   inventoryStatusText: {fileID: 5609759022619555845}
-  purifyDurabilityPerUse: 10
   turnController: {fileID: 1657685625664848699}
-  playerOxygen: {fileID: 0}
+  purifyEffectPerUse: 10
+  battleOxygenGauge: {fileID: 0}
 --- !u!1 &8347852521393819595
 GameObject:
   m_ObjectHideFlags: 0
@@ -4050,17 +4049,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d1267bf8a0bcbb4d95c39ed9ad40991, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BattleTurnController
-  battleManager: {fileID: 2834499891191813395}
+  battleManager: {fileID: 4487478925118914382}
   enemyStatus: {fileID: 0}
   battleLogText: {fileID: 3117332992353363052}
-  playerOxygen: {fileID: 0}
   damageCalculator:
     contaminationDamageBonusPerCaptureStack: 0.167
     baseMonsterOxygenDamage: 8
     monsterAttackBonusPerCaptureStack: 0.12
-  playerPurifyOxygenCost: 3
-  weightAttack: 34
-  weightCaptureUp: 33
+  playerPurifySuccessOxygenReward: 30
+  weightAttack: 25
+  weightRestoreContamination: 25
+  weightCaptureUp: 25
+  weightDoNothing: 25
   monsterTurnDelay: 0.6
 --- !u!1 &9133111346038024801
 GameObject:
@@ -4096,8 +4096,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 113.13, y: 0}
-  m_SizeDelta: {x: 399.66, y: 50}
+  m_AnchoredPosition: {x: 118.04, y: 0}
+  m_SizeDelta: {x: 636.09, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3944020854068257286
 CanvasRenderer:
@@ -4154,8 +4154,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 50
-  m_fontSizeBase: 50
+  m_fontSize: 40
+  m_fontSizeBase: 40
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
