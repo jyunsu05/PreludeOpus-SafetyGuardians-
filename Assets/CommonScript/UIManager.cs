@@ -12,6 +12,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject battleUIPanel;
     [SerializeField] private UIMainHUD mainHUD;
     [SerializeField] private UIResult resultPanel;
+    [SerializeField] private UIGameClearStats gameClearStatsPanel;
 
     [Header("--- 선택: 오염도 UI ---")]
     [SerializeField] private Slider pollutionSlider;
@@ -205,12 +206,33 @@ public class UIManager : MonoBehaviour
 
     private void ShowStageResultImmediate()
     {
+        if (TryShowFinalChapterClearStats())
+            return;
+
         UIResult panel = ResolveResultPanel();
         if (panel == null)
             return;
 
         EnsureResultPanelOnCanvas(panel);
         panel.ShowStageClearResult();
+    }
+
+    private bool TryShowFinalChapterClearStats()
+    {
+        ChapterManager chapterManager = ChapterManager.Instance;
+        if (chapterManager == null
+            || chapterManager.ChapterCount <= 0
+            || chapterManager.CurrentChapterIndex < chapterManager.ChapterCount)
+            return false;
+
+        UIGameClearStats panel = ResolveClearStatsPanel();
+        if (panel == null)
+            return false;
+
+        EnsureClearStatsPanelOnCanvas(panel);
+        panel.ShowMain();
+        Debug.Log("[UIManager] 마지막 공장 클리어 — UIGameClearStats 표시");
+        return true;
     }
 
     private void EnsureResultPanelOnCanvas(UIResult panel)
@@ -276,6 +298,36 @@ public class UIManager : MonoBehaviour
         return found;
     }
 
+    private UIGameClearStats ResolveClearStatsPanel()
+    {
+        if (gameClearStatsPanel != null)
+            return gameClearStatsPanel;
+
+        return FindAnyObjectByType<UIGameClearStats>(FindObjectsInactive.Include);
+    }
+
+    private void EnsureClearStatsPanelOnCanvas(UIGameClearStats panel)
+    {
+        if (panel == null)
+            return;
+
+        Canvas rootCanvas = ResolveRootCanvas(null);
+        if (rootCanvas == null)
+        {
+            Debug.LogWarning("[UIManager] UIGameClearStats를 붙일 Canvas를 찾지 못했습니다.");
+            return;
+        }
+
+        Transform canvasTransform = rootCanvas.transform;
+        if (panel.transform.parent != canvasTransform)
+            panel.transform.SetParent(canvasTransform, false);
+
+        if (!rootCanvas.gameObject.activeSelf)
+            rootCanvas.gameObject.SetActive(true);
+
+        panel.transform.SetAsLastSibling();
+    }
+
     private void ForceCloseBattleLayers()
     {
         CloseBattleUI();
@@ -290,6 +342,10 @@ public class UIManager : MonoBehaviour
     {
         if (resultPanel != null)
             resultPanel.ResetStageResultState();
+
+        UIGameClearStats clearStats = ResolveClearStatsPanel();
+        if (clearStats != null)
+            clearStats.ResetShowState();
     }
 
     // --- 배틀 UI ---

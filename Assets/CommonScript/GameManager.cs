@@ -775,6 +775,7 @@ public class GameManager : MonoBehaviour
         ApplyInitialSessionPollution();
         InventoryManager.Instance?.ResetAll();
         UIBattleManager.ResetSavedContaminationProgress();
+        PlaySessionStats.EnsureInstance()?.ResetAll();
     }
 
     private static GameObject FindPlayerIncludingInactive()
