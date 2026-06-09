@@ -222,13 +222,43 @@ public class UIBattleManager : MonoBehaviour
         return turnController.IsPlayerTurn && !turnController.IsResolvingTurn;
     }
 
-    /// <summary>탐색 버튼 연출을 재생한 뒤 콜백을 호출합니다.</summary>
-    public bool TryBeginSearch(System.Action onCompleted)
+    /// <summary>탐색 버튼을 누를 수 있는지 확인합니다. (정화 아이템 보유와 무관)</summary>
+    public bool CanBeginSearch()
     {
-        if (IsScanned || IsSearching || !CanAcceptPlayerBattleAction())
+        if (IsScanned || IsSearching)
             return false;
 
-        StopSearchAnimationRoutine();
+        if (hasBattleWon || IsPurifying || isProcessingBattleExit)
+            return false;
+
+        ResolveTurnController();
+        if (turnController == null)
+            return false;
+
+        return turnController.IsPlayerTurn && !turnController.IsResolvingTurn;
+    }
+
+    /// <summary>탐색 버튼 클릭 직후 SearchLens를 즉시 켭니다. (아이템 보유와 무관)</summary>
+    public void PrepareSearchLensForPlayback()
+    {
+        ResolveSearchLensPresenter();
+        searchLensPresenter?.PrepareForPlayback();
+    }
+
+    /// <summary>탐색 연출 시작에 실패했을 때 SearchLens를 끕니다.</summary>
+    public void CancelSearchLensPresentation()
+    {
+        ResolveSearchLensPresenter();
+        searchLensPresenter?.StopSearchAnimation();
+    }
+
+    /// <summary>탐색 연출을 재생한 뒤 콜백을 호출합니다. (아이템 보유 여부와 무관)</summary>
+    public bool TryBeginSearch(System.Action onCompleted)
+    {
+        if (!CanBeginSearch())
+            return false;
+
+        StopSearchAnimationRoutineOnly();
         searchAnimationRoutine = StartCoroutine(ExecuteSearchAnimationRoutine(onCompleted));
         return true;
     }
@@ -239,12 +269,13 @@ public class UIBattleManager : MonoBehaviour
 
         ResolveSearchLensPresenter();
         if (searchLensPresenter != null)
-            searchLensPresenter.PlaySearchAnimation();
+            yield return searchLensPresenter.RunSearchSequence();
+        else
+        {
+            Debug.LogWarning("[UIBattleManager] SearchLens presenter를 찾지 못했습니다.");
+            yield return new WaitForSecondsRealtime(Mathf.Max(0.01f, searchAnimationDuration));
+        }
 
-        float waitDuration = ResolveSearchAnimationDuration();
-        yield return new WaitForSecondsRealtime(waitDuration);
-
-        searchLensPresenter?.StopSearchAnimation();
         IsSearching = false;
         searchAnimationRoutine = null;
 
@@ -433,6 +464,8 @@ public class UIBattleManager : MonoBehaviour
             return;
 
         searchLensPresenter = GetComponentInChildren<BattleSearchLensPresenter>(true);
+        if (searchLensPresenter == null)
+            Debug.LogWarning("[UIBattleManager] BattleSearchLensPresenter를 찾지 못했습니다.");
     }
 
     private float ResolveSearchAnimationDuration()
@@ -629,9 +662,8 @@ public class UIBattleManager : MonoBehaviour
     public void ExitBattle()
     {
         StopPurifyAnimationRoutine();
-        StopSearchAnimationRoutine();
+        AbortSearchAnimation();
         SetPurifyVfxActive(false);
-        searchLensPresenter?.StopSearchAnimation();
         monsterSpriteLooper?.StopAll();
         playerHitPresenter?.HideHitOverlay();
         ClearPendingPurifyItemConsumption();
@@ -654,7 +686,7 @@ public class UIBattleManager : MonoBehaviour
         purifyAnimationRoutine = null;
     }
 
-    private void StopSearchAnimationRoutine()
+    private void StopSearchAnimationRoutineOnly()
     {
         if (searchAnimationRoutine == null)
             return;
@@ -662,6 +694,12 @@ public class UIBattleManager : MonoBehaviour
         StopCoroutine(searchAnimationRoutine);
         searchAnimationRoutine = null;
         IsSearching = false;
+    }
+
+    private void AbortSearchAnimation()
+    {
+        StopSearchAnimationRoutineOnly();
+        searchLensPresenter?.StopSearchAnimation();
     }
 
     /// <summary>도망 버튼 광클 방지. 성공 시 MarkFleeExit까지 처리됨.</summary>
