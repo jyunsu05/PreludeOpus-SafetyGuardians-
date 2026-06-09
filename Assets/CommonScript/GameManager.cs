@@ -15,13 +15,6 @@ public class GameManager : MonoBehaviour
     public event Action OnStageCleared;
     public event Action OnStageMonstersSpawned;
 
-    [Header("--- 오프닝 (처음부터 시작) ---")]
-    [Tooltip("비어 있으면 씬에서 OpeningSequenceRoot(또는 OpeningSequenceController)를 찾습니다.")]
-    [SerializeField] private GameObject openingSequenceRoot;
-
-    private const string OpeningSequenceRootObjectName = "OpeningSequenceRoot";
-    private const string OpeningSceneLoadName = "OpeningScene";
-
     private static readonly string[] CoreGameplaySceneRootNames =
     {
         "Managers",
@@ -30,7 +23,7 @@ public class GameManager : MonoBehaviour
         "ChapterMaps",
     };
 
-    [Header("--- 재시작 씬 설정 (인씬 오프닝이 없을 때만) ---")]
+    [Header("--- 오프닝 / 재시작 씬 설정 ---")]
     [Tooltip("처음부터 시작(fullReset) 시 로드할 오프닝 씬")]
     [SerializeField] private string openingSceneName = "OpeningScene";
 
@@ -239,12 +232,15 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        if (isFullReset)
+        {
+            LoadOpeningScene();
+            return;
+        }
+
         ResetAllSystems();
 
-        if (isFullReset && TryBeginFullResetInPlace())
-            return;
-
-        if (!isFullReset && TryRestartCurrentChapterInPlace())
+        if (TryRestartCurrentChapterInPlace())
             return;
 
         string targetScene = ResolveRestartSceneName(isFullReset);
@@ -280,7 +276,7 @@ public class GameManager : MonoBehaviour
 
         ResetAllSystems();
 
-        if (!CanLoadScene(OpeningSceneLoadName))
+        if (!CanLoadScene(openingSceneName))
             return;
 
         isRestartInProgress = true;
@@ -289,8 +285,8 @@ public class GameManager : MonoBehaviour
         try
         {
             PrepareSessionDataForOpeningSceneTransition();
-            Debug.Log($"[GameManager] OpeningScene 로드: {OpeningSceneLoadName}");
-            SceneManager.LoadScene(OpeningSceneLoadName);
+            Debug.Log($"[GameManager] OpeningScene 로드: {openingSceneName}");
+            SceneManager.LoadScene(openingSceneName);
         }
         catch (Exception e)
         {
@@ -331,33 +327,6 @@ public class GameManager : MonoBehaviour
 
         if (!TryRestartCurrentChapterInPlace())
             RequestRestart(isFullReset: false);
-    }
-
-    private bool TryBeginFullResetInPlace()
-    {
-        GameObject openingRoot = ResolveOpeningSequenceRoot();
-        if (openingRoot == null)
-            return false;
-
-        isRestartInProgress = true;
-
-        try
-        {
-            isFullResetOpeningInProgress = true;
-            PerformFullReset();
-            ActivateOpeningSequenceRoot(openingRoot);
-            Debug.Log("[GameManager] 처음부터 시작 — 데이터 초기화 완료 → 오프닝 연출 시작");
-            return true;
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"[GameManager] 인씬 오프닝 전체 리셋 실패: {e.Message}");
-            return false;
-        }
-        finally
-        {
-            isRestartInProgress = false;
-        }
     }
 
     private bool TryRestartCurrentChapterInPlace()
@@ -846,30 +815,6 @@ public class GameManager : MonoBehaviour
             chapterManager.DestroyAllChapterInstances();
     }
 
-    private void ActivateOpeningSequenceRoot(GameObject openingRoot)
-    {
-        if (openingRoot == null)
-            return;
-
-        if (!openingRoot.activeSelf)
-            openingRoot.SetActive(true);
-
-        OpeningSequenceController[] controllers =
-            openingRoot.GetComponentsInChildren<OpeningSequenceController>(true);
-
-        for (int i = 0; i < controllers.Length; i++)
-        {
-            OpeningSequenceController controller = controllers[i];
-            if (controller == null)
-                continue;
-
-            if (!controller.gameObject.activeSelf)
-                controller.gameObject.SetActive(true);
-
-            controller.PrepareForReplay();
-        }
-    }
-
     private void CacheOpeningPlayerSpawnPosition()
     {
         if (openingPlayerSpawn != null)
@@ -1037,20 +982,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private GameObject ResolveOpeningSequenceRoot()
-    {
-        if (openingSequenceRoot != null)
-            return openingSequenceRoot;
-
-        GameObject byName = GameObject.Find(OpeningSequenceRootObjectName);
-        if (byName != null)
-            return byName;
-
-        OpeningSequenceController controller =
-            FindAnyObjectByType<OpeningSequenceController>(FindObjectsInactive.Include);
-        return controller != null ? controller.gameObject : null;
-    }
-
     private void CloseGameplayOverlays()
     {
         UIGameOver gameOver = FindAnyObjectByType<UIGameOver>(FindObjectsInactive.Include);
@@ -1072,7 +1003,7 @@ public class GameManager : MonoBehaviour
         ResetToField();
         ClearFieldMovementFreeze();
 
-        if (scene.name == OpeningSceneLoadName)
+        if (scene.name == openingSceneName)
         {
             Debug.Log("[GameManager] OpeningScene 진입");
             return;
