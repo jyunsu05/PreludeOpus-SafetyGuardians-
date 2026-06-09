@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 /// <summary>
@@ -7,6 +8,8 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class BattleSearchLensPresenter : MonoBehaviour
 {
+    private const int UiLayer = 5;
+
     [Header("--- SearchLens 연출 (인스펙터에서 설정) ---")]
     [SerializeField] private Animator animator;
     [Tooltip("Animator Controller의 기본 재생 상태 이름")]
@@ -31,12 +34,28 @@ public class BattleSearchLensPresenter : MonoBehaviour
         if (animator == null)
             animator = GetComponent<Animator>();
 
+        gameObject.layer = UiLayer;
         searchTriggerHash = Animator.StringToHash(searchTriggerName);
         searchStateHash = Animator.StringToHash(searchStateName);
         RefreshAnimationDuration();
 
         if (deactivateOnStop)
             gameObject.SetActive(false);
+    }
+
+    /// <summary>탐색 버튼 클릭 직후 SearchLens 오브젝트를 즉시 켭니다.</summary>
+    public void PrepareForPlayback()
+    {
+        EnsureHierarchyActive();
+        RefreshAnimationDuration();
+
+        if (activateOnPlay)
+            gameObject.SetActive(true);
+
+        transform.SetAsLastSibling();
+
+        if (animator != null)
+            animator.enabled = true;
     }
 
     public void PlaySearchAnimation()
@@ -47,16 +66,75 @@ public class BattleSearchLensPresenter : MonoBehaviour
             return;
         }
 
+        PrepareForPlayback();
+        PlayAnimatorFromStart();
+    }
+
+    /// <summary>활성화 → Animator 준비 → 클립 길이만큼 대기 → 비활성화</summary>
+    public IEnumerator RunSearchSequence()
+    {
+        float waitDuration = Mathf.Max(0.01f, animationDuration);
+
+        if (animator == null)
+            animator = GetComponent<Animator>();
+
+        PrepareForPlayback();
+
+        yield return null;
+        yield return null;
+
+        if (animator == null)
+        {
+            Debug.LogWarning("[BattleSearchLensPresenter] Animator가 연결되지 않았습니다.");
+            yield return new WaitForSecondsRealtime(waitDuration);
+            StopSearchAnimation();
+            yield break;
+        }
+
         RefreshAnimationDuration();
+        waitDuration = Mathf.Max(waitDuration, AnimationDuration);
+        PlayAnimatorFromStart();
 
-        if (activateOnPlay)
-            gameObject.SetActive(true);
+        yield return null;
+        if (!IsSearchStatePlaying())
+            PlayAnimatorFromStart();
 
+        yield return new WaitForSecondsRealtime(waitDuration);
+        StopSearchAnimation();
+    }
+
+    public void StopSearchAnimation()
+    {
+        if (deactivateOnStop)
+            gameObject.SetActive(false);
+    }
+
+    private void EnsureHierarchyActive()
+    {
+        gameObject.layer = UiLayer;
+
+        Transform node = transform;
+        while (node != null)
+        {
+            if (!node.gameObject.activeSelf)
+                node.gameObject.SetActive(true);
+
+            node = node.parent;
+        }
+    }
+
+    private void PlayAnimatorFromStart()
+    {
+        if (animator == null)
+            return;
+
+        animator.enabled = true;
         animator.Rebind();
         animator.Update(0f);
 
         if (!string.IsNullOrEmpty(searchTriggerName) && HasTriggerParameter(searchTriggerName))
         {
+            animator.ResetTrigger(searchTriggerHash);
             animator.SetTrigger(searchTriggerHash);
             return;
         }
@@ -65,10 +143,16 @@ public class BattleSearchLensPresenter : MonoBehaviour
             animator.Play(searchStateHash, 0, 0f);
     }
 
-    public void StopSearchAnimation()
+    private bool IsSearchStatePlaying()
     {
-        if (deactivateOnStop)
-            gameObject.SetActive(false);
+        if (animator == null || string.IsNullOrEmpty(searchStateName))
+            return false;
+
+        if (!string.IsNullOrEmpty(searchTriggerName) && HasTriggerParameter(searchTriggerName))
+            return true;
+
+        AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+        return state.shortNameHash == searchStateHash && state.normalizedTime < 0.99f;
     }
 
     private void RefreshAnimationDuration()

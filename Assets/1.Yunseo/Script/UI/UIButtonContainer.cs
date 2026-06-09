@@ -159,19 +159,34 @@ public class UIButtonContainer : MonoBehaviour
 
     public void OnSearchClick()
     {
-        if (isEscaping || uiManager == null || !CanUsePlayerTurnAction())
+        if (isEscaping || uiManager == null)
             return;
 
         if (uiManager.IsScanned || uiManager.IsSearching)
             return;
 
+        if (!uiManager.CanBeginSearch())
+            return;
+
         SetBattleActionsLocked(true);
+        uiManager.PrepareSearchLensForPlayback();
 
         if (!uiManager.TryBeginSearch(CompleteSearchAfterAnimation))
+        {
+            uiManager.CancelSearchLensPresentation();
             SetBattleActionsLocked(false);
+        }
     }
 
     private void CompleteSearchAfterAnimation()
+    {
+        ApplySearchScanResults();
+        SetBattleActionsLocked(false);
+        UpdateActionButtonsForPlayerTurn();
+    }
+
+    /// <summary>탐색 연출 종료 후 스캔 정보·정화 버튼 상태를 갱신합니다. (아이템 보유는 정화 버튼에만 영향)</summary>
+    private void ApplySearchScanResults()
     {
         uiManager.NotifySearchCompleted();
 
@@ -188,9 +203,6 @@ public class UIButtonContainer : MonoBehaviour
             GetInfectionTypeText(),
             GetDescriptionText(),
             uiManager.BuildInventoryStatusText());
-
-        SetBattleActionsLocked(false);
-        UpdateActionButtonsForPlayerTurn();
     }
 
     public void OnPurifyClick()
