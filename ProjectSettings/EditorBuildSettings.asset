@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/3.ChangHEE/Scene/OpeningScene.unity
+    guid: 5daf8796b8dd6bf48808f287868d6d4a
+  - enabled: 1
     path: Assets/Scenes/MainGameScenes.unity
     guid: dd5cbdd7272924c4d94552c06917ef03
   - enabled: 1

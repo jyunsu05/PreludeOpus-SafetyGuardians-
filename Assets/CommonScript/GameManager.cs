@@ -20,6 +20,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject openingSequenceRoot;
 
     private const string OpeningSequenceRootObjectName = "OpeningSequenceRoot";
+    private const string OpeningSceneLoadName = "OpeningScene";
 
     private static readonly string[] CoreGameplaySceneRootNames =
     {
@@ -263,6 +264,58 @@ public class GameManager : MonoBehaviour
             isRestartInProgress = false;
             Debug.LogError($"[GameManager] 재시작 실패: {e.Message}");
         }
+    }
+
+    /// <summary>
+    /// 게임오버 등에서 호출. 세션 데이터만 초기화한 뒤 OpeningScene으로 이동합니다.
+    /// 씬 언로드로 월드 오브젝트는 정리되므로 인씬 전체 리셋(PerformFullReset)은 생략합니다.
+    /// </summary>
+    public void LoadOpeningScene()
+    {
+        if (isRestartInProgress)
+        {
+            Debug.LogWarning("[GameManager] 재시작이 이미 진행 중입니다.");
+            return;
+        }
+
+        ResetAllSystems();
+
+        if (!CanLoadScene(OpeningSceneLoadName))
+            return;
+
+        isRestartInProgress = true;
+        isFullResetOpeningInProgress = true;
+
+        try
+        {
+            PrepareSessionDataForOpeningSceneTransition();
+            Debug.Log($"[GameManager] OpeningScene 로드: {OpeningSceneLoadName}");
+            SceneManager.LoadScene(OpeningSceneLoadName);
+        }
+        catch (Exception e)
+        {
+            isRestartInProgress = false;
+            isFullResetOpeningInProgress = false;
+            Debug.LogError($"[GameManager] OpeningScene 로드 실패: {e.Message}");
+        }
+    }
+
+    private void PrepareSessionDataForOpeningSceneTransition()
+    {
+        ResetToField();
+        ApplyInitialSessionData();
+        CloseGameplayOverlays();
+        ResetFullResetUiState();
+        HidePersistentGameplayUiForOpeningScene();
+    }
+
+    private static void HidePersistentGameplayUiForOpeningScene()
+    {
+        if (UIManager.Instance == null)
+            return;
+
+        UIManager.Instance.CloseAllPanels();
+        UIManager.Instance.gameObject.SetActive(false);
     }
 
     /// <summary>씬 재로드 없이 현재 챕터만 재시작합니다.</summary>
@@ -1009,13 +1062,37 @@ public class GameManager : MonoBehaviour
 
     private void OnSceneLoadedAfterRestart(Scene scene, LoadSceneMode mode)
     {
-        if (!isRestartInProgress)
+        if (!isRestartInProgress && !isFullResetOpeningInProgress)
             return;
 
-        isRestartInProgress = false;
+        bool wasRestartLoad = isRestartInProgress;
+        if (wasRestartLoad)
+            isRestartInProgress = false;
+
         ResetToField();
-        PerformPostLoadSceneSetup();
-        Debug.Log($"[GameManager] 재시작 씬 로드 완료: {scene.name}");
+        ClearFieldMovementFreeze();
+
+        if (scene.name == OpeningSceneLoadName)
+        {
+            Debug.Log("[GameManager] OpeningScene 진입");
+            return;
+        }
+
+        if (isFullResetOpeningInProgress)
+        {
+            if (UIManager.Instance != null)
+                UIManager.Instance.gameObject.SetActive(true);
+
+            StartNewGameAfterOpening();
+            Debug.Log($"[GameManager] 오프닝 후 '{scene.name}' — 새 게임 시작");
+            return;
+        }
+
+        if (wasRestartLoad)
+        {
+            PerformPostLoadSceneSetup();
+            Debug.Log($"[GameManager] 재시작 씬 로드 완료: {scene.name}");
+        }
     }
 
     private void PerformPostLoadSceneSetup()

@@ -2647,7 +2647,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7262544662682241796, guid: 438d90f48b866c24c8518ace47b74683, type: 3}
       propertyPath: openingSceneName
-      value: OpeningSequenceRoot
+      value: OpeningScene
       objectReference: {fileID: 0}
     - target: {fileID: 7262544662682241796, guid: 438d90f48b866c24c8518ace47b74683, type: 3}
       propertyPath: openingPlayerSpawn
