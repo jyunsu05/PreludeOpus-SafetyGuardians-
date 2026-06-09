@@ -1,34 +1,58 @@
 fileFormatVersion: 2
-guid: 9a5eb002cd2286542965412b10130e1a
+guid: ca923ca2981666b48b7dff21d9727972
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 5808180415460426888
-    second: monster_fire_0
+      213: 5633951157362176896
+    second: monster_fungus_Hit_0
   - first:
-      213: -4232146004520664212
-    second: monster_fire_1
+      213: 8416545626765969787
+    second: monster_fungus_Hit_1
   - first:
-      213: 8416073030883148877
-    second: monster_fire_2
+      213: -8775780362932440305
+    second: monster_fungus_Hit_2
   - first:
-      213: 3788160653514316638
-    second: monster_fire_3
+      213: -6609750858178957745
+    second: monster_fungus_Hit_3
   - first:
-      213: 883802048108322576
-    second: monster_fire_4
+      213: 7076052971064884977
+    second: monster_fungus_Hit_4
   - first:
-      213: 171033158595883646
-    second: monster_fire_5
+      213: 8249400516961679549
+    second: monster_fungus_Hit_5
   - first:
-      213: 2385321789862385347
-    second: monster_fire_6
+      213: -6361458666256602428
+    second: monster_fungus_Hit_6
   - first:
-      213: 3988916403420245356
-    second: monster_fire_7
+      213: -3671053884505895653
+    second: monster_fungus_Hit_7
   - first:
-      213: 8846501050350307391
-    second: monster_fire_8
+      213: 1645152460925538784
+    second: monster_fungus_Hit_8
+  - first:
+      213: 3491878128229472447
+    second: monster_fungus_Hit_9
+  - first:
+      213: -6168537655179008272
+    second: monster_fungus_Hit_10
+  - first:
+      213: -8018951643924718357
+    second: monster_fungus_Hit_11
+  - first:
+      213: 9082771992877980378
+    second: monster_fungus_Hit_12
+  - first:
+      213: 8430721558090068862
+    second: monster_fungus_Hit_13
+  - first:
+      213: 4087341370725000424
+    second: monster_fungus_Hit_14
+  - first:
+      213: -8682322793261393646
+    second: monster_fungus_Hit_15
+  - first:
+      213: 7817691909639881682
+    second: monster_fungus_Hit_16
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -61,7 +85,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 0
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -137,199 +161,133 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: monster_fire_0
+      name: monster_fungus_Hit_4
       rect:
         serializedVersion: 2
-        x: 322
-        y: 606
-        width: 20
-        height: 26
+        x: 1141
+        y: 306
+        width: 231
+        height: 255
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 88446e6905dca9050800000000000000
-      internalID: 5808180415460426888
+      spriteID: 1fe7b28cfa0333260800000000000000
+      internalID: 7076052971064884977
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_fire_1
+      name: monster_fungus_Hit_5
       rect:
         serializedVersion: 2
-        x: 331
-        y: 226
-        width: 614
-        height: 843
+        x: 1402
+        y: 302
+        width: 233
+        height: 249
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: c6305fab1a56445c0800000000000000
-      internalID: -4232146004520664212
+      spriteID: db8bc6f1012cb7270800000000000000
+      internalID: 8249400516961679549
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_fire_2
+      name: monster_fungus_Hit_7
       rect:
         serializedVersion: 2
-        x: 907
-        y: 626
-        width: 32
-        height: 40
+        x: 34
+        y: 330
+        width: 245
+        height: 266
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: d440981d4d5ebc470800000000000000
-      internalID: 8416073030883148877
+      spriteID: b1d45be21fbcd0dc0800000000000000
+      internalID: -3671053884505895653
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_fire_3
+      name: monster_fungus_Hit_9
       rect:
         serializedVersion: 2
-        x: 311
-        y: 556
-        width: 17
-        height: 22
+        x: 313
+        y: 324
+        width: 245
+        height: 207
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: e5b15d83b00429430800000000000000
-      internalID: 3788160653514316638
+      spriteID: fb8d21828a4a57030800000000000000
+      internalID: 3491878128229472447
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_fire_4
+      name: monster_fungus_Hit_11
       rect:
         serializedVersion: 2
-        x: 299
-        y: 490
-        width: 19
-        height: 19
+        x: 590
+        y: 311
+        width: 244
+        height: 291
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 01f5249b745e34c00800000000000000
-      internalID: 883802048108322576
+      spriteID: bec15d057f5f6b090800000000000000
+      internalID: -8018951643924718357
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_fire_5
+      name: monster_fungus_Hit_15
       rect:
         serializedVersion: 2
-        x: 308
-        y: 424
-        width: 20
-        height: 26
+        x: 862
+        y: 310
+        width: 242
+        height: 289
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: e72bbe660c1af5200800000000000000
-      internalID: 171033158595883646
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: monster_fire_6
-      rect:
-        serializedVersion: 2
-        x: 931
-        y: 417
-        width: 21
-        height: 29
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 3c61fb7a78d5a1120800000000000000
-      internalID: 2385321789862385347
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: monster_fire_7
-      rect:
-        serializedVersion: 2
-        x: 322
-        y: 368
-        width: 21
-        height: 24
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: c6da790b55a7b5730800000000000000
-      internalID: 3988916403420245356
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: monster_fire_8
-      rect:
-        serializedVersion: 2
-        x: 911
-        y: 375
-        width: 22
-        height: 26
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: f380043a5d515ca70800000000000000
-      internalID: 8846501050350307391
+      spriteID: 2199062ab61328780800000000000000
+      internalID: -8682322793261393646
       vertices: []
       indices: 
       edges: []
@@ -338,7 +296,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 769c7e0996520004c80c418e1d410e6a
     internalID: 0
     vertices: []
     indices: 
@@ -348,15 +306,23 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      monster_fire_0: 5808180415460426888
-      monster_fire_1: -4232146004520664212
-      monster_fire_2: 8416073030883148877
-      monster_fire_3: 3788160653514316638
-      monster_fire_4: 883802048108322576
-      monster_fire_5: 171033158595883646
-      monster_fire_6: 2385321789862385347
-      monster_fire_7: 3988916403420245356
-      monster_fire_8: 8846501050350307391
+      monster_fungus_Hit_0: 5633951157362176896
+      monster_fungus_Hit_1: 8416545626765969787
+      monster_fungus_Hit_10: -6168537655179008272
+      monster_fungus_Hit_11: -8018951643924718357
+      monster_fungus_Hit_12: 9082771992877980378
+      monster_fungus_Hit_13: 8430721558090068862
+      monster_fungus_Hit_14: 4087341370725000424
+      monster_fungus_Hit_15: -8682322793261393646
+      monster_fungus_Hit_16: 7817691909639881682
+      monster_fungus_Hit_2: -8775780362932440305
+      monster_fungus_Hit_3: -6609750858178957745
+      monster_fungus_Hit_4: 7076052971064884977
+      monster_fungus_Hit_5: 8249400516961679549
+      monster_fungus_Hit_6: -6361458666256602428
+      monster_fungus_Hit_7: -3671053884505895653
+      monster_fungus_Hit_8: 1645152460925538784
+      monster_fungus_Hit_9: 3491878128229472447
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

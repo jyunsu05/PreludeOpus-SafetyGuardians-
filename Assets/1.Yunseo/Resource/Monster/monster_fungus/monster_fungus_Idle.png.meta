@@ -1,0 +1,414 @@
+fileFormatVersion: 2
+guid: 8eb6022826d21fc468bd2a0b8a3720ee
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 158235529036398167
+    second: monster_fungus_Idle_0
+  - first:
+      213: 1412128355155409445
+    second: monster_fungus_Idle_1
+  - first:
+      213: 1107331502003089479
+    second: monster_fungus_Idle_2
+  - first:
+      213: -8795079617937855701
+    second: monster_fungus_Idle_3
+  - first:
+      213: -371027658462347333
+    second: monster_fungus_Idle_4
+  - first:
+      213: 1261216207564887343
+    second: monster_fungus_Idle_5
+  - first:
+      213: 5044035721162281445
+    second: monster_fungus_Idle_6
+  - first:
+      213: -3031420925421401252
+    second: monster_fungus_Idle_7
+  - first:
+      213: -6490071937162519964
+    second: monster_fungus_Idle_8
+  - first:
+      213: 2984533014093561112
+    second: monster_fungus_Idle_9
+  - first:
+      213: -8330983927758166788
+    second: monster_fungus_Idle_10
+  - first:
+      213: 5052341323637458671
+    second: monster_fungus_Idle_11
+  - first:
+      213: -8354335200296999620
+    second: monster_fungus_Idle_12
+  - first:
+      213: -4298811483354165178
+    second: monster_fungus_Idle_13
+  - first:
+      213: 9195783613448478372
+    second: monster_fungus_Idle_14
+  - first:
+      213: 1784943822911177739
+    second: monster_fungus_Idle_15
+  - first:
+      213: -6510709357179277036
+    second: monster_fungus_Idle_16
+  - first:
+      213: -5852953670409032848
+    second: monster_fungus_Idle_17
+  - first:
+      213: 814005321456582249
+    second: monster_fungus_Idle_18
+  - first:
+      213: -2188043627046549862
+    second: monster_fungus_Idle_19
+  - first:
+      213: 7072641807018450107
+    second: monster_fungus_Idle_20
+  - first:
+      213: -817558624441353159
+    second: monster_fungus_Idle_21
+  - first:
+      213: -694532361140169056
+    second: monster_fungus_Idle_22
+  - first:
+      213: -9097942501579769883
+    second: monster_fungus_Idle_23
+  - first:
+      213: -6715164646425184534
+    second: monster_fungus_Idle_24
+  - first:
+      213: -1028544361386468791
+    second: monster_fungus_Idle_25
+  - first:
+      213: 2202529030102984338
+    second: monster_fungus_Idle_26
+  - first:
+      213: -3981115143922097929
+    second: monster_fungus_Idle_27
+  - first:
+      213: -3550313962324229718
+    second: monster_fungus_Idle_28
+  - first:
+      213: 7369131967154510242
+    second: monster_fungus_Idle_29
+  - first:
+      213: 1024558961703334007
+    second: monster_fungus_Idle_30
+  - first:
+      213: -7698856046947141425
+    second: monster_fungus_Idle_31
+  - first:
+      213: 3536226451004201350
+    second: monster_fungus_Idle_32
+  - first:
+      213: -4833311958845175606
+    second: monster_fungus_Idle_33
+  - first:
+      213: 6605758687828220210
+    second: monster_fungus_Idle_34
+  - first:
+      213: -662754489240603777
+    second: monster_fungus_Idle_35
+  - first:
+      213: -6330529464557080347
+    second: monster_fungus_Idle_36
+  - first:
+      213: -5236877156020125082
+    second: monster_fungus_Idle_37
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: monster_fungus_Idle_0
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 574
+        width: 459
+        height: 386
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 75e7f03106a223200800000000000000
+      internalID: 158235529036398167
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: monster_fungus_Idle_3
+      rect:
+        serializedVersion: 2
+        x: 554
+        y: 574
+        width: 436
+        height: 388
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b2b29819fa991f580800000000000000
+      internalID: -8795079617937855701
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: monster_fungus_Idle_8
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 574
+        width: 432
+        height: 387
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 46a52b285f1aee5a0800000000000000
+      internalID: -6490071937162519964
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: monster_fungus_Idle_20
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 116
+        width: 442
+        height: 404
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bbc59e24042172260800000000000000
+      internalID: 7072641807018450107
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: monster_fungus_Idle_22
+      rect:
+        serializedVersion: 2
+        x: 544
+        y: 122
+        width: 445
+        height: 397
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0a61a315f768c56f0800000000000000
+      internalID: -694532361140169056
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: monster_fungus_Idle_25
+      rect:
+        serializedVersion: 2
+        x: 1015
+        y: 120
+        width: 451
+        height: 394
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 94a14df4a50e9b1f0800000000000000
+      internalID: -1028544361386468791
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 08ebe4339536ac74dba3c2f9783d0fcc
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      monster_fungus_Idle_0: 158235529036398167
+      monster_fungus_Idle_1: 1412128355155409445
+      monster_fungus_Idle_10: -8330983927758166788
+      monster_fungus_Idle_11: 5052341323637458671
+      monster_fungus_Idle_12: -8354335200296999620
+      monster_fungus_Idle_13: -4298811483354165178
+      monster_fungus_Idle_14: 9195783613448478372
+      monster_fungus_Idle_15: 1784943822911177739
+      monster_fungus_Idle_16: -6510709357179277036
+      monster_fungus_Idle_17: -5852953670409032848
+      monster_fungus_Idle_18: 814005321456582249
+      monster_fungus_Idle_19: -2188043627046549862
+      monster_fungus_Idle_2: 1107331502003089479
+      monster_fungus_Idle_20: 7072641807018450107
+      monster_fungus_Idle_21: -817558624441353159
+      monster_fungus_Idle_22: -694532361140169056
+      monster_fungus_Idle_23: -9097942501579769883
+      monster_fungus_Idle_24: -6715164646425184534
+      monster_fungus_Idle_25: -1028544361386468791
+      monster_fungus_Idle_26: 2202529030102984338
+      monster_fungus_Idle_27: -3981115143922097929
+      monster_fungus_Idle_28: -3550313962324229718
+      monster_fungus_Idle_29: 7369131967154510242
+      monster_fungus_Idle_3: -8795079617937855701
+      monster_fungus_Idle_30: 1024558961703334007
+      monster_fungus_Idle_31: -7698856046947141425
+      monster_fungus_Idle_32: 3536226451004201350
+      monster_fungus_Idle_33: -4833311958845175606
+      monster_fungus_Idle_34: 6605758687828220210
+      monster_fungus_Idle_35: -662754489240603777
+      monster_fungus_Idle_36: -6330529464557080347
+      monster_fungus_Idle_37: -5236877156020125082
+      monster_fungus_Idle_4: -371027658462347333
+      monster_fungus_Idle_5: 1261216207564887343
+      monster_fungus_Idle_6: 5044035721162281445
+      monster_fungus_Idle_7: -3031420925421401252
+      monster_fungus_Idle_8: -6490071937162519964
+      monster_fungus_Idle_9: 2984533014093561112
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

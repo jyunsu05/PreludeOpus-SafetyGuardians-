@@ -1,34 +1,37 @@
 fileFormatVersion: 2
-guid: 23f2be1b13fbaf945b8edf688da0dd25
+guid: ed700d8bccf755342a03dd0ecc328254
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 5622929148848713036
-    second: monster_fungus_0
+      213: -3760719011158570567
+    second: monster_slime_Hit_0
   - first:
-      213: -4953839750483701942
-    second: monster_fungus_1
+      213: 753515769194372099
+    second: monster_slime_Hit_1
   - first:
-      213: -8262789492887012270
-    second: monster_fungus_2
+      213: -5977770875082794590
+    second: monster_slime_Hit_2
   - first:
-      213: 5325719768320100549
-    second: monster_fungus_3
+      213: -6672516517319693063
+    second: monster_slime_Hit_3
   - first:
-      213: -7590409340289476339
-    second: monster_fungus_4
+      213: -4636039734479788376
+    second: monster_slime_Hit_4
   - first:
-      213: 8546757980989952418
-    second: monster_fungus_5
+      213: 4397547430816747603
+    second: monster_slime_Hit_5
   - first:
-      213: -8832978801984050809
-    second: monster_fungus_6
+      213: 178632636793410195
+    second: monster_slime_Hit_6
   - first:
-      213: 4667917812525405013
-    second: monster_fungus_7
+      213: 6092475310274281280
+    second: monster_slime_Hit_7
   - first:
-      213: 4058950132268643255
-    second: monster_fungus_8
+      213: 7979020387207699512
+    second: monster_slime_Hit_8
+  - first:
+      213: -5092695500603721571
+    second: monster_slime_Hit_9
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -137,199 +140,221 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: monster_fungus_0
+      name: monster_slime_Hit_0
       rect:
         serializedVersion: 2
-        x: 170
-        y: 249
-        width: 918
-        height: 794
+        x: 17
+        y: 340
+        width: 165
+        height: 127
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: c4d2152f448a80e40800000000000000
-      internalID: 5622929148848713036
+      spriteID: 9b9c5d70cfd3fcbc0800000000000000
+      internalID: -3760719011158570567
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_fungus_1
+      name: monster_slime_Hit_1
       rect:
         serializedVersion: 2
-        x: 872
-        y: 976
-        width: 39
-        height: 55
+        x: 189
+        y: 340
+        width: 149
+        height: 181
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: a4f85365efc604bb0800000000000000
-      internalID: -4953839750483701942
+      spriteID: 30c5c7b8996057a00800000000000000
+      internalID: 753515769194372099
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_fungus_2
+      name: monster_slime_Hit_2
       rect:
         serializedVersion: 2
-        x: 214
-        y: 812
-        width: 55
-        height: 53
+        x: 346
+        y: 340
+        width: 145
+        height: 230
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 25cb3aefbbca45d80800000000000000
-      internalID: -8262789492887012270
+      spriteID: 2a9930a8f01ba0da0800000000000000
+      internalID: -5977770875082794590
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_fungus_3
+      name: monster_slime_Hit_3
       rect:
         serializedVersion: 2
-        x: 1004
-        y: 802
-        width: 26
-        height: 29
+        x: 500
+        y: 340
+        width: 144
+        height: 243
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 5c8cef399e1c8e940800000000000000
-      internalID: 5325719768320100549
+      spriteID: 9fcab3b74957663a0800000000000000
+      internalID: -6672516517319693063
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_fungus_4
+      name: monster_slime_Hit_4
       rect:
         serializedVersion: 2
-        x: 177
-        y: 675
-        width: 28
-        height: 31
+        x: 652
+        y: 340
+        width: 144
+        height: 244
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: d091d34bbe279a690800000000000000
-      internalID: -7590409340289476339
+      spriteID: 8a66cbd9c6a79afb0800000000000000
+      internalID: -4636039734479788376
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_fungus_5
+      name: monster_slime_Hit_5
       rect:
         serializedVersion: 2
-        x: 1031
-        y: 615
-        width: 46
-        height: 49
+        x: 804
+        y: 340
+        width: 145
+        height: 246
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 2a1142ed91f2c9670800000000000000
-      internalID: 8546757980989952418
+      spriteID: 35093c0d61a370d30800000000000000
+      internalID: 4397547430816747603
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_fungus_6
+      name: monster_slime_Hit_6
       rect:
         serializedVersion: 2
-        x: 204
-        y: 477
-        width: 55
-        height: 60
+        x: 956
+        y: 340
+        width: 156
+        height: 165
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 7896f272494fa6580800000000000000
-      internalID: -8832978801984050809
+      spriteID: 392dc5dcf61aa7200800000000000000
+      internalID: 178632636793410195
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_fungus_7
+      name: monster_slime_Hit_7
       rect:
         serializedVersion: 2
-        x: 984
-        y: 499
-        width: 46
-        height: 48
+        x: 1120
+        y: 340
+        width: 189
+        height: 71
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 5539b40d486c7c040800000000000000
-      internalID: 4667917812525405013
+      spriteID: 04f7cbfe302dc8450800000000000000
+      internalID: 6092475310274281280
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_fungus_8
+      name: monster_slime_Hit_8
       rect:
         serializedVersion: 2
-        x: 983
-        y: 376
-        width: 40
-        height: 46
+        x: 1318
+        y: 340
+        width: 161
+        height: 133
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 7b3b5ead3a9445830800000000000000
-      internalID: 4058950132268643255
+      spriteID: 83c5d1b74cc2bbe60800000000000000
+      internalID: 7979020387207699512
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: monster_slime_Hit_9
+      rect:
+        serializedVersion: 2
+        x: 1486
+        y: 340
+        width: 165
+        height: 127
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d98f849ac6c1359b0800000000000000
+      internalID: -5092695500603721571
       vertices: []
       indices: 
       edges: []
@@ -338,7 +363,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: c2053be72a8854243ab830bf4f2ce3ee
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -348,15 +373,16 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      monster_fungus_0: 5622929148848713036
-      monster_fungus_1: -4953839750483701942
-      monster_fungus_2: -8262789492887012270
-      monster_fungus_3: 5325719768320100549
-      monster_fungus_4: -7590409340289476339
-      monster_fungus_5: 8546757980989952418
-      monster_fungus_6: -8832978801984050809
-      monster_fungus_7: 4667917812525405013
-      monster_fungus_8: 4058950132268643255
+      monster_slime_Hit_0: -3760719011158570567
+      monster_slime_Hit_1: 753515769194372099
+      monster_slime_Hit_2: -5977770875082794590
+      monster_slime_Hit_3: -6672516517319693063
+      monster_slime_Hit_4: -4636039734479788376
+      monster_slime_Hit_5: 4397547430816747603
+      monster_slime_Hit_6: 178632636793410195
+      monster_slime_Hit_7: 6092475310274281280
+      monster_slime_Hit_8: 7979020387207699512
+      monster_slime_Hit_9: -5092695500603721571
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
