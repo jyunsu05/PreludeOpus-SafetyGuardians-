@@ -118,6 +118,37 @@ public class PlaySessionStats : MonoBehaviour
             reachedFactory = chapterIndex;
     }
 
+    /// <summary>공장 활성화 시 호출. Spec §4.3, §10.3.</summary>
+    public void OnChapterEntered(int chapterIndex, int chapterCount, bool isRestart)
+    {
+        NotifyFactoryEntered(chapterIndex);
+
+        bool isFinalChapter = chapterCount > 0 && chapterIndex >= chapterCount;
+        if (isFinalChapter || isRestart)
+            BeginClearRun();
+
+        BeginCurrentChapterStats();
+    }
+
+    public static float ResolveRuntimeOxygenPercent()
+    {
+        PlayerOxygen[] oxygenComponents =
+            FindObjectsByType<PlayerOxygen>(FindObjectsInactive.Include);
+        if (oxygenComponents.Length == 0)
+            return 0f;
+
+        PlayerOxygen oxygen = oxygenComponents[0];
+        if (oxygen.maxOxygen <= 0f)
+            return 0f;
+
+        return Mathf.Clamp(oxygen.currentOxygen / oxygen.maxOxygen * 100f, 0f, 100f);
+    }
+
+    public void SaveSnapshotForCurrentChapter(int chapterIndex)
+    {
+        SaveChapterSnapshot(chapterIndex, ResolveRuntimeOxygenPercent());
+    }
+
     public bool TryRecordPurification(string monsterId)
     {
         if (string.IsNullOrEmpty(monsterId))

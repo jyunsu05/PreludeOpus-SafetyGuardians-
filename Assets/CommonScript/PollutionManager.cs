@@ -157,6 +157,26 @@ public class PollutionManager : MonoBehaviour
         Debug.Log(
             $"[PollutionManager] 몬스터 정화 — 오염도 {before:F1}% → {currentPollution:F1}% " +
             $"(-{reductionPercent:F1}%, {PurifiedMonstersThisChapter}/{TotalMonstersThisChapter})");
+
+        PlaySessionStats stats = PlaySessionStats.EnsureInstance();
+        if (stats != null)
+            stats.TryRecordPurification(ResolvePurifiedMonsterId());
+    }
+
+    private static string ResolvePurifiedMonsterId()
+    {
+        UIBattleManager battleManager =
+            FindAnyObjectByType<UIBattleManager>(FindObjectsInactive.Include);
+        MonsterData data = battleManager != null ? battleManager.GetCurrentMonsterData() : null;
+        if (data != null && !string.IsNullOrEmpty(data.id))
+            return data.id;
+
+        string contextId = BattleEncounterContext.PeekEncounteredMonsterId();
+        if (!string.IsNullOrEmpty(contextId))
+            return contextId;
+
+        GameObject monster = BattleEncounterContext.PeekEncounteredMonsterObject();
+        return monster != null ? monster.name : "unknown_monster";
     }
 
     private void BeginChapterPollutionTracking(bool resetPollutionToMax)

@@ -143,6 +143,7 @@ public class PlayerOxygen : MonoBehaviour
         isOxygenGameOver = true;
         currentOxygen = 0f;
         SyncOxygenVisual();
+        PlaySessionStats.EnsureInstance()?.RecordGameOver();
 
         if (mainHUD != null && mainHUD.activeSelf)
             mainHUD.SetActive(false);

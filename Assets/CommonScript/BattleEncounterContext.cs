@@ -29,6 +29,11 @@ public static class BattleEncounterContext
         currentEncounteredMonsterObject = monster;
     }
 
+    public static string PeekEncounteredMonsterId()
+    {
+        return string.IsNullOrWhiteSpace(currentEncounteredMonsterId) ? null : currentEncounteredMonsterId;
+    }
+
     public static string ConsumeEncounteredMonsterId()
     {
         string monsterId = currentEncounteredMonsterId;

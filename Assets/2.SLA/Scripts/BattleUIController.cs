@@ -59,6 +59,7 @@ public class BattleUIController : MonoBehaviour
         else
             Debug.LogWarning("[BattleUIController] PlayerController를 찾지 못해 도망 후 재진입 방지 시간을 적용하지 못했습니다.");
 
+        PlaySessionStats.EnsureInstance()?.RecordEscape();
         Debug.Log("[BattleUIController] 도망 패널티 적용 완료.");
     }
 
