@@ -359,7 +359,7 @@ public class MonsterSpawner : MonoBehaviour
 
     private void EnsureSpawnCountsByStage()
     {
-        int[] fixedCounts = { 3, 5, 9, 0, 0, 0, 0 };
+        int[] fixedCounts = { 3, 5, 7, 0, 0, 0, 0 };
 
         if (spawnCountsByStage == null || spawnCountsByStage.Length != fixedCounts.Length)
             spawnCountsByStage = new int[fixedCounts.Length];
