@@ -256,7 +256,10 @@ public class UIButtonContainer : MonoBehaviour
         if (battleUIController != null)
             battleUIController.ApplyFleePenaltyOnly();
         else
+        {
+            PlaySessionStats.EnsureInstance()?.RecordEscape();
             Debug.LogWarning("[UIButtonContainer] BattleUIController가 없어 산소 패널티를 생략합니다.");
+        }
 
         uiManager.CompleteFleeExit();
     }

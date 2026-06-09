@@ -72,6 +72,7 @@ public class InventoryManager : MonoBehaviour
         });
 
         Debug.Log($"[InventoryManager] 아이템 추가됨: {id} (내구도 {durability})");
+        PlaySessionStats.EnsureInstance()?.RecordSessionItem(id);
         OnInventoryChanged?.Invoke();
     }
 

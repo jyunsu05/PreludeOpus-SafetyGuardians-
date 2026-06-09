@@ -1072,7 +1072,11 @@ public class ChapterManager : MonoBehaviour
         PublishChapterLoaded(isRestart);
 
         if (Application.isPlaying)
+        {
+            PlaySessionStats.EnsureInstance()
+                ?.OnChapterEntered(CurrentChapterIndex, ChapterCount, isRestart);
             MapInitializer.RefreshActiveMapColliders();
+        }
 
         Debug.Log($"[ChapterManager] 활성 챕터: {CurrentChapterIndex} (restart={isRestart})");
     }

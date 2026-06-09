@@ -206,6 +206,8 @@ public class UIManager : MonoBehaviour
 
     private void ShowStageResultImmediate()
     {
+        SaveCurrentChapterSnapshot();
+
         if (TryShowFinalChapterClearStats())
             return;
 
@@ -215,6 +217,16 @@ public class UIManager : MonoBehaviour
 
         EnsureResultPanelOnCanvas(panel);
         panel.ShowStageClearResult();
+    }
+
+    private static void SaveCurrentChapterSnapshot()
+    {
+        ChapterManager chapterManager = ChapterManager.Instance;
+        PlaySessionStats stats = PlaySessionStats.EnsureInstance();
+        if (chapterManager == null || stats == null)
+            return;
+
+        stats.SaveSnapshotForCurrentChapter(chapterManager.CurrentChapterIndex);
     }
 
     private bool TryShowFinalChapterClearStats()
