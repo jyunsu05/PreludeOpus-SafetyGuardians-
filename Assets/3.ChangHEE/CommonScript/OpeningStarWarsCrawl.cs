@@ -52,6 +52,9 @@ public class OpeningStarWarsCrawl : MonoBehaviour
     [SerializeField] bool fadeAtTop = true;
     [SerializeField] float topFadeRange = 220f;
 
+    [Header("Game Start Button")]
+    public GameObject gameStartButton;
+
     [Header("Transition")]
     [SerializeField] TransitionMode transitionMode = TransitionMode.LoadScene;
     [SerializeField] string nextSceneName = "MainGameScenes";
@@ -96,6 +99,7 @@ public class OpeningStarWarsCrawl : MonoBehaviour
     float textVisuallyGoneAt = -1f;
     CrawlPhase phase = CrawlPhase.Scrolling;
     bool openingFinished;
+    bool gameStartButtonShown;
     Coroutine activeFadeRoutine;
 
     const string StoryText =
@@ -145,19 +149,47 @@ public class OpeningStarWarsCrawl : MonoBehaviour
         BuildPressAnyKeyText();
         BuildExitFadeOverlay();
         EnsureOpeningCanvasGroup();
+        BindGameStartButton();
         ResetCrawl();
         BeginEntryFade();
     }
 
-    void Update()
+    void BindGameStartButton()
+    {
+        if (gameStartButton == null)
+            return;
+
+        Button button = gameStartButton.GetComponent<Button>();
+        if (button == null)
+        {
+            Debug.LogWarning("[OpeningStarWarsCrawl] gameStartButton에 Button 컴포넌트가 없습니다.");
+            return;
+        }
+
+        button.onClick.RemoveListener(OnGameStartButtonClicked);
+        button.onClick.AddListener(OnGameStartButtonClicked);
+    }
+
+    /// <summary>인스펙터 [게임 시작] 버튼 OnClick에도 연결 가능합니다.</summary>
+    public void OnGameStartButtonClicked()
     {
         if (openingFinished)
             return;
 
-        // 화면 연출은 예전과 동일하게 진행. 키는 스크롤 중·'아무 키나' 표시 중 언제든 다음으로 스킵.
-        if (WasAnyKeyPressed())
+        Debug.Log("[OpeningStarWarsCrawl] [게임 시작] 버튼 클릭 — 메인 게임 씬으로 이동합니다.");
+        openingFinished = true;
+        StopActiveFadeRoutine();
+        CompleteOpeningTransition();
+    }
+
+    void Update()
+    {
+        if (openingFinished || gameStartButtonShown)
+            return;
+
+        if (phase == CrawlPhase.Scrolling && WasScreenTouched())
         {
-            FinishOpening();
+            SkipCrawlToEnd();
             return;
         }
 
@@ -165,12 +197,6 @@ public class OpeningStarWarsCrawl : MonoBehaviour
 
         if (phase == CrawlPhase.Scrolling)
             UpdateScroll();
-
-        if (phase == CrawlPhase.WaitingForInput)
-        {
-            pressKeyElapsed += Time.deltaTime;
-            UpdatePressKeyFade();
-        }
     }
 
     void AdvanceCrawlTimer()
@@ -203,7 +229,41 @@ public class OpeningStarWarsCrawl : MonoBehaviour
         LogTextGoneIfNeeded();
 
         if (ShouldShowPressKey())
-            BeginWaitingForInput();
+            CompleteCrawlAndShowButton();
+    }
+
+    void SkipCrawlToEnd()
+    {
+        if (phase != CrawlPhase.Scrolling)
+            return;
+
+        EnsureCrawlTimerStarted();
+        scrollOffset = GetFinalScrollOffset();
+        UpdateCreditsTransform();
+        CompleteCrawlAndShowButton();
+
+        if (logCrawlTimerToConsole)
+            Debug.Log($"[OpeningTimer] 화면 터치 스킵 — {crawlTimer:F1}초");
+    }
+
+    void EnsureCrawlTimerStarted()
+    {
+        if (crawlTimerStarted)
+            return;
+
+        elapsed = Mathf.Max(elapsed, initialDelay);
+        crawlTimerStarted = true;
+        crawlTimer = 0f;
+        nextLogTime = 0f;
+
+        if (logCrawlTimerToConsole)
+            Debug.Log("[OpeningTimer] 크롤 시작 — 0.0초 (글자 스크롤 시작)");
+    }
+
+    float GetFinalScrollOffset()
+    {
+        float finalY = GetTopY() + finishPadding + textScrollHeight;
+        return Mathf.Max(0f, finalY - runtimeStartY);
     }
 
     void TrackTextVisuallyGone()
@@ -269,23 +329,41 @@ public class OpeningStarWarsCrawl : MonoBehaviour
         return bottomOfText >= GetTopY() + finishPadding;
     }
 
-    void BeginWaitingForInput()
+    void CompleteCrawlAndShowButton()
     {
-        if (phase == CrawlPhase.WaitingForInput)
+        if (gameStartButtonShown)
             return;
 
+        gameStartButtonShown = true;
         phase = CrawlPhase.WaitingForInput;
-        pressKeyElapsed = 0f;
+
         if (logCrawlTimerToConsole)
-            Debug.Log($"[OpeningTimer] '아무 키나' 페이드 시작 — {crawlTimer:F1}초");
+            Debug.Log($"[OpeningTimer] 크롤 완료 — [게임 시작] 버튼 표시 ({crawlTimer:F1}초)");
 
         HideCreditsText();
 
         if (pressAnyKeyText != null)
+            pressAnyKeyText.gameObject.SetActive(false);
+
+        if (gameStartButton != null)
         {
-            pressAnyKeyText.gameObject.SetActive(true);
-            UpdatePressKeyFade();
+            gameStartButton.SetActive(true);
+            EnableGameStartInteraction();
+            Debug.Log("[OpeningStarWarsCrawl] [게임 시작] 버튼이 활성화되었습니다.");
         }
+        else
+        {
+            Debug.LogWarning("[OpeningStarWarsCrawl] gameStartButton이 연결되지 않았습니다.");
+        }
+    }
+
+    void EnableGameStartInteraction()
+    {
+        if (openingCanvasGroup == null)
+            return;
+
+        openingCanvasGroup.interactable = true;
+        openingCanvasGroup.blocksRaycasts = true;
     }
 
     void HideCreditsText()
@@ -402,6 +480,15 @@ public class OpeningStarWarsCrawl : MonoBehaviour
         openingCanvasGroup = GetComponent<CanvasGroup>();
         if (openingCanvasGroup == null)
             openingCanvasGroup = gameObject.AddComponent<CanvasGroup>();
+
+        openingCanvasGroup.interactable = true;
+        openingCanvasGroup.blocksRaycasts = false;
+    }
+
+    void DisableGameStartInteraction()
+    {
+        if (openingCanvasGroup == null)
+            return;
 
         openingCanvasGroup.interactable = true;
         openingCanvasGroup.blocksRaycasts = false;
@@ -531,17 +618,23 @@ public class OpeningStarWarsCrawl : MonoBehaviour
             rootCanvas.sortingOrder = 100;
     }
 
-    static bool WasAnyKeyPressed()
+    static bool WasScreenTouched()
     {
 #if ENABLE_INPUT_SYSTEM
-        if (Keyboard.current != null && Keyboard.current.anyKey.wasPressedThisFrame)
+        if (Touchscreen.current != null &&
+            Touchscreen.current.primaryTouch.press.wasPressedThisFrame)
             return true;
 
-        if (Mouse.current != null &&
-            (Mouse.current.leftButton.wasPressedThisFrame || Mouse.current.rightButton.wasPressedThisFrame))
+        if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
+            return true;
+#else
+        if (Input.GetMouseButtonDown(0))
+            return true;
+
+        if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
             return true;
 #endif
-        return Input.anyKeyDown;
+        return false;
     }
 
     void BuildCreditsText()
@@ -685,11 +778,17 @@ public class OpeningStarWarsCrawl : MonoBehaviour
         textVisuallyGoneAt = -1f;
         phase = CrawlPhase.Scrolling;
         openingFinished = false;
+        gameStartButtonShown = false;
         runtimeStartY = GetBottomY() - startOffsetFromBottom;
         UpdateCreditsTransform();
 
         if (pressAnyKeyText != null)
             pressAnyKeyText.gameObject.SetActive(false);
+
+        if (gameStartButton != null)
+            gameStartButton.SetActive(false);
+
+        DisableGameStartInteraction();
     }
 
     void UpdateCreditsTransform()
