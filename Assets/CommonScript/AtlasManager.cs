@@ -43,10 +43,35 @@ public class AtlasManager : MonoBehaviour
     /// </summary>
     public Sprite GetMonsterSprite(string spriteName)
     {
-        return GetSpriteFromAtlas(MonsterImages, spriteName, "MonsterImages");
+        return GetMonsterSprite(spriteName, true);
+    }
+
+    public Sprite GetMonsterSprite(string spriteName, bool logIfMissing)
+    {
+        return GetSpriteFromAtlas(MonsterImages, spriteName, "MonsterImages", logIfMissing);
+    }
+
+    /// <summary>
+    /// MonsterAtlas에서 이름이 정확히 일치하는 스프라이트만 반환합니다. (_0 폴백 없음)
+    /// </summary>
+    public Sprite TryGetMonsterSpriteExact(string spriteName)
+    {
+        if (MonsterImages == null || string.IsNullOrEmpty(spriteName))
+            return null;
+
+        return MonsterImages.GetSprite(spriteName);
     }
 
     private Sprite GetSpriteFromAtlas(SpriteAtlas atlas, string spriteName, string atlasName)
+    {
+        return GetSpriteFromAtlas(atlas, spriteName, atlasName, true);
+    }
+
+    private Sprite GetSpriteFromAtlas(
+        SpriteAtlas atlas,
+        string spriteName,
+        string atlasName,
+        bool logIfMissing)
     {
         if (atlas == null || string.IsNullOrEmpty(spriteName))
             return null;
@@ -55,7 +80,7 @@ public class AtlasManager : MonoBehaviour
         if (sprite == null)
             sprite = atlas.GetSprite($"{spriteName}_0");
 
-        if (sprite == null)
+        if (sprite == null && logIfMissing)
             Debug.LogWarning($"[AtlasManager] {atlasName}에서 스프라이트를 찾을 수 없습니다: {spriteName}");
 
         return sprite;

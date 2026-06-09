@@ -21,6 +21,8 @@ public class UIBattleManager : MonoBehaviour
     public event System.Action OnContaminationEmpty;
     [Header("--- 몬스터 기본 정보 UI (항상 보임) ---")]
     [SerializeField] private Image monsterImage;
+    [Tooltip("MonsterImages의 BattleMonsterSpriteLooper. 비우면 monsterImage에서 자동 탐색합니다.")]
+    [SerializeField] private BattleMonsterSpriteLooper monsterSpriteLooper;
     [SerializeField] private TextMeshProUGUI monsterNameText;       // 몬스터: name
     [SerializeField] private TextMeshProUGUI difficultyText;        // 포획 난이도: New Text
     [SerializeField] private Slider contaminationSlider;            // 오염도 게이지 바
@@ -358,9 +360,17 @@ public class UIBattleManager : MonoBehaviour
         SetPurifyVfxActive(true);
         TriggerPurifyAnimation();
 
+        ResolveMonsterSpriteLooper();
+        Coroutine hitCoroutine = null;
+        if (monsterSpriteLooper != null)
+            hitCoroutine = monsterSpriteLooper.StartCoroutine(monsterSpriteLooper.PlayHitOnceRoutine());
+
         float purifyWaitDuration = Mathf.Max(0.01f, purifyAnimationDuration);
         yield return new WaitForSecondsRealtime(purifyWaitDuration);
         SetPurifyVfxActive(false);
+
+        if (hitCoroutine != null)
+            yield return hitCoroutine;
 
         ApplyPurifyDamage(finalPurifyDamage);
         FinalizePurifyTurn(basePurifyDamage, finalPurifyDamage);
@@ -622,6 +632,7 @@ public class UIBattleManager : MonoBehaviour
         StopSearchAnimationRoutine();
         SetPurifyVfxActive(false);
         searchLensPresenter?.StopSearchAnimation();
+        monsterSpriteLooper?.StopAll();
         playerHitPresenter?.HideHitOverlay();
         ClearPendingPurifyItemConsumption();
         hasBattleWon = false;
@@ -811,6 +822,8 @@ public class UIBattleManager : MonoBehaviour
 
         if (monsterImage != null)
             monsterImage.sprite = null;
+
+        monsterSpriteLooper?.StopAll();
 
         if (contaminationSlider != null)
         {
@@ -1008,9 +1021,38 @@ public class UIBattleManager : MonoBehaviour
         contaminationAtBattleEntry = currentContamination;
         BattleEncounterContext.ClearFleeExit();
         SetMonsterBasicUI(data.name, difficulty, maxContamination, currentContamination);
+        ApplyMonsterBattleSprite(data);
+    }
+
+    private void ApplyMonsterBattleSprite(MonsterData data)
+    {
+        ResolveMonsterSpriteLooper();
+
+        if (monsterSpriteLooper != null &&
+            data != null &&
+            !string.IsNullOrEmpty(data.image_key) &&
+            monsterSpriteLooper.ConfigureFromAtlas(data.image_key))
+        {
+            monsterSpriteLooper.PlayIdleLoop();
+            return;
+        }
+
+        monsterSpriteLooper?.StopAll();
 
         if (monsterImage != null)
             monsterImage.sprite = GetMonsterSprite(data);
+    }
+
+    private void ResolveMonsterSpriteLooper()
+    {
+        if (monsterSpriteLooper != null)
+            return;
+
+        if (monsterImage != null)
+            monsterSpriteLooper = monsterImage.GetComponent<BattleMonsterSpriteLooper>();
+
+        if (monsterSpriteLooper == null)
+            monsterSpriteLooper = GetComponentInChildren<BattleMonsterSpriteLooper>(true);
     }
 
     private Sprite GetMonsterSprite(MonsterData data)

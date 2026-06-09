@@ -1,0 +1,438 @@
+fileFormatVersion: 2
+guid: b3cf0485f6321f549a00410a8d8cfad0
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -497965441856560223
+    second: monster_fire_Idle_0
+  - first:
+      213: -3425549198831067597
+    second: monster_fire_Idle_1
+  - first:
+      213: 2531347499362214623
+    second: monster_fire_Idle_2
+  - first:
+      213: -2435612956259647015
+    second: monster_fire_Idle_3
+  - first:
+      213: 3194802644733855359
+    second: monster_fire_Idle_4
+  - first:
+      213: -3950007241080842502
+    second: monster_fire_Idle_5
+  - first:
+      213: 3917645461031727658
+    second: monster_fire_Idle_6
+  - first:
+      213: 313851484892158539
+    second: monster_fire_Idle_7
+  - first:
+      213: -8005130611285808975
+    second: monster_fire_Idle_8
+  - first:
+      213: 5690414828638288619
+    second: monster_fire_Idle_9
+  - first:
+      213: 8721471024180106252
+    second: monster_fire_Idle_10
+  - first:
+      213: 3833032459049925927
+    second: monster_fire_Idle_11
+  - first:
+      213: -1248112388466358945
+    second: monster_fire_Idle_12
+  - first:
+      213: 2707382425905862306
+    second: monster_fire_Idle_13
+  - first:
+      213: -2630342407930675176
+    second: monster_fire_Idle_14
+  - first:
+      213: -7979783175817249991
+    second: monster_fire_Idle_15
+  - first:
+      213: 7435690140233647942
+    second: monster_fire_Idle_16
+  - first:
+      213: -3754041511926448333
+    second: monster_fire_Idle_17
+  - first:
+      213: -2172624518097791132
+    second: monster_fire_Idle_18
+  - first:
+      213: -3144403945146592327
+    second: monster_fire_Idle_19
+  - first:
+      213: -2890855886657709430
+    second: monster_fire_Idle_20
+  - first:
+      213: 3724843126007882729
+    second: monster_fire_Idle_21
+  - first:
+      213: 3960687088450403836
+    second: monster_fire_Idle_22
+  - first:
+      213: 4144885080620231301
+    second: monster_fire_Idle_23
+  - first:
+      213: 2677309591264134774
+    second: monster_fire_Idle_24
+  - first:
+      213: -645983837684313721
+    second: monster_fire_Idle_25
+  - first:
+      213: -4994931244012816597
+    second: monster_fire_Idle_26
+  - first:
+      213: 6527315040118585144
+    second: monster_fire_Idle_27
+  - first:
+      213: 7731492762706373586
+    second: monster_fire_Idle_28
+  - first:
+      213: -6570765021164658569
+    second: monster_fire_Idle_29
+  - first:
+      213: 1827904516002861385
+    second: monster_fire_Idle_30
+  - first:
+      213: -919560352033098807
+    second: monster_fire_Idle_31
+  - first:
+      213: -1582807720612298497
+    second: monster_fire_Idle_32
+  - first:
+      213: 1165396750435178714
+    second: monster_fire_Idle_33
+  - first:
+      213: -6313471426042553967
+    second: monster_fire_Idle_34
+  - first:
+      213: 6470173360969685305
+    second: monster_fire_Idle_35
+  - first:
+      213: 4128691391434769504
+    second: monster_fire_Idle_36
+  - first:
+      213: 4640407382583621307
+    second: monster_fire_Idle_37
+  - first:
+      213: 7795673911793382892
+    second: monster_fire_Idle_38
+  - first:
+      213: -553580915216700767
+    second: monster_fire_Idle_39
+  - first:
+      213: 6124380854756358865
+    second: monster_fire_Idle_40
+  - first:
+      213: 3561918058196903951
+    second: monster_fire_Idle_41
+  - first:
+      213: 4501181340688619032
+    second: monster_fire_Idle_42
+  - first:
+      213: 3005353158131275190
+    second: monster_fire_Idle_43
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: monster_fire_Idle_2
+      rect:
+        serializedVersion: 2
+        x: 380
+        y: 244
+        width: 283
+        height: 432
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fd2ee869327212320800000000000000
+      internalID: 2531347499362214623
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: monster_fire_Idle_4
+      rect:
+        serializedVersion: 2
+        x: 675
+        y: 243
+        width: 333
+        height: 471
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f7607de1418365c20800000000000000
+      internalID: 3194802644733855359
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: monster_fire_Idle_6
+      rect:
+        serializedVersion: 2
+        x: 62
+        y: 239
+        width: 292
+        height: 415
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a22b7bc4ac54e5630800000000000000
+      internalID: 3917645461031727658
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: monster_fire_Idle_7
+      rect:
+        serializedVersion: 2
+        x: 1013
+        y: 244
+        width: 213
+        height: 351
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b4ad93d33460b5400800000000000000
+      internalID: 313851484892158539
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: monster_fire_Idle_9
+      rect:
+        serializedVersion: 2
+        x: 1455
+        y: 237
+        width: 268
+        height: 428
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: beab995332a68fe40800000000000000
+      internalID: 5690414828638288619
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: monster_fire_Idle_10
+      rect:
+        serializedVersion: 2
+        x: 1239
+        y: 244
+        width: 199
+        height: 288
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c041e1b20b3e80970800000000000000
+      internalID: 8721471024180106252
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: a63619c51d655384ca0f0f7743b37e66
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      monster_fire_Idle_0: -497965441856560223
+      monster_fire_Idle_1: -3425549198831067597
+      monster_fire_Idle_10: 8721471024180106252
+      monster_fire_Idle_11: 3833032459049925927
+      monster_fire_Idle_12: -1248112388466358945
+      monster_fire_Idle_13: 2707382425905862306
+      monster_fire_Idle_14: -2630342407930675176
+      monster_fire_Idle_15: -7979783175817249991
+      monster_fire_Idle_16: 7435690140233647942
+      monster_fire_Idle_17: -3754041511926448333
+      monster_fire_Idle_18: -2172624518097791132
+      monster_fire_Idle_19: -3144403945146592327
+      monster_fire_Idle_2: 2531347499362214623
+      monster_fire_Idle_20: -2890855886657709430
+      monster_fire_Idle_21: 3724843126007882729
+      monster_fire_Idle_22: 3960687088450403836
+      monster_fire_Idle_23: 4144885080620231301
+      monster_fire_Idle_24: 2677309591264134774
+      monster_fire_Idle_25: -645983837684313721
+      monster_fire_Idle_26: -4994931244012816597
+      monster_fire_Idle_27: 6527315040118585144
+      monster_fire_Idle_28: 7731492762706373586
+      monster_fire_Idle_29: -6570765021164658569
+      monster_fire_Idle_3: -2435612956259647015
+      monster_fire_Idle_30: 1827904516002861385
+      monster_fire_Idle_31: -919560352033098807
+      monster_fire_Idle_32: -1582807720612298497
+      monster_fire_Idle_33: 1165396750435178714
+      monster_fire_Idle_34: -6313471426042553967
+      monster_fire_Idle_35: 6470173360969685305
+      monster_fire_Idle_36: 4128691391434769504
+      monster_fire_Idle_37: 4640407382583621307
+      monster_fire_Idle_38: 7795673911793382892
+      monster_fire_Idle_39: -553580915216700767
+      monster_fire_Idle_4: 3194802644733855359
+      monster_fire_Idle_40: 6124380854756358865
+      monster_fire_Idle_41: 3561918058196903951
+      monster_fire_Idle_42: 4501181340688619032
+      monster_fire_Idle_43: 3005353158131275190
+      monster_fire_Idle_5: -3950007241080842502
+      monster_fire_Idle_6: 3917645461031727658
+      monster_fire_Idle_7: 313851484892158539
+      monster_fire_Idle_8: -8005130611285808975
+      monster_fire_Idle_9: 5690414828638288619
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

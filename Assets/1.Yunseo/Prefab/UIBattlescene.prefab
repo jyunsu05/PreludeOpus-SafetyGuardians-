@@ -86,6 +86,7 @@ GameObject:
   - component: {fileID: 8887882851133972959}
   - component: {fileID: 8283829407851175646}
   - component: {fileID: 5320492944066121304}
+  - component: {fileID: 7123456789012345680}
   m_Layer: 5
   m_Name: MonsterImages
   m_TagString: Untagged
@@ -150,6 +151,19 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &7123456789012345680
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 90092837228051255}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7b8c9d0e1f243658697a8b9c0d1e2f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BattleMonsterSpriteLooper
+  framesPerSecond: 8
 --- !u!1 &638712256543387146
 GameObject:
   m_ObjectHideFlags: 0
@@ -380,6 +394,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIBattleManager
   monsterImage: {fileID: 5320492944066121304}
+  monsterSpriteLooper: {fileID: 7123456789012345680}
   monsterNameText: {fileID: 1046898412022011351}
   difficultyText: {fileID: 7814412594963117899}
   contaminationSlider: {fileID: 7900153703087947571}
@@ -4018,6 +4033,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIBattleManager
   monsterImage: {fileID: 5320492944066121304}
+  monsterSpriteLooper: {fileID: 7123456789012345680}
   monsterNameText: {fileID: 1046898412022011351}
   difficultyText: {fileID: 7814412594963117899}
   contaminationSlider: {fileID: 7900153703087947571}
