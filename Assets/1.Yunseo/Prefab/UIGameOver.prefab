@@ -795,7 +795,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1772200704184243200}
         m_TargetAssemblyTypeName: UIGameOver, Assembly-CSharp
-        m_MethodName: OnRestartGame
+        m_MethodName: LoadOpeningScene
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
