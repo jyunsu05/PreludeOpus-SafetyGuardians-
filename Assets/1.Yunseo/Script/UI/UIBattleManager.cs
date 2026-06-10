@@ -61,6 +61,7 @@ public class UIBattleManager : MonoBehaviour
     [Tooltip("Presenter가 없을 때 사용할 피격 연출 대기 시간(초)입니다.")]
     [FormerlySerializedAs("monsterHitAnimationDuration")]
     [SerializeField] private float playerHitAnimationDuration = 0.65f;
+    [SerializeField] private AudioClip fireMonsterAttackClip;
 
     [Header("--- 탐색 연출 ---")]
     [Tooltip("SearchLens의 BattleSearchLensPresenter. 비우면 자식에서 자동 탐색합니다.")]
@@ -71,10 +72,13 @@ public class UIBattleManager : MonoBehaviour
     [SerializeField] private float searchAnimationDuration = 3f;
 
     private const string DefaultPurifyItemId = "MI-101";
+    private const string FireMonsterId = "M-003";
     private static readonly int DoPurifyTrigger = Animator.StringToHash("DoPurify");
 
     private Coroutine purifyAnimationRoutine;
     private Coroutine searchAnimationRoutine;
+    private AudioSource playerHitAudioSource;
+    private bool isPlayerHitEffectPlaying;
 
     public bool IsScanned { get; private set; }
     public bool IsSearching { get; private set; }
@@ -112,6 +116,8 @@ public class UIBattleManager : MonoBehaviour
     void Awake()
     {
         DisableNestedDuplicateManagers();
+        if (enabled)
+            ConfigurePlayerHitAudioSource();
     }
 
     private void DisableNestedDuplicateManagers()
@@ -491,19 +497,89 @@ public class UIBattleManager : MonoBehaviour
     /// <summary>몬스터 공격 행동 시 반투명 Hit 이미지를 잠깐 표시합니다.</summary>
     public IEnumerator PlayPlayerHitEffectRoutine()
     {
-        ResolvePlayerHitPresenter();
-        if (playerHitPresenter == null)
+        isPlayerHitEffectPlaying = true;
+
+        try
         {
-            yield return new WaitForSecondsRealtime(Mathf.Max(0.01f, playerHitAnimationDuration));
-            yield break;
+            ResolvePlayerHitPresenter();
+
+            if (IsCurrentMonsterFire())
+                yield return PlayFireMonsterAttackLeadInRoutine();
+
+            if (playerHitPresenter == null)
+            {
+                yield return new WaitForSecondsRealtime(Mathf.Max(0.01f, playerHitAnimationDuration));
+                yield break;
+            }
+
+            playerHitPresenter.ShowHitOverlay();
+            PlayPlayerHitClothSound();
+
+            float impactDelay = playerHitPresenter.GetImpactHitDelay();
+            if (impactDelay > 0f)
+                yield return new WaitForSecondsRealtime(impactDelay);
+
+            PlayPlayerHitImpactSound();
+
+            float overlayDuration = Mathf.Max(0.01f, playerHitPresenter.HitOverlayDuration);
+            float totalSoundDuration = playerHitPresenter.GetTotalHitSoundDuration();
+            float waitAfterImpact = Mathf.Max(overlayDuration, totalSoundDuration) - impactDelay;
+            if (waitAfterImpact > 0f)
+                yield return new WaitForSecondsRealtime(waitAfterImpact);
         }
+        finally
+        {
+            isPlayerHitEffectPlaying = false;
+            playerHitPresenter?.HideHitOverlay();
+        }
+    }
 
-        playerHitPresenter.ShowHitOverlay();
+    private void ConfigurePlayerHitAudioSource()
+    {
+        playerHitAudioSource = GetComponent<AudioSource>();
+        if (playerHitAudioSource == null)
+            playerHitAudioSource = gameObject.AddComponent<AudioSource>();
 
-        float waitDuration = Mathf.Max(0.01f, playerHitPresenter.HitOverlayDuration);
-        yield return new WaitForSecondsRealtime(waitDuration);
+        playerHitAudioSource.playOnAwake = false;
+        playerHitAudioSource.loop = false;
+        playerHitAudioSource.spatialBlend = 0f;
+    }
 
-        playerHitPresenter.HideHitOverlay();
+    private void PlayPlayerHitClothSound()
+    {
+        AudioClip clip = playerHitPresenter != null ? playerHitPresenter.HitClothSoundClip : null;
+        if (clip == null || playerHitAudioSource == null)
+            return;
+
+        playerHitAudioSource.PlayOneShot(clip);
+    }
+
+    private void PlayPlayerHitImpactSound()
+    {
+        AudioClip clip = playerHitPresenter != null ? playerHitPresenter.ImpactHitSoundClip : null;
+        if (clip == null || playerHitAudioSource == null)
+            return;
+
+        playerHitAudioSource.PlayOneShot(clip);
+    }
+
+    private bool IsCurrentMonsterFire()
+    {
+        if (string.Equals(currentMonsterId, FireMonsterId, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        string imageKey = currentMonsterData != null ? currentMonsterData.image_key : null;
+        return !string.IsNullOrEmpty(imageKey) &&
+               imageKey.IndexOf("fire", StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
+    private IEnumerator PlayFireMonsterAttackLeadInRoutine()
+    {
+        if (fireMonsterAttackClip == null || playerHitAudioSource == null)
+            yield break;
+
+        playerHitAudioSource.PlayOneShot(fireMonsterAttackClip);
+        yield return new WaitForSecondsRealtime(fireMonsterAttackClip.length);
     }
 
     private void ResolvePlayerHitPresenter()
@@ -724,7 +800,9 @@ public class UIBattleManager : MonoBehaviour
         AbortSearchAnimation();
         SetPurifyVfxActive(false);
         monsterSpriteLooper?.StopAll();
-        playerHitPresenter?.HideHitOverlay();
+
+        if (!isPlayerHitEffectPlaying)
+            playerHitPresenter?.HideHitOverlay();
         ClearPendingPurifyItemConsumption();
         hasBattleWon = false;
         ResetBattleSessionState();

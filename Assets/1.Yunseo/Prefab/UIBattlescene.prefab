@@ -503,7 +503,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &5228653180113165303
 RectTransform:
   m_ObjectHideFlags: 0
@@ -539,6 +539,9 @@ MonoBehaviour:
   hitOverlayImage: {fileID: 5370351137545662789}
   hitOverlayAlpha: 0.35
   hitOverlayDuration: 0.45
+  hitClothSoundClip: {fileID: 8300000, guid: 8d8c83ef54ddadf46b05ad1eb4c6cae2, type: 3}
+  hitSoundClip: {fileID: 8300000, guid: d6bd0fd62cc4b434ba297a784700d135, type: 3}
+  hitSoundDelayRatio: 0.5
 --- !u!1 &1615937745572312262
 GameObject:
   m_ObjectHideFlags: 0
@@ -4362,6 +4365,7 @@ MonoBehaviour:
   purifyAnimationDuration: 0.6
   playerHitPresenter: {fileID: 7123456789012345679}
   playerHitAnimationDuration: 0.65
+  fireMonsterAttackClip: {fileID: 8300000, guid: c8a71a4906826744dbc60bed74b54573, type: 3}
   searchLensPresenter: {fileID: 6119235269211238354}
   searchAnimationDuration: 1
 --- !u!1 &8234567890123456781
