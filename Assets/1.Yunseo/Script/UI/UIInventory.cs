@@ -16,6 +16,7 @@ public class UIInventory : MonoBehaviour
     [SerializeField] private Button closeButton;
 
     private BattleTurnController subscribedTurnController;
+    private bool battleActionPanelHiddenByInventory;
     private readonly List<UIInventoryItemSceneView> spawnedSlots = new List<UIInventoryItemSceneView>();
 
     private readonly struct InventorySlotEntry
@@ -61,6 +62,11 @@ public class UIInventory : MonoBehaviour
             RefreshUI();
     }
 
+    void OnDisable()
+    {
+        RestoreBattleActionPanelIfHidden();
+    }
+
     void OnDestroy()
     {
         if (InventoryManager.Instance != null)
@@ -77,6 +83,16 @@ public class UIInventory : MonoBehaviour
             UIInventory inventory = inventories[i];
             if (inventory != null && inventory.isActiveAndEnabled)
                 inventory.RefreshUI();
+        }
+    }
+
+    public static void ClearBattleOverlayTracking()
+    {
+        UIInventory[] inventories = FindObjectsByType<UIInventory>(FindObjectsInactive.Include);
+        for (int i = 0; i < inventories.Length; i++)
+        {
+            if (inventories[i] != null)
+                inventories[i].battleActionPanelHiddenByInventory = false;
         }
     }
 
@@ -467,9 +483,28 @@ public class UIInventory : MonoBehaviour
 
     public void Open()
     {
+        if (IsBattleInventoryContext())
+        {
+            UIButtonContainer.SetAllBattleActionPanelsVisible(false);
+            battleActionPanelHiddenByInventory = true;
+        }
+
         gameObject.SetActive(true);
         RefreshUI(); // 열 때마다 최신 상태 반영
     }
 
-    public void Close() => gameObject.SetActive(false);
+    public void Close()
+    {
+        RestoreBattleActionPanelIfHidden();
+        gameObject.SetActive(false);
+    }
+
+    private void RestoreBattleActionPanelIfHidden()
+    {
+        if (!battleActionPanelHiddenByInventory)
+            return;
+
+        UIButtonContainer.SetAllBattleActionPanelsVisible(true);
+        battleActionPanelHiddenByInventory = false;
+    }
 }

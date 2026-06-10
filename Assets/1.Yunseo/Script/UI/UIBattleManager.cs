@@ -32,8 +32,8 @@ public class UIBattleManager : MonoBehaviour
     [SerializeField] private GameObject scanInfoPanel;              // 3개를 하나로 묶으신 부모 오브젝트
 
     [Header("--- 부모 Panel 내부의 텍스트들 ---")]
-    [SerializeField] private TextMeshProUGUI infectionTypeText;     // 감염 물질 : 감염물질 이름
-    [SerializeField] private TextMeshProUGUI descriptionText;       // 정화 방법 : 정화 방법 설명
+    [SerializeField] private TextMeshProUGUI infectionTypeText;     // SubstanceName : description
+    [SerializeField] private TextMeshProUGUI descriptionText;       // PurificationMethodExplanationText : purification_method
     [SerializeField] private TextMeshProUGUI inventoryStatusText;   // 인벤토리 상황 : 아이템 보유
 
     [Header("--- 턴제 배틀 ---")]
@@ -815,20 +815,18 @@ public class UIBattleManager : MonoBehaviour
 
     public string GetInfectionTypeDisplayText()
     {
-        if (currentMonsterData == null)
+        if (currentMonsterData == null || string.IsNullOrEmpty(currentMonsterData.description))
             return "감염물질 이름";
 
-        return !string.IsNullOrEmpty(currentMonsterData.infection_type)
-            ? currentMonsterData.infection_type
-            : currentMonsterData.name;
+        return currentMonsterData.description;
     }
 
     public string GetDescriptionDisplayText()
     {
-        if (currentMonsterData == null || string.IsNullOrEmpty(currentMonsterData.description))
+        if (currentMonsterData == null || string.IsNullOrEmpty(currentMonsterData.purification_method))
             return "정화 방법 설명";
 
-        return currentMonsterData.description;
+        return currentMonsterData.purification_method;
     }
 
     public void SetMonsterById(string monsterId)

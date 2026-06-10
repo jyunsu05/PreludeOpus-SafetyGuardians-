@@ -26,6 +26,9 @@ public class UIButtonContainer : MonoBehaviour
 
     private bool isEscaping;
     private bool wasEscapeUiActive = true;
+    private bool battleActionPanelHiddenByOverlay;
+    private bool overlayHideUsedDeactivate;
+    private bool storedActiveBeforeOverlayHide = true;
     private string depletedItemIdThisBattle;
     private BattleTurnController turnController;
 
@@ -120,6 +123,80 @@ public class UIButtonContainer : MonoBehaviour
         }
     }
 
+    /// <summary>배틀 중 오버레이(인벤토리 등)가 열릴 때 액션 버튼 패널 전체를 숨기거나 복구합니다.</summary>
+    public static void SetAllBattleActionPanelsVisible(bool visible)
+    {
+        UIButtonContainer[] containers =
+            FindObjectsByType<UIButtonContainer>(FindObjectsInactive.Include);
+
+        for (int i = 0; i < containers.Length; i++)
+        {
+            if (containers[i] != null)
+                containers[i].SetBattleActionPanelVisible(visible);
+        }
+    }
+
+    public void SetBattleActionPanelVisible(bool visible)
+    {
+        if (!visible)
+        {
+            if (!battleActionPanelHiddenByOverlay)
+            {
+                storedActiveBeforeOverlayHide = gameObject.activeSelf;
+                battleActionPanelHiddenByOverlay = true;
+            }
+
+            ResolveActionCanvasGroup();
+            if (actionCanvasGroup != null)
+            {
+                overlayHideUsedDeactivate = false;
+                actionCanvasGroup.alpha = 0f;
+                actionCanvasGroup.interactable = false;
+                actionCanvasGroup.blocksRaycasts = false;
+            }
+            else
+            {
+                overlayHideUsedDeactivate = true;
+                if (gameObject.activeSelf)
+                    gameObject.SetActive(false);
+            }
+
+            return;
+        }
+
+        if (!battleActionPanelHiddenByOverlay)
+            return;
+
+        battleActionPanelHiddenByOverlay = false;
+
+        if (overlayHideUsedDeactivate)
+            gameObject.SetActive(storedActiveBeforeOverlayHide);
+        else if (!gameObject.activeSelf)
+            gameObject.SetActive(true);
+
+        ResolveActionCanvasGroup();
+        if (actionCanvasGroup != null)
+        {
+            actionCanvasGroup.alpha = 1f;
+            actionCanvasGroup.interactable = true;
+            actionCanvasGroup.blocksRaycasts = true;
+        }
+
+        RestoreBattleActionPanelState();
+    }
+
+    private void RestoreBattleActionPanelState()
+    {
+        EnsureUiManagerSubscribed();
+        ResetButtonsState();
+
+        ResolveTurnController();
+        if (turnController != null)
+            HandleTurnPhaseChanged(turnController.CurrentPhase);
+        else
+            UpdateActionButtonsForPlayerTurn();
+    }
+
     /// <summary>씬에 있는 모든 UIButtonContainer의 배틀 버튼 상태를 초기화합니다.</summary>
     public static void ResetAllRuntimeButtonState()
     {
@@ -135,6 +212,8 @@ public class UIButtonContainer : MonoBehaviour
 
     public void ResetButtonsState()
     {
+        ResetOverlayHideVisualState();
+
         isEscaping = false;
         depletedItemIdThisBattle = null;
         SetBattleActionsLocked(false);
@@ -151,6 +230,23 @@ public class UIButtonContainer : MonoBehaviour
         SetEscapeUiVisible(true);
         ResetEscapeButtonInteractable();
         ApplyBattleKeyboardInputGuard();
+    }
+
+    private void ResetOverlayHideVisualState()
+    {
+        battleActionPanelHiddenByOverlay = false;
+        overlayHideUsedDeactivate = false;
+
+        if (!gameObject.activeSelf)
+            gameObject.SetActive(true);
+
+        ResolveActionCanvasGroup();
+        if (actionCanvasGroup == null)
+            return;
+
+        actionCanvasGroup.alpha = 1f;
+        actionCanvasGroup.interactable = true;
+        actionCanvasGroup.blocksRaycasts = true;
     }
 
     public void OnSearchClick()
@@ -323,18 +419,11 @@ public class UIButtonContainer : MonoBehaviour
         root.SetActive(wasEscapeUiActive);
     }
 
-    /// <summary>아이템 획득 팝업이 뜰 때만 탐색·정화·도망 UI를 전부 끕니다.</summary>
+    /// <summary>아이템 획득 팝업이 뜰 때 배틀 액션 버튼 패널 전체를 숨깁니다.</summary>
     private void HideAllActionButtonsForAcquisitionPopup()
     {
+        SetBattleActionPanelVisible(false);
         SetBattleActionsLocked(true);
-
-        if (searchButton != null)
-            searchButton.gameObject.SetActive(false);
-
-        if (purifyButton != null)
-            purifyButton.gameObject.SetActive(false);
-
-        SetEscapeUiVisible(false);
     }
 
     private void SyncPurifyButtonVisibility()
@@ -472,19 +561,19 @@ public class UIButtonContainer : MonoBehaviour
     private string GetInfectionTypeText()
     {
         MonsterData monster = uiManager != null ? uiManager.GetCurrentMonsterData() : null;
-        if (monster == null)
+        if (monster == null || string.IsNullOrEmpty(monster.description))
             return "감염물질 이름";
 
-        return !string.IsNullOrEmpty(monster.infection_type) ? monster.infection_type : monster.name;
+        return monster.description;
     }
 
     private string GetDescriptionText()
     {
         MonsterData monster = uiManager != null ? uiManager.GetCurrentMonsterData() : null;
-        if (monster == null || string.IsNullOrEmpty(monster.description))
+        if (monster == null || string.IsNullOrEmpty(monster.purification_method))
             return "정화 방법 설명";
 
-        return monster.description;
+        return monster.purification_method;
     }
 
     private string GetRewardItemId()
