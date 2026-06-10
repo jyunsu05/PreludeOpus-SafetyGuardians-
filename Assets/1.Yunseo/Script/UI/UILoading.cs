@@ -5,6 +5,8 @@ using System.Collections;
 
 public class UILoading : MonoBehaviour
 {
+    private static UILoading instance;
+
     [SerializeField] private GameObject loadingPanel; // 로딩 패널 오브젝트
     [SerializeField] private Slider loadingProgressBar; // 로딩 진행 바
     [SerializeField] private TextMeshProUGUI loadingProgressText; // 로딩 진행 텍스트
@@ -21,8 +23,21 @@ public class UILoading : MonoBehaviour
     private bool isSceneLoading;
     private Coroutine autoProgressRoutine;
 
+    public static bool IsLoadingScreenVisible
+    {
+        get
+        {
+            UILoading loading = ResolveInstance();
+            return loading != null && loading.IsPanelVisible;
+        }
+    }
+
+    public bool IsPanelVisible => loadingPanel != null && loadingPanel.activeInHierarchy;
+
     void Awake()
     {
+        instance = this;
+
         if (loadingPanel != null)
             loadingPanel.SetActive(false);
 
@@ -32,6 +47,21 @@ public class UILoading : MonoBehaviour
         ConfigureProgressBar();
         SetProgress(0f);
         SetLoadingText("로딩중");
+    }
+
+    void OnDestroy()
+    {
+        if (instance == this)
+            instance = null;
+    }
+
+    private static UILoading ResolveInstance()
+    {
+        if (instance != null)
+            return instance;
+
+        instance = FindAnyObjectByType<UILoading>(FindObjectsInactive.Include);
+        return instance;
     }
 
     private void ConfigureProgressBar()

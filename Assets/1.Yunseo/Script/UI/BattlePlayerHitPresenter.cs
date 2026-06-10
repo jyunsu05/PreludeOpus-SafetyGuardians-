@@ -15,18 +15,32 @@ public class BattlePlayerHitPresenter : MonoBehaviour
     [FormerlySerializedAs("hitAnimationDuration")]
     [SerializeField] private float hitOverlayDuration = 0.45f;
 
+    [Header("--- 피격 사운드 ---")]
+    [SerializeField] private AudioClip hitClothSoundClip;
+    [SerializeField] private AudioClip hitSoundClip;
+    [Tooltip("Heavy cloth 재생 후 Hit 사운드를 넣을 타이밍 비율. 0.5면 cloth 길이의 절반 지점입니다.")]
+    [SerializeField] private float hitSoundDelayRatio = 0.5f;
+
     private static Sprite fallbackWhiteSprite;
 
     private Color overlayBaseColor;
 
     public float HitOverlayDuration => hitOverlayDuration;
+    public AudioClip HitClothSoundClip => hitClothSoundClip;
+    public AudioClip ImpactHitSoundClip => hitSoundClip;
 
     private void Awake()
     {
         ResolveReferences();
         EnsureOverlaySprite();
         CacheOverlayBaseColor();
+        EnsureRootActive();
         HideHitOverlay();
+    }
+
+    private void OnEnable()
+    {
+        EnsureRootActive();
     }
 
     public void ShowHitOverlay()
@@ -39,7 +53,11 @@ public class BattlePlayerHitPresenter : MonoBehaviour
             return;
         }
 
-        gameObject.SetActive(true);
+        EnsureHierarchyActive();
+        EnsureRootActive();
+
+        if (transform is RectTransform hitVfxRect)
+            hitVfxRect.SetAsLastSibling();
 
         Color color = overlayBaseColor;
         color.a = hitOverlayAlpha;
@@ -50,15 +68,58 @@ public class BattlePlayerHitPresenter : MonoBehaviour
         hitOverlayImage.rectTransform.SetAsLastSibling();
     }
 
+    public float GetImpactHitDelay()
+    {
+        if (hitClothSoundClip == null || hitSoundClip == null)
+            return 0f;
+
+        return hitClothSoundClip.length * Mathf.Clamp01(hitSoundDelayRatio);
+    }
+
+    public float GetImpactHitSoundDuration()
+    {
+        return hitSoundClip != null ? hitSoundClip.length : 0f;
+    }
+
+    public float GetTotalHitSoundDuration()
+    {
+        if (hitClothSoundClip != null && hitSoundClip != null)
+            return GetImpactHitDelay() + hitSoundClip.length;
+
+        if (hitClothSoundClip != null)
+            return hitClothSoundClip.length;
+
+        if (hitSoundClip != null)
+            return hitSoundClip.length;
+
+        return 0f;
+    }
+
     public void HideHitOverlay()
     {
-        if (hitOverlayImage != null)
-        {
-            hitOverlayImage.gameObject.SetActive(false);
-            hitOverlayImage.enabled = true;
-        }
+        if (hitOverlayImage == null)
+            return;
 
-        gameObject.SetActive(false);
+        hitOverlayImage.enabled = false;
+        hitOverlayImage.gameObject.SetActive(false);
+    }
+
+    private void EnsureRootActive()
+    {
+        if (!gameObject.activeSelf)
+            gameObject.SetActive(true);
+    }
+
+    private void EnsureHierarchyActive()
+    {
+        Transform current = transform.parent;
+        while (current != null)
+        {
+            if (!current.gameObject.activeSelf)
+                current.gameObject.SetActive(true);
+
+            current = current.parent;
+        }
     }
 
     private void ResolveReferences()

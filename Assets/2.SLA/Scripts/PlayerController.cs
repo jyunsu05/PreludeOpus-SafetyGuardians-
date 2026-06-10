@@ -13,6 +13,16 @@ public class PlayerController : MonoBehaviour
     [Header("기본 UI(HUD) 연결")]
     [SerializeField] private GameObject mainHUD;
 
+    [Header("필드 이동 사운드")]
+    [SerializeField] private AudioClip walkingClip1;
+    [SerializeField] private AudioClip walkingClip2;
+    [SerializeField] private AudioClip walkingOxygenClip;
+    [Tooltip("발소리 간격(초). 0이면 walking_1 길이의 절반을 사용합니다.")]
+    [SerializeField] private float walkingStepInterval;
+    [SerializeField] private AudioClip idleCoughClip1;
+    [SerializeField] private AudioClip idleCoughClip2;
+    [SerializeField] private AudioClip idleLoopClip;
+
     [Header("도망 후 재진입 방지")]
     [Tooltip("도망 직후 다시 전투에 들어가지 않도록 잠깐 막는 시간")]
     [SerializeField] private float postFleeGraceDuration = 0.75f;
@@ -23,8 +33,19 @@ public class PlayerController : MonoBehaviour
     // 캐싱용 컴포넌트 변수들
     private Rigidbody2D rb;
     private SpriteRenderer spriteRenderer;
-    private Animator animator; 
+    private Animator animator;
+    private AudioSource walkingSource;
+    private AudioSource walkingOxygenSource;
+    private AudioSource coughSource;
+    private AudioSource idleSource;
+    private bool isWalkingSoundActive;
+    private bool wasFieldWalking;
+    private bool playWalkingClip1Next = true;
+    private float nextWalkingStepTime;
     private Coroutine postFleeGraceRoutine;
+    private Coroutine coughRoutine;
+
+    private const int IdleAnimatorState = 4;
 
     // 실시간 제어 상태 플래그 변수들
     private Vector2 movementInput; // 현재 프레임에서 입력된 방향 벡터 (X, Y)
@@ -47,7 +68,8 @@ public class PlayerController : MonoBehaviour
         // 시작 시 핵심 컴포넌트들을 스크립트 메모리에 저장(캐싱)
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
-        animator = GetComponent<Animator>(); 
+        animator = GetComponent<Animator>();
+        ConfigureWalkingAudioSource();
     }
 
     private void OnEnable()
@@ -68,6 +90,10 @@ public class PlayerController : MonoBehaviour
             StopCoroutine(postFleeGraceRoutine);
 
         postFleeGraceRoutine = null;
+        CancelIdleCoughSequence();
+        StopWalkingSound();
+        StopIdleLoop();
+        wasFieldWalking = false;
         UnsubscribeGameManager();
     }
 
@@ -114,8 +140,12 @@ public class PlayerController : MonoBehaviour
             }
 
             // 캐릭터가 강제로 멈추는 타이밍에 즉시 애니메이터를 4번(Idle) 상태로 변경
-            if (animator != null) animator.SetInteger("State", 4);
+            if (animator != null) animator.SetInteger("State", IdleAnimatorState);
 
+            wasFieldWalking = false;
+            CancelIdleCoughSequence();
+            StopWalkingSound();
+            StopIdleLoop();
             return;
         }
 
@@ -145,6 +175,9 @@ public class PlayerController : MonoBehaviour
             // 이동 방향키가 하나라도 눌려 있는지 감지
             bool isMoving = movementInput.sqrMagnitude > 0;
 
+            if (wasFieldWalking && !isMoving)
+                PlayIdleCoughSounds();
+
             if (isMoving)
             {
                 // 대각선 키 입력 시 절대값이 더 큰(조금 더 확실하게 누르고 있는) 방향을 우선 판정
@@ -168,8 +201,12 @@ public class PlayerController : MonoBehaviour
             else
             {
                 // 키를 모두 떼고 멈추면 대기 상태 번호(4) 지정 ➔ Any State의 'State == 4' 조건에 의해 즉시 Idle로 복귀
-                animator.SetInteger("State", 4);
+                animator.SetInteger("State", IdleAnimatorState);
             }
+
+            UpdateWalkingSound(isMoving);
+            UpdateIdleSound(isMoving);
+            wasFieldWalking = isMoving;
         }
         // ==========================================
     }
@@ -190,8 +227,13 @@ public class PlayerController : MonoBehaviour
         movementInput = Vector2.zero;
 
         // 즉시 정지 시 애니메이터에 대기(4) 지정
-        if (animator != null) 
-            animator.SetInteger("State", 4); 
+        if (animator != null)
+            animator.SetInteger("State", IdleAnimatorState);
+
+        wasFieldWalking = false;
+        CancelIdleCoughSequence();
+        StopWalkingSound();
+        StopIdleLoop();
 
         if (rb == null)
             return;
@@ -405,6 +447,178 @@ public class PlayerController : MonoBehaviour
             rb.simulated = true;
             Debug.LogWarning("[PlayerController] Rigidbody2D.simulated 복구됨.");
         }
+    }
+
+    private void ConfigureWalkingAudioSource()
+    {
+        walkingSource = gameObject.AddComponent<AudioSource>();
+        walkingSource.playOnAwake = false;
+        walkingSource.loop = false;
+        walkingSource.spatialBlend = 0f;
+
+        walkingOxygenSource = gameObject.AddComponent<AudioSource>();
+        walkingOxygenSource.playOnAwake = false;
+        walkingOxygenSource.loop = true;
+        walkingOxygenSource.spatialBlend = 0f;
+
+        coughSource = gameObject.AddComponent<AudioSource>();
+        coughSource.playOnAwake = false;
+        coughSource.loop = false;
+        coughSource.spatialBlend = 0f;
+
+        idleSource = gameObject.AddComponent<AudioSource>();
+        idleSource.playOnAwake = false;
+        idleSource.loop = true;
+        idleSource.spatialBlend = 0f;
+    }
+
+    private void PlayIdleCoughSounds()
+    {
+        StopIdleLoop();
+
+        if (coughSource == null || (idleCoughClip1 == null && idleCoughClip2 == null))
+            return;
+
+        CancelIdleCoughSequence();
+        coughRoutine = StartCoroutine(PlayIdleCoughSequence());
+    }
+
+    private IEnumerator PlayIdleCoughSequence()
+    {
+        if (idleCoughClip1 != null)
+        {
+            coughSource.PlayOneShot(idleCoughClip1);
+            yield return new WaitForSeconds(idleCoughClip1.length);
+        }
+
+        if (idleCoughClip2 != null)
+        {
+            coughSource.PlayOneShot(idleCoughClip2);
+            yield return new WaitForSeconds(idleCoughClip2.length);
+        }
+
+        coughRoutine = null;
+    }
+
+    private void UpdateIdleSound(bool isMoving)
+    {
+        if (isMoving || ShouldSuppressBreathingSounds())
+        {
+            StopIdleLoop();
+            return;
+        }
+
+        if (coughRoutine != null)
+            return;
+
+        StartIdleLoop();
+    }
+
+    private static bool ShouldSuppressBreathingSounds()
+    {
+        return UILoading.IsLoadingScreenVisible;
+    }
+
+    private void StartIdleLoop()
+    {
+        if (ShouldSuppressBreathingSounds() || idleLoopClip == null || idleSource == null)
+            return;
+
+        idleSource.clip = idleLoopClip;
+        if (!idleSource.isPlaying)
+            idleSource.Play();
+    }
+
+    private void StopIdleLoop()
+    {
+        if (idleSource != null && idleSource.isPlaying)
+            idleSource.Stop();
+    }
+
+    private void CancelIdleCoughSequence()
+    {
+        if (coughRoutine == null)
+            return;
+
+        StopCoroutine(coughRoutine);
+        coughRoutine = null;
+    }
+
+    private void UpdateWalkingSound(bool isMoving)
+    {
+        if (!isMoving)
+        {
+            StopWalkingSound();
+            return;
+        }
+
+        if (walkingClip1 == null || walkingClip2 == null || walkingSource == null)
+            return;
+
+        if (!isWalkingSoundActive)
+        {
+            isWalkingSoundActive = true;
+            playWalkingClip1Next = true;
+            if (!ShouldSuppressBreathingSounds())
+                StartWalkingOxygenLoop();
+            PlayNextWalkingStep();
+            nextWalkingStepTime = Time.time + GetWalkingStepInterval();
+            return;
+        }
+
+        if (ShouldSuppressBreathingSounds())
+            StopWalkingOxygenLoop();
+        else if (walkingOxygenSource != null && !walkingOxygenSource.isPlaying)
+            StartWalkingOxygenLoop();
+
+        if (Time.time < nextWalkingStepTime)
+            return;
+
+        PlayNextWalkingStep();
+        nextWalkingStepTime = Time.time + GetWalkingStepInterval();
+    }
+
+    private float GetWalkingStepInterval()
+    {
+        if (walkingStepInterval > 0f)
+            return walkingStepInterval;
+
+        return walkingClip1 != null ? walkingClip1.length * 0.5f : 0.35f;
+    }
+
+    private void PlayNextWalkingStep()
+    {
+        AudioClip clip = playWalkingClip1Next ? walkingClip1 : walkingClip2;
+        playWalkingClip1Next = !playWalkingClip1Next;
+        walkingSource.PlayOneShot(clip);
+    }
+
+    private void StartWalkingOxygenLoop()
+    {
+        if (ShouldSuppressBreathingSounds() || walkingOxygenClip == null || walkingOxygenSource == null)
+            return;
+
+        walkingOxygenSource.clip = walkingOxygenClip;
+        if (!walkingOxygenSource.isPlaying)
+            walkingOxygenSource.Play();
+    }
+
+    private void StopWalkingOxygenLoop()
+    {
+        if (walkingOxygenSource != null && walkingOxygenSource.isPlaying)
+            walkingOxygenSource.Stop();
+    }
+
+    private void StopWalkingSound()
+    {
+        isWalkingSoundActive = false;
+        playWalkingClip1Next = true;
+        nextWalkingStepTime = 0f;
+
+        if (walkingSource != null)
+            walkingSource.Stop();
+
+        StopWalkingOxygenLoop();
     }
 
     // 충돌한 상대가 실제 몬스터가 맞는지 타겟 검사 및 오작동 보호 장치를 동작시키는 함수

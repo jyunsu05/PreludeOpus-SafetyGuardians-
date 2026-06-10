@@ -199,6 +199,13 @@ MonoBehaviour:
   moveSpeed: 5
   battleSceneUI: {fileID: 0}
   mainHUD: {fileID: 0}
+  walkingClip1: {fileID: 8300000, guid: b4010d280fc2f3b41b99310b58fe7774, type: 3}
+  walkingClip2: {fileID: 8300000, guid: 3b770c7bdf76e8c48a290c3910ccdb6c, type: 3}
+  walkingOxygenClip: {fileID: 8300000, guid: 7dc8b0fc6f4b84546904029333b2cdd8, type: 3}
+  walkingStepInterval: 0
+  idleCoughClip1: {fileID: 8300000, guid: 92fc171eb63c9384bb7ab0fd5d5aad80, type: 3}
+  idleCoughClip2: {fileID: 8300000, guid: 3bb03103fecdfd943aa9a8f3b06108dc, type: 3}
+  idleLoopClip: {fileID: 8300000, guid: 30a2e26c8bae97142a95575bcaf118c3, type: 3}
   postFleeGraceDuration: 0.5
   postBattleReentryDistance: 0.8
 --- !u!114 &7236435115061726686

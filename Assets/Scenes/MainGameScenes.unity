@@ -2342,6 +2342,10 @@ PrefabInstance:
       propertyPath: battleSceneUI
       value: 
       objectReference: {fileID: 1978609887375575616}
+    - target: {fileID: 433014957338676636, guid: 5fa4c472c84bfd64899a1be0aa8d43e9, type: 3}
+      propertyPath: walkingStepInterval
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7236435115061726686, guid: 5fa4c472c84bfd64899a1be0aa8d43e9, type: 3}
       propertyPath: mainHUD
       value: 
@@ -2365,7 +2369,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8262382494914530255, guid: 5fa4c472c84bfd64899a1be0aa8d43e9, type: 3}
+      insertIndex: 7
+      addedObject: {fileID: 1841198526}
   m_SourcePrefab: {fileID: 100100000, guid: 5fa4c472c84bfd64899a1be0aa8d43e9, type: 3}
 --- !u!4 &1098541202 stripped
 Transform:
@@ -2821,7 +2828,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 7236435115061726686, guid: 5fa4c472c84bfd64899a1be0aa8d43e9, type: 3}
   m_PrefabInstance: {fileID: 1098541201}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 1841198520}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cb7fe5ac271c7ae45b8a9df4d7f3b3c3, type: 3}
@@ -2832,7 +2839,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 433014957338676636, guid: 5fa4c472c84bfd64899a1be0aa8d43e9, type: 3}
   m_PrefabInstance: {fileID: 1098541201}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 1841198520}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5836bce04e5839c46ad8d5b2c1f6e767, type: 3}
@@ -5191,6 +5198,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 23de58039780d464490d4808b846f667, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UILoading
+--- !u!1 &1841198520 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8262382494914530255, guid: 5fa4c472c84bfd64899a1be0aa8d43e9, type: 3}
+  m_PrefabInstance: {fileID: 1098541201}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1841198526
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1841198520}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8e4f2a1c3d54e6f9a0b1c2d3e4f5a6b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BattlePlayerHitPresenter
+  hitOverlayImage: {fileID: 0}
+  hitOverlayAlpha: 0.35
+  hitOverlayDuration: 0.45
+  hitClothSoundClip: {fileID: 8300000, guid: 8d8c83ef54ddadf46b05ad1eb4c6cae2, type: 3}
+  hitSoundClip: {fileID: 8300000, guid: d6bd0fd62cc4b434ba297a784700d135, type: 3}
+  hitSoundDelayRatio: 0.1
 --- !u!1001 &1854419055
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5906,7 +5936,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1557433726174073833, guid: 670e2a2f4876d9b43af120ca18810067, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1802623979999114019, guid: 670e2a2f4876d9b43af120ca18810067, type: 3}
       propertyPath: m_AnchoredPosition.y
