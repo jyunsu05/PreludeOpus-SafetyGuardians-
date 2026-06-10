@@ -145,11 +145,7 @@ public class UIButtonContainer : MonoBehaviour
             searchButton.interactable = true;
         }
 
-        if (purifyButton != null)
-        {
-            purifyButton.gameObject.SetActive(false);
-            purifyButton.interactable = true;
-        }
+        SyncPurifyButtonVisibility();
 
         wasEscapeUiActive = true;
         SetEscapeUiVisible(true);
@@ -193,11 +189,7 @@ public class UIButtonContainer : MonoBehaviour
         if (searchButton != null)
             searchButton.interactable = true;
 
-        if (purifyButton != null)
-        {
-            purifyButton.gameObject.SetActive(true);
-            UpdatePurifyButtonInteractable();
-        }
+        SyncPurifyButtonVisibility();
 
         uiManager.RevealScannedInfo(
             GetInfectionTypeText(),
@@ -345,9 +337,27 @@ public class UIButtonContainer : MonoBehaviour
         SetEscapeUiVisible(false);
     }
 
+    private void SyncPurifyButtonVisibility()
+    {
+        if (purifyButton == null)
+            return;
+
+        bool shouldShow = uiManager != null && uiManager.IsScanned;
+        if (purifyButton.gameObject.activeSelf != shouldShow)
+            purifyButton.gameObject.SetActive(shouldShow);
+
+        if (!shouldShow)
+            purifyButton.interactable = true;
+        else
+            UpdatePurifyButtonInteractable();
+    }
+
     private void UpdatePurifyButtonInteractable()
     {
         if (purifyButton == null || uiManager == null)
+            return;
+
+        if (!purifyButton.gameObject.activeSelf)
             return;
 
         purifyButton.interactable = CanUsePlayerTurnAction() && uiManager.CanPurifyWithInventory();
@@ -359,9 +369,7 @@ public class UIButtonContainer : MonoBehaviour
         bool isResolving = turnController != null && turnController.IsResolvingTurn;
         SetBattleActionsLocked(!isPlayerTurn || isResolving);
         UIInventory.RefreshAllVisible();
-
-        if (isPlayerTurn && !isResolving)
-            UpdateActionButtonsForPlayerTurn();
+        UpdateActionButtonsForPlayerTurn();
     }
 
     public void UpdateActionButtonsForPlayerTurn()
@@ -374,7 +382,7 @@ public class UIButtonContainer : MonoBehaviour
         if (searchButton != null)
             searchButton.interactable = canAct && !uiManager.IsScanned && !uiManager.IsSearching;
 
-        UpdatePurifyButtonInteractable();
+        SyncPurifyButtonVisibility();
         ResetEscapeButtonInteractable();
     }
 
