@@ -167,7 +167,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: monster_slime_Idle_9
+      name: monster_slime_Idle_0
       rect:
         serializedVersion: 2
         x: 24
@@ -189,7 +189,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_slime_Idle_10
+      name: monster_slime_Idle_1
       rect:
         serializedVersion: 2
         x: 328
@@ -211,7 +211,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_slime_Idle_11
+      name: monster_slime_Idle_2
       rect:
         serializedVersion: 2
         x: 619
@@ -233,7 +233,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_slime_Idle_12
+      name: monster_slime_Idle_3
       rect:
         serializedVersion: 2
         x: 901
@@ -255,7 +255,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_slime_Idle_14
+      name: monster_slime_Idle_4
       rect:
         serializedVersion: 2
         x: 1186
@@ -277,7 +277,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_slime_Idle_15
+      name: monster_slime_Idle_5
       rect:
         serializedVersion: 2
         x: 1467
@@ -312,25 +312,19 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      monster_slime_Idle_0: -2612858261769303995
-      monster_slime_Idle_1: -1189188511556750702
-      monster_slime_Idle_10: 1940825716314465972
-      monster_slime_Idle_11: 3107701882865114919
-      monster_slime_Idle_12: 4965713770047542055
+      monster_slime_Idle_0: 8926261284961419732
+      monster_slime_Idle_1: 1940825716314465972
       monster_slime_Idle_13: -311435424418645355
-      monster_slime_Idle_14: -2072589154959220050
-      monster_slime_Idle_15: 41768811101417550
       monster_slime_Idle_16: -5190331867998321305
       monster_slime_Idle_17: 1604155325790433473
       monster_slime_Idle_18: 3763580915757333710
-      monster_slime_Idle_2: -270256597075614813
-      monster_slime_Idle_3: -3314357442766481404
-      monster_slime_Idle_4: -5286540310670729050
-      monster_slime_Idle_5: -4428299589835305939
+      monster_slime_Idle_2: 3107701882865114919
+      monster_slime_Idle_3: 4965713770047542055
+      monster_slime_Idle_4: -2072589154959220050
+      monster_slime_Idle_5: 41768811101417550
       monster_slime_Idle_6: 1555826449110110830
       monster_slime_Idle_7: 4583780161290251447
       monster_slime_Idle_8: 1163190598332463109
-      monster_slime_Idle_9: 8926261284961419732
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

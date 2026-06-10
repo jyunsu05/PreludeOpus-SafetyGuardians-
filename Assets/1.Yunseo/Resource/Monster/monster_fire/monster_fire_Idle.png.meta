@@ -242,7 +242,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: monster_fire_Idle_2
+      name: monster_fire_Idle_1
       rect:
         serializedVersion: 2
         x: 380
@@ -264,7 +264,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_fire_Idle_4
+      name: monster_fire_Idle_2
       rect:
         serializedVersion: 2
         x: 675
@@ -286,7 +286,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_fire_Idle_6
+      name: monster_fire_Idle_0
       rect:
         serializedVersion: 2
         x: 62
@@ -308,7 +308,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_fire_Idle_7
+      name: monster_fire_Idle_3
       rect:
         serializedVersion: 2
         x: 1013
@@ -330,7 +330,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_fire_Idle_9
+      name: monster_fire_Idle_5
       rect:
         serializedVersion: 2
         x: 1455
@@ -352,7 +352,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_fire_Idle_10
+      name: monster_fire_Idle_4
       rect:
         serializedVersion: 2
         x: 1239
@@ -387,9 +387,8 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      monster_fire_Idle_0: -497965441856560223
-      monster_fire_Idle_1: -3425549198831067597
-      monster_fire_Idle_10: 8721471024180106252
+      monster_fire_Idle_0: 3917645461031727658
+      monster_fire_Idle_1: 2531347499362214623
       monster_fire_Idle_11: 3833032459049925927
       monster_fire_Idle_12: -1248112388466358945
       monster_fire_Idle_13: 2707382425905862306
@@ -399,7 +398,7 @@ TextureImporter:
       monster_fire_Idle_17: -3754041511926448333
       monster_fire_Idle_18: -2172624518097791132
       monster_fire_Idle_19: -3144403945146592327
-      monster_fire_Idle_2: 2531347499362214623
+      monster_fire_Idle_2: 3194802644733855359
       monster_fire_Idle_20: -2890855886657709430
       monster_fire_Idle_21: 3724843126007882729
       monster_fire_Idle_22: 3960687088450403836
@@ -410,7 +409,7 @@ TextureImporter:
       monster_fire_Idle_27: 6527315040118585144
       monster_fire_Idle_28: 7731492762706373586
       monster_fire_Idle_29: -6570765021164658569
-      monster_fire_Idle_3: -2435612956259647015
+      monster_fire_Idle_3: 313851484892158539
       monster_fire_Idle_30: 1827904516002861385
       monster_fire_Idle_31: -919560352033098807
       monster_fire_Idle_32: -1582807720612298497
@@ -421,16 +420,13 @@ TextureImporter:
       monster_fire_Idle_37: 4640407382583621307
       monster_fire_Idle_38: 7795673911793382892
       monster_fire_Idle_39: -553580915216700767
-      monster_fire_Idle_4: 3194802644733855359
+      monster_fire_Idle_4: 8721471024180106252
       monster_fire_Idle_40: 6124380854756358865
       monster_fire_Idle_41: 3561918058196903951
       monster_fire_Idle_42: 4501181340688619032
       monster_fire_Idle_43: 3005353158131275190
-      monster_fire_Idle_5: -3950007241080842502
-      monster_fire_Idle_6: 3917645461031727658
-      monster_fire_Idle_7: 313851484892158539
+      monster_fire_Idle_5: 5690414828638288619
       monster_fire_Idle_8: -8005130611285808975
-      monster_fire_Idle_9: 5690414828638288619
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
