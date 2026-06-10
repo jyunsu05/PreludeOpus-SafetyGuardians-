@@ -172,9 +172,23 @@ public class UIBattleManager : MonoBehaviour
         EnsureTurnController();
         ResolveAndBindPlayerOxygen();
         turnController?.BeginBattle();
+        ApplyFieldPrepaidBattleEntryState();
         LockPlayerMovementAtBattleEntry();
         LockMonsterMovementAtBattleEntry();
         DisableContaminationSliderDirectInput();
+    }
+
+    private void ApplyFieldPrepaidBattleEntryState()
+    {
+        if (!BattleEncounterContext.WasFieldEntryPrepaid)
+            return;
+
+        NotifySearchCompleted();
+        RevealScannedInfo(
+            GetInfectionTypeDisplayText(),
+            GetDescriptionDisplayText(),
+            BuildInventoryStatusText());
+        UIButtonContainer.RefreshAllPlayerTurnButtons();
     }
 
     private void DisableContaminationSliderDirectInput()
@@ -384,7 +398,8 @@ public class UIBattleManager : MonoBehaviour
     private IEnumerator ExecutePurifyWithAnimationRoutine(int basePurifyDamage, int finalPurifyDamage)
     {
         BeginPurifySession();
-        hasPendingPurifyItemConsumption = true;
+        if (!BattleEncounterContext.WasFieldEntryPrepaid)
+            hasPendingPurifyItemConsumption = true;
         UIButtonContainer.SetAllBattleInputBlocked(true);
         UIInventory.RefreshAllVisible();
 
@@ -574,6 +589,9 @@ public class UIBattleManager : MonoBehaviour
 
     public bool CanPurifyWithInventory(string itemId = null)
     {
+        if (BattleEncounterContext.WasFieldEntryPrepaid)
+            return true;
+
         string requiredItemId = GetRequiredPurifyItemId();
         if (InventoryManager.Instance == null || string.IsNullOrEmpty(requiredItemId))
             return false;
@@ -1266,6 +1284,13 @@ public class UIBattleManager : MonoBehaviour
 
     private void CommitPendingPurifyItemOnBattleWin()
     {
+        if (BattleEncounterContext.WasFieldEntryPrepaid)
+        {
+            LastConsumedBattleItemId = BattleEncounterContext.GetFieldEntryConsumedItemId();
+            ClearPendingPurifyItemConsumption();
+            return;
+        }
+
         if (!hasPendingPurifyItemConsumption || InventoryManager.Instance == null)
         {
             ClearPendingPurifyItemConsumption();
@@ -1381,6 +1406,7 @@ public class UIBattleManager : MonoBehaviour
 
         lastResolvedEncounterMonsterId = null;
         BattleEncounterContext.SetEncounteredMonsterId(null);
+        BattleEncounterContext.ClearFieldEntryPrepaid();
     }
 
     private void FinalizeContaminationOnce()

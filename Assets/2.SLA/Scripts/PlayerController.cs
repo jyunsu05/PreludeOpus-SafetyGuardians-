@@ -216,19 +216,22 @@ public class PlayerController : MonoBehaviour
         if (!CanStartBattleFromCollision(other))
             return;
 
-        // 충돌한 상대 이름 분석을 통해 몬스터 ID 도출
         string resolvedMonsterId = ResolveMonsterId(other);
-        BattleEncounterContext.SetEncounteredMonsterId(resolvedMonsterId);
-
         string colliderName = other != null && other.gameObject != null ? other.gameObject.name : "(null)";
         Debug.Log($"[PlayerController] 배틀 충돌 감지. collider='{colliderName}', resolvedMonsterId='{resolvedMonsterId ?? "null"}'");
-
-        hasEnteredBattle = true;
 
         if (string.IsNullOrEmpty(resolvedMonsterId))
             Debug.LogWarning($"[PlayerController] 몬스터 ID 해석 실패: {other.gameObject.name}");
 
-        // GameManager의 필드 상태를 배틀로 전환
+        ConfirmBattleEntryFromField(resolvedMonsterId);
+    }
+
+    /// <summary>몬스터 충돌 시 배틀 씬으로 즉시 전환합니다.</summary>
+    public void ConfirmBattleEntryFromField(string resolvedMonsterId)
+    {
+        BattleEncounterContext.SetEncounteredMonsterId(resolvedMonsterId);
+        hasEnteredBattle = true;
+
         if (GameManager.Instance != null)
             GameManager.Instance.EnterBattle();
 
