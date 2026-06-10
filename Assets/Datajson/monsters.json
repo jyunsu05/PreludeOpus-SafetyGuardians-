@@ -7,7 +7,8 @@
       "contamination_level": 100,
       "capture_difficulty": "보통",
       "description": "산성 감염을 일으킨 점액질 생명체입니다.",
-      "drop_item_id": "MI-101"
+      "drop_item_id": "MI-101",
+      "purification_method": "중탄산나트륨 수용액을 사용하여 슬라임의 강한 산성 신체를 알칼리성으로 중화시켜 정화합니다."
     },
     {
       "id": "M-002",
@@ -16,7 +17,8 @@
       "contamination_level": 100,
       "capture_difficulty": "보통",
       "description": "독성 감염되어 증식하는 유기체입니다.",
-      "drop_item_id": "MI-102"
+      "drop_item_id": "MI-102",
+      "purification_method": "강력한 살균 능력을 지닌 과산화수소 수용액을 살포하여, 증식하는 곰팡이류의 포자를 박멸하고 정화합니다."
     },
     {
       "id": "M-003",
@@ -25,7 +27,8 @@
       "contamination_level": 100,
       "capture_difficulty": "보통",
       "description": "인화성 감염을 일으킨 화재성 괴물입니다.",
-      "drop_item_id": "MI-201"
+      "drop_item_id": "MI-201",
+      "purification_method": "특수 포소화 약제인 수성막포를 사용하여 산소를 차단하고, 폭발적으로 타오르는 인화성 신체를 진압하여 정화합니다."
     }
   ]
 }

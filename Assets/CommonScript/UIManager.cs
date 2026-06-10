@@ -367,7 +367,13 @@ public class UIManager : MonoBehaviour
         ResetBattleUIOnOpen();
     }
 
-    public void CloseBattleUI() => SetPanelActive(battleUIPanel, false);
+    public void CloseBattleUI()
+    {
+        CloseInventory();
+        UIInventory.ClearBattleOverlayTracking();
+        UIButtonContainer.ResetAllRuntimeButtonState();
+        SetPanelActive(battleUIPanel, false);
+    }
 
     public bool IsBattleUiVisible()
     {
@@ -376,7 +382,9 @@ public class UIManager : MonoBehaviour
 
     private void ResetBattleUIOnOpen()
     {
+        CloseInventory();
         CloseAcquisitionPopup();
+        UIInventory.ClearBattleOverlayTracking();
 
         if (battleUIPanel == null)
             return;
@@ -388,9 +396,7 @@ public class UIManager : MonoBehaviour
             battleManager.ResetMonsterBattleStatus();
         }
 
-        UIButtonContainer buttonContainer = battleUIPanel.GetComponentInChildren<UIButtonContainer>(true);
-        if (buttonContainer != null)
-            buttonContainer.ResetButtonsState();
+        UIButtonContainer.ResetAllRuntimeButtonState();
     }
 
     // --- HUD ---
