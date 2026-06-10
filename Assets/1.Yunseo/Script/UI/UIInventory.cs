@@ -16,22 +16,26 @@ public class UIInventory : MonoBehaviour
     [SerializeField] private Button closeButton;
 
     private BattleTurnController subscribedTurnController;
+    private readonly List<UIInventoryItemSceneView> spawnedSlots = new List<UIInventoryItemSceneView>();
 
     private readonly struct InventorySlotEntry
     {
         public readonly string useItemId;
         public readonly ItemData displayData;
+        public readonly int count;
 
-        public InventorySlotEntry(string useItemId, ItemData displayData)
+        public InventorySlotEntry(string useItemId, ItemData displayData, int count)
         {
             this.useItemId = useItemId;
             this.displayData = displayData;
+            this.count = count;
         }
     }
 
     void Start()
     {
         EnsureReferences();
+        ClearLegacyContentChildren();
 
         if (closeButton != null)
             closeButton.onClick.AddListener(Close);
@@ -86,7 +90,7 @@ public class UIInventory : MonoBehaviour
 
         if (InventoryManager.Instance == null || DataManager.Instance == null)
         {
-            ClearSlots();
+            HideAllSlots();
             if (InventoryManager.Instance == null)
                 Debug.LogError("[UIInventory] InventoryManager가 씬에 없습니다. 캔버스 밖 빈 오브젝트에 InventoryManager 스크립트를 붙여주세요.");
             if (DataManager.Instance == null)
@@ -94,8 +98,9 @@ public class UIInventory : MonoBehaviour
             return;
         }
 
-        ClearSlots();
+        HideAllSlots();
 
+        int slotIndex = 0;
         foreach (InventorySlotEntry entry in BuildVisibleSlotEntries())
         {
             if (entry.displayData == null)
@@ -104,65 +109,139 @@ public class UIInventory : MonoBehaviour
                 continue;
             }
 
-            SpawnSlot(entry.useItemId, entry.displayData);
+            BindSlot(slotIndex, entry.useItemId, entry.displayData, entry.count);
+            slotIndex++;
         }
     }
 
     private IEnumerable<InventorySlotEntry> BuildVisibleSlotEntries()
     {
-        IReadOnlyList<string> itemIds = InventoryManager.Instance.GetItemIds();
+        IReadOnlyList<InventoryManager.StackedInventoryItem> stackedItems =
+            InventoryManager.Instance.GetStackedItems();
         bool filterForBattle = IsBattleInventoryContext();
-        var shownMonsterItemIds = new HashSet<string>();
 
-        for (int i = 0; i < itemIds.Count; i++)
+        if (!filterForBattle)
         {
-            string id = itemIds[i];
-            if (string.IsNullOrEmpty(id))
-                continue;
-
-            if (!filterForBattle)
+            for (int i = 0; i < stackedItems.Count; i++)
             {
-                ItemData data = DataManager.Instance.GetItemData(id);
-                if (data != null)
-                    yield return new InventorySlotEntry(id, data);
+                InventoryManager.StackedInventoryItem stackedItem = stackedItems[i];
+                if (string.IsNullOrEmpty(stackedItem.itemId) || stackedItem.count <= 0)
+                    continue;
 
-                continue;
+                ItemData data = DataManager.Instance.GetItemData(stackedItem.itemId);
+                if (data != null)
+                    yield return new InventorySlotEntry(stackedItem.itemId, data, stackedItem.count);
             }
 
-            if (!DataManager.Instance.TryGetBattleInventorySlot(id, out string useItemId, out ItemData displayData) ||
+            yield break;
+        }
+
+        var countsByDisplayId = new Dictionary<string, int>();
+        var useItemIdByDisplayId = new Dictionary<string, string>();
+        var displayDataByDisplayId = new Dictionary<string, ItemData>();
+        var orderedDisplayIds = new List<string>();
+
+        for (int i = 0; i < stackedItems.Count; i++)
+        {
+            InventoryManager.StackedInventoryItem stackedItem = stackedItems[i];
+            if (string.IsNullOrEmpty(stackedItem.itemId) || stackedItem.count <= 0)
+                continue;
+
+            if (!DataManager.Instance.TryGetBattleInventorySlot(
+                    stackedItem.itemId,
+                    out string useItemId,
+                    out ItemData displayData) ||
                 displayData == null)
             {
                 continue;
             }
 
             string dedupeKey = displayData.id;
-            if (!shownMonsterItemIds.Add(dedupeKey))
+            if (countsByDisplayId.ContainsKey(dedupeKey))
+            {
+                countsByDisplayId[dedupeKey] += stackedItem.count;
                 continue;
+            }
 
-            yield return new InventorySlotEntry(useItemId, displayData);
+            countsByDisplayId[dedupeKey] = stackedItem.count;
+            useItemIdByDisplayId[dedupeKey] = useItemId;
+            displayDataByDisplayId[dedupeKey] = displayData;
+            orderedDisplayIds.Add(dedupeKey);
+        }
+
+        for (int i = 0; i < orderedDisplayIds.Count; i++)
+        {
+            string dedupeKey = orderedDisplayIds[i];
+            yield return new InventorySlotEntry(
+                useItemIdByDisplayId[dedupeKey],
+                displayDataByDisplayId[dedupeKey],
+                countsByDisplayId[dedupeKey]);
         }
     }
 
-    // 슬롯 1개 생성
-    private void SpawnSlot(string itemId, ItemData data)
+    private void BindSlot(int slotIndex, string itemId, ItemData data, int count)
     {
-        UIInventoryItemSceneView[] prefabCandidates = GetItemViewCandidates();
-
-        if (prefabCandidates == null || prefabCandidates.Length == 0 || contentParent == null)
-        {
-            Debug.LogError($"[UIInventory] itemSceneViews 또는 contentParent가 연결되지 않았습니다! ({gameObject.name})");
+        UIInventoryItemSceneView slot = GetOrCreateSlot(slotIndex);
+        if (slot == null)
             return;
-        }
 
-        // TODO: 나중에 아이템 타입별로 프리팹 선택 로직 추가 예정
-        UIInventoryItemSceneView prefab = prefabCandidates[0];
-        UIInventoryItemSceneView slot = Instantiate(prefab, contentParent);
-        slot.Setup(itemId, data.name, data.description, GetItemTypeLabel(data), GetItemSprite(data));
+        slot.Setup(itemId, data.name, data.description, GetItemTypeLabel(data), GetItemSprite(data), count);
 
         if (IsBattleInventoryContext())
             slot.ConfigureBattleUse(HandleBattleItemUseRequest, CanUseBattleItemNow);
         else
             slot.ClearBattleUse();
+    }
+
+    private UIInventoryItemSceneView GetOrCreateSlot(int slotIndex)
+    {
+        UIInventoryItemSceneView slotPrefab = GetSlotPrefab();
+        if (slotPrefab == null || contentParent == null)
+        {
+            Debug.LogError($"[UIInventory] itemSceneViews 또는 contentParent가 연결되지 않았습니다! ({gameObject.name})");
+            return null;
+        }
+
+        while (spawnedSlots.Count <= slotIndex)
+        {
+            UIInventoryItemSceneView slot = Instantiate(slotPrefab, contentParent);
+            slot.gameObject.name = $"{slotPrefab.gameObject.name}_{spawnedSlots.Count + 1}";
+            spawnedSlots.Add(slot);
+        }
+
+        UIInventoryItemSceneView existingSlot = spawnedSlots[slotIndex];
+        existingSlot.gameObject.SetActive(true);
+        return existingSlot;
+    }
+
+    private UIInventoryItemSceneView GetSlotPrefab()
+    {
+        UIInventoryItemSceneView[] prefabCandidates = GetItemViewCandidates();
+        if (prefabCandidates == null || prefabCandidates.Length == 0)
+            return null;
+
+        for (int i = 0; i < prefabCandidates.Length; i++)
+        {
+            UIInventoryItemSceneView candidate = prefabCandidates[i];
+            if (candidate == null)
+                continue;
+
+            if (contentParent != null && candidate.transform.IsChildOf(contentParent))
+                continue;
+
+            return candidate;
+        }
+
+        return null;
+    }
+
+    private void HideAllSlots()
+    {
+        for (int i = 0; i < spawnedSlots.Count; i++)
+        {
+            if (spawnedSlots[i] != null)
+                spawnedSlots[i].gameObject.SetActive(false);
+        }
     }
 
     private bool IsBattleInventoryContext()
@@ -337,22 +416,53 @@ public class UIInventory : MonoBehaviour
 
         if ((itemSceneViews == null || itemSceneViews.Length == 0) && (itemPrefabs == null || itemPrefabs.Length == 0))
         {
-            UIInventoryItemSceneView[] candidates = GetComponentsInChildren<UIInventoryItemSceneView>(true);
-            if (candidates != null && candidates.Length > 0)
+            UIInventoryItemSceneView template = FindSlotTemplateOutsideContent();
+            if (template != null)
             {
-                itemSceneViews = new[] { candidates[0] };
+                itemSceneViews = new[] { template };
                 itemPrefabs = itemSceneViews;
             }
         }
     }
 
-    // 모든 슬롯 제거
-    private void ClearSlots()
+    private UIInventoryItemSceneView FindSlotTemplateOutsideContent()
     {
-        if (contentParent == null) return;
+        UIInventoryItemSceneView[] candidates = GetComponentsInChildren<UIInventoryItemSceneView>(true);
+        if (candidates == null)
+            return null;
 
-        foreach (Transform child in contentParent)
+        for (int i = 0; i < candidates.Length; i++)
+        {
+            UIInventoryItemSceneView candidate = candidates[i];
+            if (candidate == null)
+                continue;
+
+            if (contentParent != null && candidate.transform.IsChildOf(contentParent))
+                continue;
+
+            if (spawnedSlots.Contains(candidate))
+                continue;
+
+            return candidate;
+        }
+
+        return null;
+    }
+
+    private void ClearLegacyContentChildren()
+    {
+        if (contentParent == null)
+            return;
+
+        for (int i = contentParent.childCount - 1; i >= 0; i--)
+        {
+            Transform child = contentParent.GetChild(i);
+            UIInventoryItemSceneView slotView = child.GetComponent<UIInventoryItemSceneView>();
+            if (slotView != null && spawnedSlots.Contains(slotView))
+                continue;
+
             Destroy(child.gameObject);
+        }
     }
 
     public void Open()
