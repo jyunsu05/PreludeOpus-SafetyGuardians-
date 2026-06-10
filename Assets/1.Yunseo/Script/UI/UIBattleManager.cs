@@ -19,6 +19,7 @@ public class UIBattleManager : MonoBehaviour
     }
 
     public event System.Action OnContaminationEmpty;
+    public event System.Action<float> OnPurifyPerformed;
     [Header("--- 몬스터 기본 정보 UI (항상 보임) ---")]
     [SerializeField] private Image monsterImage;
     [Tooltip("MonsterImages의 BattleMonsterSpriteLooper. 비우면 monsterImage에서 자동 탐색합니다.")]
@@ -135,8 +136,16 @@ public class UIBattleManager : MonoBehaviour
         }
     }
 
-    private bool IsPrimaryBattleManagerHost() =>
-        gameObject.name == "UIBattlescene";
+    private bool IsPrimaryBattleManagerHost()
+    {
+        if (gameObject.name == "UIBattlescene")
+            return true;
+
+        Transform parent = transform.parent;
+        return parent != null &&
+               parent.name == "UIBattlescene" &&
+               gameObject.name == "UIBattleManager";
+    }
 
     public static UIBattleManager TryGetPrimaryActive()
     {
@@ -146,17 +155,45 @@ public class UIBattleManager : MonoBehaviour
         for (int i = 0; i < managers.Length; i++)
         {
             UIBattleManager manager = managers[i];
-            if (manager == null || !manager.isActiveAndEnabled || !manager.enabled)
+            if (manager == null || !manager.enabled)
                 continue;
 
-            if (manager.gameObject.name == "UIBattlescene")
-                return manager;
+            if (!manager.IsPrimaryBattleManagerHost())
+                continue;
+
+            if (!manager.isActiveAndEnabled)
+                continue;
+
+            return manager;
+        }
+
+        for (int i = 0; i < managers.Length; i++)
+        {
+            UIBattleManager manager = managers[i];
+            if (manager == null || !manager.enabled || !manager.IsPrimaryBattleManagerHost())
+                continue;
 
             if (fallback == null)
                 fallback = manager;
         }
 
         return fallback;
+    }
+
+    public static UIBattleManager TryGetPrimaryInHierarchy(Transform battleRoot)
+    {
+        if (battleRoot == null)
+            return TryGetPrimaryActive();
+
+        UIBattleManager[] managers = battleRoot.GetComponentsInChildren<UIBattleManager>(true);
+        for (int i = 0; i < managers.Length; i++)
+        {
+            UIBattleManager manager = managers[i];
+            if (manager != null && manager.enabled && manager.IsPrimaryBattleManagerHost())
+                return manager;
+        }
+
+        return TryGetPrimaryActive();
     }
 
     void OnEnable()
@@ -410,6 +447,10 @@ public class UIBattleManager : MonoBehaviour
         Coroutine hitCoroutine = null;
         if (monsterSpriteLooper != null)
             hitCoroutine = monsterSpriteLooper.StartCoroutine(monsterSpriteLooper.PlayHitOnceRoutine());
+
+        float hitAnimationDuration = GetPurifyHitAnimationDuration();
+        PlayMonsterPurifySound(hitAnimationDuration);
+        OnPurifyPerformed?.Invoke(hitAnimationDuration);
 
         float purifyWaitDuration = Mathf.Max(0.01f, purifyAnimationDuration);
         yield return new WaitForSecondsRealtime(purifyWaitDuration);
@@ -1107,6 +1148,104 @@ public class UIBattleManager : MonoBehaviour
 
         if (monsterSpriteLooper == null)
             monsterSpriteLooper = GetComponentInChildren<BattleMonsterSpriteLooper>(true);
+    }
+
+    private float GetPurifyHitAnimationDuration()
+    {
+        ResolveMonsterSpriteLooper();
+
+        if (monsterSpriteLooper != null)
+        {
+            float hitDuration = monsterSpriteLooper.GetHitAnimationDuration();
+            if (hitDuration > 0f)
+                return hitDuration;
+        }
+
+        return Mathf.Max(0.01f, purifyAnimationDuration);
+    }
+
+    private void PlayMonsterPurifySound(float hitAnimationDuration)
+    {
+        MonsterFieldSoundController soundController = ResolveBattleMonsterSoundController();
+        if (soundController == null)
+        {
+            Debug.LogWarning(
+                $"[UIBattleManager] 정화 사운드 대상을 찾지 못했습니다. " +
+                $"monsterId={GetCurrentMonsterData()?.id ?? BattleEncounterContext.PeekEncounteredMonsterId() ?? "null"}, " +
+                $"hitDuration={hitAnimationDuration:F2}s");
+            return;
+        }
+
+        Debug.Log(
+            $"[UIBattleManager] 정화 사운드 재생 요청 → {soundController.gameObject.name}, " +
+            $"hitDuration={hitAnimationDuration:F2}s");
+
+        soundController.PlayBattlePurifySound(hitAnimationDuration);
+    }
+
+    private MonsterFieldSoundController ResolveBattleMonsterSoundController()
+    {
+        GameObject encountered = BattleEncounterContext.PeekEncounteredMonsterObject();
+        if (encountered != null)
+        {
+            MonsterFieldSoundController controller = encountered.GetComponent<MonsterFieldSoundController>();
+            if (controller != null)
+                return controller;
+        }
+
+        MonsterData data = GetCurrentMonsterData();
+        string monsterId = data != null && !string.IsNullOrEmpty(data.id)
+            ? data.id
+            : BattleEncounterContext.PeekEncounteredMonsterId();
+
+        if (string.IsNullOrEmpty(monsterId))
+            return null;
+
+        MonsterFieldSoundController[] controllers = FindObjectsByType<MonsterFieldSoundController>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        Vector2 origin = player != null ? player.transform.position : Vector2.zero;
+        MonsterFieldSoundController closestController = null;
+        float closestDistance = float.MaxValue;
+
+        for (int i = 0; i < controllers.Length; i++)
+        {
+            MonsterFieldSoundController candidate = controllers[i];
+            if (candidate == null || !MatchesMonsterSoundTarget(candidate.gameObject, monsterId))
+                continue;
+
+            float distance = Vector2.Distance(origin, candidate.transform.position);
+            if (distance >= closestDistance)
+                continue;
+
+            closestController = candidate;
+            closestDistance = distance;
+        }
+
+        return closestController;
+    }
+
+    private static bool MatchesMonsterSoundTarget(GameObject candidate, string monsterId)
+    {
+        if (candidate == null || string.IsNullOrEmpty(monsterId))
+            return false;
+
+        string objectName = candidate.name.ToLowerInvariant();
+
+        switch (monsterId)
+        {
+            case "M-001":
+                return objectName.Contains("slime") || objectName.Contains("m001") || candidate.name.Contains("슬라임");
+            case "M-002":
+                return objectName.Contains("mold") || objectName.Contains("fungus") || objectName.Contains("m002") ||
+                       candidate.name.Contains("곰팡");
+            case "M-003":
+                return objectName.Contains("fire") || objectName.Contains("m003") || candidate.name.Contains("불");
+            default:
+                return false;
+        }
     }
 
     private Sprite GetMonsterSprite(MonsterData data)

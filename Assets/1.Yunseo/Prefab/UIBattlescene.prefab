@@ -342,7 +342,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 933698790514263987}
-  - component: {fileID: 4487478925118914382}
   - component: {fileID: 2433052342639462050}
   m_Layer: 5
   m_Name: UIBattlescene
@@ -383,38 +382,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &4487478925118914382
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 791913657609258341}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f0c582f0a6d44ee48a89e1c7d120936b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::UIBattleManager
-  monsterImage: {fileID: 5320492944066121304}
-  monsterSpriteLooper: {fileID: 7123456789012345680}
-  monsterNameText: {fileID: 1046898412022011351}
-  difficultyText: {fileID: 7814412594963117899}
-  contaminationSlider: {fileID: 7900153703087947571}
-  defaultMonsterId: 
-  scanInfoPanel: {fileID: 3071312354667630999}
-  infectionTypeText: {fileID: 5596169578632724980}
-  descriptionText: {fileID: 3696527288333901640}
-  inventoryStatusText: {fileID: 5609759022619555845}
-  turnController: {fileID: 1657685625664848699}
-  purifyEffectPerUse: 10
-  battleOxygenGauge: {fileID: 0}
-  purificationCircleAnimator: {fileID: 0}
-  purificationParticlesAnimator: {fileID: 0}
-  purifyAnimationDuration: 0.6
-  playerHitPresenter: {fileID: 7123456789012345679}
-  playerHitAnimationDuration: 0.65
-  searchLensPresenter: {fileID: 6119235269211238354}
-  searchAnimationDuration: 1
 --- !u!114 &2433052342639462050
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2991,6 +2958,7 @@ MonoBehaviour:
   battleManager: {fileID: 2834499891191813395}
   turnController: {fileID: 1657685625664848699}
   overlayView: {fileID: 0}
+  autoBattleBadge: {fileID: 0}
   autoBattleIndicatorMessage: "\uC790\uB3D9 \uC815\uD654 \uC911..."
   autoSearchIndicatorMessage: "\uC790\uB3D9 \uD0D0\uC0C9 \uC911..."
 --- !u!1 &5655299721731257925
@@ -4868,7 +4836,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d1267bf8a0bcbb4d95c39ed9ad40991, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BattleTurnController
-  battleManager: {fileID: 4487478925118914382}
+  battleManager: {fileID: 0}
   enemyStatus: {fileID: 0}
   battleLogText: {fileID: 3117332992353363052}
   damageCalculator:

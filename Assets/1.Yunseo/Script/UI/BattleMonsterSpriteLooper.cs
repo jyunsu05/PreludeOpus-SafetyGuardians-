@@ -66,6 +66,15 @@ public class BattleMonsterSpriteLooper : MonoBehaviour
         StartRoutine(IdleLoopRoutine());
     }
 
+    public float GetHitAnimationDuration()
+    {
+        if (!HasValidSprites(hitSprites))
+            return 0f;
+
+        float interval = 1f / Mathf.Max(framesPerSecond, 0.01f);
+        return hitSprites.Length * interval;
+    }
+
     public IEnumerator PlayHitOnceRoutine()
     {
         if (!HasValidSprites(hitSprites))
