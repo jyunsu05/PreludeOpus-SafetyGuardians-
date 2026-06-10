@@ -482,6 +482,13 @@ public class ChapterManager : MonoBehaviour
 
             ReinstantiateAllChapterSlotsAfterDestroy();
 
+            // 챕터 프리팹 Instantiate 직후 같은 프레임에 ActivateChapter() →
+            // MapInitializer.RefreshActiveMapColliders()가 호출되면, TilemapCollider2D가
+            // 물리 엔진에 완전히 등록되기 전에 enabled 토글이 발생해 프리팹에 베이크된
+            // 콜라이더 경로가 그대로 남는 버그가 발생한다.
+            // 한 프레임 대기해 새 챕터 인스턴스들의 Start()가 완료된 후 진행한다.
+            yield return null;
+
             if (!PreparePlaySessionChapter(chapterIndex, isRestart: true))
                 yield break;
 
