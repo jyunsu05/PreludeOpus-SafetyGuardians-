@@ -205,7 +205,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_fungus_Hit_7
+      name: monster_fungus_Hit_0
       rect:
         serializedVersion: 2
         x: 34
@@ -227,7 +227,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_fungus_Hit_9
+      name: monster_fungus_Hit_1
       rect:
         serializedVersion: 2
         x: 313
@@ -249,7 +249,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_fungus_Hit_11
+      name: monster_fungus_Hit_2
       rect:
         serializedVersion: 2
         x: 590
@@ -271,7 +271,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_fungus_Hit_15
+      name: monster_fungus_Hit_3
       rect:
         serializedVersion: 2
         x: 862
@@ -306,23 +306,19 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      monster_fungus_Hit_0: 5633951157362176896
-      monster_fungus_Hit_1: 8416545626765969787
+      monster_fungus_Hit_0: -3671053884505895653
+      monster_fungus_Hit_1: 3491878128229472447
       monster_fungus_Hit_10: -6168537655179008272
-      monster_fungus_Hit_11: -8018951643924718357
       monster_fungus_Hit_12: 9082771992877980378
       monster_fungus_Hit_13: 8430721558090068862
       monster_fungus_Hit_14: 4087341370725000424
-      monster_fungus_Hit_15: -8682322793261393646
       monster_fungus_Hit_16: 7817691909639881682
-      monster_fungus_Hit_2: -8775780362932440305
-      monster_fungus_Hit_3: -6609750858178957745
+      monster_fungus_Hit_2: -8018951643924718357
+      monster_fungus_Hit_3: -8682322793261393646
       monster_fungus_Hit_4: 7076052971064884977
       monster_fungus_Hit_5: 8249400516961679549
       monster_fungus_Hit_6: -6361458666256602428
-      monster_fungus_Hit_7: -3671053884505895653
       monster_fungus_Hit_8: 1645152460925538784
-      monster_fungus_Hit_9: 3491878128229472447
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

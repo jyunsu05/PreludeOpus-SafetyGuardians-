@@ -915,7 +915,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_fire_Hit_9
+      name: monster_fire_Hit_1
       rect:
         serializedVersion: 2
         x: 426
@@ -937,7 +937,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_fire_Hit_14
+      name: monster_fire_Hit_2
       rect:
         serializedVersion: 2
         x: 820
@@ -959,7 +959,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_fire_Hit_30
+      name: monster_fire_Hit_3
       rect:
         serializedVersion: 2
         x: 1261
@@ -981,7 +981,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: monster_fire_Hit_76
+      name: monster_fire_Hit_4
       rect:
         serializedVersion: 2
         x: 1608
@@ -1017,7 +1017,7 @@ TextureImporter:
       entries: []
     nameFileIdTable:
       monster_fire_Hit_0: 5990858488003269824
-      monster_fire_Hit_1: 34513277966000709
+      monster_fire_Hit_1: 1860054801353033821
       monster_fire_Hit_10: -4207072127620682278
       monster_fire_Hit_100: 6613123328158070189
       monster_fire_Hit_101: -732304297005254106
@@ -1062,7 +1062,6 @@ TextureImporter:
       monster_fire_Hit_137: -8406554655996287498
       monster_fire_Hit_138: -7186594137415661297
       monster_fire_Hit_139: 5552637494358942715
-      monster_fire_Hit_14: 3276760042304356082
       monster_fire_Hit_140: -7605214424729233615
       monster_fire_Hit_141: 3839964012678075204
       monster_fire_Hit_142: 706164238161453975
@@ -1128,7 +1127,7 @@ TextureImporter:
       monster_fire_Hit_197: 2919085856226452440
       monster_fire_Hit_198: 8615868820863410201
       monster_fire_Hit_199: 7910441987758497055
-      monster_fire_Hit_2: 6124367198168036222
+      monster_fire_Hit_2: 3276760042304356082
       monster_fire_Hit_20: 7780164986705696018
       monster_fire_Hit_200: 6991823796625323608
       monster_fire_Hit_201: 414630257976871835
@@ -1200,8 +1199,7 @@ TextureImporter:
       monster_fire_Hit_27: -5993781347999180397
       monster_fire_Hit_28: -6712864839026840713
       monster_fire_Hit_29: -5189371554185319476
-      monster_fire_Hit_3: -9210343816071039597
-      monster_fire_Hit_30: -3771919948919794107
+      monster_fire_Hit_3: -3771919948919794107
       monster_fire_Hit_31: 1329516042248335735
       monster_fire_Hit_32: -5094525002058919624
       monster_fire_Hit_33: 5098147540761403789
@@ -1211,7 +1209,7 @@ TextureImporter:
       monster_fire_Hit_37: -6467954880034385512
       monster_fire_Hit_38: -1963987940546672418
       monster_fire_Hit_39: -5155887413001893642
-      monster_fire_Hit_4: 1561158827859824878
+      monster_fire_Hit_4: 6741914976699172974
       monster_fire_Hit_40: -7678918426252121884
       monster_fire_Hit_41: 5291325009809367934
       monster_fire_Hit_42: 720216746629722520
@@ -1244,14 +1242,12 @@ TextureImporter:
       monster_fire_Hit_67: -5059142648917415578
       monster_fire_Hit_68: -5497084281674363957
       monster_fire_Hit_69: 8551024589363124889
-      monster_fire_Hit_7: -5001064772182298256
       monster_fire_Hit_70: -2196924577193912554
       monster_fire_Hit_71: -2735363984702428752
       monster_fire_Hit_72: -2651889312723356031
       monster_fire_Hit_73: 6278552222496276186
       monster_fire_Hit_74: 1299400420240189047
       monster_fire_Hit_75: -5836892905745482628
-      monster_fire_Hit_76: 6741914976699172974
       monster_fire_Hit_77: -2694150969345712440
       monster_fire_Hit_78: -2326813424872463223
       monster_fire_Hit_79: -5329361239202094111
@@ -1266,7 +1262,6 @@ TextureImporter:
       monster_fire_Hit_87: 4845815934568406796
       monster_fire_Hit_88: -6773649479226288679
       monster_fire_Hit_89: 4011632579202796977
-      monster_fire_Hit_9: 1860054801353033821
       monster_fire_Hit_90: -7857675433366015960
       monster_fire_Hit_91: 7199594598625968053
       monster_fire_Hit_92: 5196427372714749635
