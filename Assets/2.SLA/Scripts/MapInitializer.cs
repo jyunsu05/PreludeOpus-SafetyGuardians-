@@ -7,9 +7,14 @@ public class MapInitializer : MonoBehaviour
     [Header("Tilemap Reference")]
     [SerializeField] private Tilemap obstacleTilemap;
 
+    // OnEnable → Start 순서로 둘 다 실행되는 유니티 라이프사이클 특성상,
+    // Start 이전의 첫 OnEnable 호출을 구분해 geometry 재생성을 중복 실행하지 않도록 한다.
+    private bool hasStarted;
+
     private void Start()
     {
         ValidateAndConfigureMap();
+        hasStarted = true;
 
         if (Application.isPlaying && !IsUnderFactoryStage())
             RefreshCompositeColliderGeometry();
@@ -18,6 +23,11 @@ public class MapInitializer : MonoBehaviour
     private void OnEnable()
     {
         if (!Application.isPlaying || IsUnderFactoryStage())
+            return;
+
+        // Start 이전 첫 활성화는 Start에서 처리하므로 여기서는 건너뜀.
+        // 이후 비활성화 → 재활성화 시에만 실행.
+        if (!hasStarted)
             return;
 
         ValidateAndConfigureMap();
@@ -32,7 +42,11 @@ public class MapInitializer : MonoBehaviour
     {
         ValidateAndConfigureMap();
 
-        if (Application.isPlaying)
+        // Start() 이전(Instantiate 직후 같은 프레임)에는 geometry를 갱신하지 않는다.
+        // TilemapCollider2D가 물리 엔진에 완전히 등록되기 전에 enabled 토글을 하면
+        // CompositeCollider2D에 프리팹의 베이크된 경로가 그대로 남는 버그가 발생한다.
+        // Start()에서 타일맵 초기화 완료 후 RefreshCompositeColliderGeometry()가 호출된다.
+        if (Application.isPlaying && hasStarted)
             RefreshCompositeColliderGeometry();
     }
 
@@ -130,14 +144,19 @@ public class MapInitializer : MonoBehaviour
             Debug.Log("[지도 세팅] 유니티 6 대응 - Composite Operation이 'Merge'로 세팅되었습니다. (끼임 방지)");
         }
 
-        // 4. Rigidbody2D 검증 및 Body Type 강제 고정
-        if (obstacleTilemap.TryGetComponent<Rigidbody2D>(out var rb))
+        // 4. Rigidbody2D 보장 및 Body Type 강제 고정
+        // CompositeCollider2D 추가 시 Unity가 자동으로 Rigidbody2D를 붙이지만
+        // 기본 bodyType이 Dynamic이므로, 없으면 직접 추가해 Static을 명시한다.
+        if (!obstacleTilemap.TryGetComponent<Rigidbody2D>(out var rb))
         {
-            if (rb.bodyType != RigidbodyType2D.Static)
-            {
-                rb.bodyType = RigidbodyType2D.Static;
-                Debug.Log("[지도 세팅] Rigidbody2D Body Type을 Static으로 안전하게 변경했습니다.");
-            }
+            rb = obstacleTilemap.gameObject.AddComponent<Rigidbody2D>();
+            Debug.Log("[지도 세팅] Rigidbody2D가 없어 자동으로 추가했습니다.");
+        }
+
+        if (rb.bodyType != RigidbodyType2D.Static)
+        {
+            rb.bodyType = RigidbodyType2D.Static;
+            Debug.Log("[지도 세팅] Rigidbody2D Body Type을 Static으로 안전하게 변경했습니다.");
         }
     }
 
@@ -152,9 +171,17 @@ public class MapInitializer : MonoBehaviour
         if (!obstacleTilemap.TryGetComponent<CompositeCollider2D>(out var compositeCollider))
             return;
 
-        compositeCollider.generationType = CompositeCollider2D.GenerationType.Synchronous;
+        // 핵심: Instantiate()는 씬 로드와 달리 TilemapCollider2D의 타일 데이터 재읽기를
+        // 자동으로 수행하지 않는다. RefreshAllTiles()로 Tilemap → TilemapCollider2D 경로를
+        // 강제 동기화해야 이후 GenerateGeometry()가 실제 타일 도형으로 CompositeCollider2D를
+        // 재빌드한다. 이 호출이 없으면 프리팹에 베이크된 m_ColliderPaths가 그대로 남는다.
+        obstacleTilemap.RefreshAllTiles();
+
+        compositeCollider.generationType = CompositeCollider2D.GenerationType.Manual;
         tilemapCollider.enabled = false;
         tilemapCollider.enabled = true;
         compositeCollider.GenerateGeometry();
+        Physics2D.SyncTransforms();
+        compositeCollider.generationType = CompositeCollider2D.GenerationType.Synchronous;
     }
 }
