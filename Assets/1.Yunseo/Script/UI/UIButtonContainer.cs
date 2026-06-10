@@ -63,6 +63,13 @@ public class UIButtonContainer : MonoBehaviour
         if (uiManager == null)
             uiManager = GetComponentInParent<UIBattleManager>();
 
+        if (uiManager == null)
+        {
+            Transform battleRoot = transform.parent;
+            if (battleRoot != null)
+                uiManager = UIBattleManager.TryGetPrimaryInHierarchy(battleRoot);
+        }
+
         if (uiManager == null || !uiManager.enabled)
             uiManager = UIBattleManager.TryGetPrimaryActive();
 
