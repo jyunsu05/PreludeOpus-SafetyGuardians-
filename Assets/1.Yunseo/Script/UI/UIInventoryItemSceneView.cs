@@ -20,12 +20,24 @@ public class UIInventoryItemSceneView : MonoBehaviour, IPointerClickHandler
     public string ItemId => itemId;
     public bool HasItem => !string.IsNullOrEmpty(itemId);
 
-    public void Setup(string itemId, string itemName, string description, string itemType, Sprite icon = null)
+    public void Setup(
+        string itemId,
+        string itemName,
+        string description,
+        string itemType,
+        Sprite icon = null,
+        int count = 1)
     {
         this.itemId = itemId;
 
         if (itemNameText != null)
-            itemNameText.text = itemName ?? string.Empty;
+        {
+            string resolvedName = itemName ?? string.Empty;
+            int displayCount = Mathf.Max(1, count);
+            itemNameText.text = string.IsNullOrEmpty(resolvedName)
+                ? string.Empty
+                : $"{resolvedName} x{displayCount}";
+        }
 
         if (itemDescriptionText != null)
             itemDescriptionText.text = description ?? string.Empty;

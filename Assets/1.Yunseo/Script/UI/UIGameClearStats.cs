@@ -402,8 +402,9 @@ public class UIGameClearStats : MonoBehaviour
 
     private void BindItemList(PlaySessionStats stats)
     {
-        IReadOnlyList<InventoryManager.StackedInventoryItem> items = stats.SessionAcquiredItems;
-        bool hasItems = items != null && items.Count > 0;
+        List<InventoryManager.StackedInventoryItem> items =
+            AggregateItemsById(stats.SessionAcquiredItems);
+        bool hasItems = items.Count > 0;
 
         if (itemEmptyText != null)
         {
@@ -429,6 +430,42 @@ public class UIGameClearStats : MonoBehaviour
 
         for (int i = displayCount; i < itemListRows.Length; i++)
             itemListRows[i].Hide();
+    }
+
+    private static List<InventoryManager.StackedInventoryItem> AggregateItemsById(
+        IReadOnlyList<InventoryManager.StackedInventoryItem> items)
+    {
+        var aggregated = new List<InventoryManager.StackedInventoryItem>();
+        if (items == null || items.Count == 0)
+            return aggregated;
+
+        var countsById = new Dictionary<string, int>();
+        var orderedIds = new List<string>();
+
+        for (int i = 0; i < items.Count; i++)
+        {
+            string itemId = ResolveItemId(items[i].itemId);
+            int count = items[i].count;
+            if (string.IsNullOrEmpty(itemId) || count <= 0)
+                continue;
+
+            if (countsById.ContainsKey(itemId))
+            {
+                countsById[itemId] += count;
+                continue;
+            }
+
+            countsById[itemId] = count;
+            orderedIds.Add(itemId);
+        }
+
+        for (int i = 0; i < orderedIds.Count; i++)
+        {
+            string itemId = orderedIds[i];
+            aggregated.Add(new InventoryManager.StackedInventoryItem(itemId, countsById[itemId]));
+        }
+
+        return aggregated;
     }
 
     private void BindFactoryDots(int clearedFactoryCount)
@@ -1103,8 +1140,9 @@ public class UIGameClearStats : MonoBehaviour
             string displayName = data != null ? data.name : resolvedId;
             Sprite sprite = GetItemSprite(data);
 
+            int displayCount = Mathf.Max(1, count);
             SetText(nameText, displayName);
-            SetText(quantityText, $"{Mathf.Max(1, count)}개");
+            SetText(quantityText, $"x{displayCount}");
             SetText(dataText, data != null ? data.description : string.Empty);
 
             if (iconImage != null)
