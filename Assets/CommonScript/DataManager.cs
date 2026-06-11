@@ -160,6 +160,10 @@ public class DataManager : MonoBehaviour
                displayData.item_type.Contains("산소");
     }
 
+    /// <summary>인벤토리 저장·표시용 대표 ID. MI는 대응 FI로 통일합니다.</summary>
+    public string GetCanonicalInventoryItemId(string itemId)
+        => GetFactoryItemIdForInventory(itemId);
+
     // 몬스터 보상 아이템 ID를 인벤토리용 공장 아이템 ID로 변환
     public string GetFactoryItemIdForInventory(string itemId)
     {

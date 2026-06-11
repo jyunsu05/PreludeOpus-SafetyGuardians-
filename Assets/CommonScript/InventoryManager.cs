@@ -97,7 +97,10 @@ public class InventoryManager : MonoBehaviour
         if (string.IsNullOrEmpty(id))
             return false;
 
-        return items.Exists(x => x.id == id);
+        if (items.Exists(x => x.id == id))
+            return true;
+
+        return GetEquivalentInventoryCount(id) > 0;
     }
 
     public int GetItemRemainingDurability(string id)
@@ -130,25 +133,9 @@ public class InventoryManager : MonoBehaviour
     }
 
     public int GetBattleConsumableCount(string requiredMonsterItemId)
-    {
-        if (string.IsNullOrEmpty(requiredMonsterItemId))
-            return 0;
+        => GetEquivalentInventoryCount(requiredMonsterItemId);
 
-        int count = GetItemCount(requiredMonsterItemId);
-        if (DataManager.Instance == null)
-            return count;
-
-        string factoryEquivalent = DataManager.Instance.GetFactoryItemIdForInventory(requiredMonsterItemId);
-        if (!string.IsNullOrEmpty(factoryEquivalent) &&
-            !string.Equals(factoryEquivalent, requiredMonsterItemId, StringComparison.Ordinal))
-        {
-            count += GetItemCount(factoryEquivalent);
-        }
-
-        return count;
-    }
-
-    /// <summary>배틀 UI용 — 몬스터 정화 아이템(MI) 보유 수만 집계합니다. 공장 정화(FI)는 제외합니다.</summary>
+    /// <summary>배틀 탐색 UI용 — 몬스터 정화 아이템(MI) 보유 수만 집계합니다. 공장 정화(FI)는 제외합니다.</summary>
     public int GetMonsterPurificationItemCount(string monsterItemId = null)
     {
         if (DataManager.Instance == null)
@@ -177,17 +164,10 @@ public class InventoryManager : MonoBehaviour
         if (string.IsNullOrEmpty(consumableItemId) || string.IsNullOrEmpty(requiredMonsterItemId))
             return false;
 
-        if (!HasItem(consumableItemId))
+        if (!IsSameInventoryItemGroup(consumableItemId, requiredMonsterItemId))
             return false;
 
-        if (string.Equals(consumableItemId, requiredMonsterItemId, StringComparison.Ordinal))
-            return true;
-
-        if (DataManager.Instance == null)
-            return false;
-
-        string factoryEquivalent = DataManager.Instance.GetFactoryItemIdForInventory(requiredMonsterItemId);
-        return string.Equals(consumableItemId, factoryEquivalent, StringComparison.Ordinal);
+        return GetEquivalentInventoryCount(requiredMonsterItemId) > 0;
     }
 
     /// <summary>
@@ -241,6 +221,37 @@ public class InventoryManager : MonoBehaviour
         return true;
     }
 
+    private static bool IsSameInventoryItemGroup(string leftId, string rightId)
+    {
+        if (string.IsNullOrEmpty(leftId) || string.IsNullOrEmpty(rightId))
+            return false;
+
+        if (string.Equals(leftId, rightId, StringComparison.Ordinal))
+            return true;
+
+        if (DataManager.Instance == null)
+            return false;
+
+        string leftCanonical = DataManager.Instance.GetCanonicalInventoryItemId(leftId);
+        string rightCanonical = DataManager.Instance.GetCanonicalInventoryItemId(rightId);
+        return string.Equals(leftCanonical, rightCanonical, StringComparison.Ordinal);
+    }
+
+    private int GetEquivalentInventoryCount(string itemId)
+    {
+        if (string.IsNullOrEmpty(itemId))
+            return 0;
+
+        int count = 0;
+        for (int i = 0; i < items.Count; i++)
+        {
+            if (IsSameInventoryItemGroup(items[i].id, itemId))
+                count++;
+        }
+
+        return count;
+    }
+
     private int FindBattleConsumableIndex(string requiredMonsterItemId)
     {
         if (string.IsNullOrEmpty(requiredMonsterItemId))
@@ -248,23 +259,7 @@ public class InventoryManager : MonoBehaviour
 
         for (int i = 0; i < items.Count; i++)
         {
-            if (items[i].id == requiredMonsterItemId)
-                return i;
-        }
-
-        if (DataManager.Instance == null)
-            return -1;
-
-        string factoryEquivalent = DataManager.Instance.GetFactoryItemIdForInventory(requiredMonsterItemId);
-        if (string.IsNullOrEmpty(factoryEquivalent) ||
-            string.Equals(factoryEquivalent, requiredMonsterItemId, StringComparison.Ordinal))
-        {
-            return -1;
-        }
-
-        for (int i = 0; i < items.Count; i++)
-        {
-            if (items[i].id == factoryEquivalent)
+            if (IsSameInventoryItemGroup(items[i].id, requiredMonsterItemId))
                 return i;
         }
 
