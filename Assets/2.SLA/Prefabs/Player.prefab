@@ -224,6 +224,7 @@ MonoBehaviour:
   currentOxygen: 0
   decayRate: 1
   oxygenSlider: {fileID: 0}
+  oxygenRecoveryClip: {fileID: 8300000, guid: 0446302f4dc561f47b525d5e7896599c, type: 3}
   gameOverUI: {fileID: 0}
   mainHUD: {fileID: 0}
 --- !u!114 &8351533337805257606

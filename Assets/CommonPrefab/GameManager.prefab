@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7749337337835635184}
   - component: {fileID: 7262544662682241796}
+  - component: {fileID: 8812345678901234567}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -44,3 +45,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eaa8b59b8735fd14694c6cbb8cdb740b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
+--- !u!114 &8812345678901234567
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1604986371281037963}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b7c8d9e0f1a24365869708b9c0d1e2f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIButtonClickSoundPlayer
+  clickClip: {fileID: 8300000, guid: 4ea285d9fa9ae3244bfb3c5ac58b49ec, type: 3}
