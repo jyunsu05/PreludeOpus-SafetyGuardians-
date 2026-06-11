@@ -18,10 +18,25 @@ public class PlayerOxygen : MonoBehaviour
     [Header("산소 회복 사운드")]
     [SerializeField] private AudioClip oxygenRecoveryClip;
 
+    [Header("산소 경고 사이렌")]
+    [SerializeField] private AudioClip oxygenSirenClip;
+    [Tooltip("산소 %가 이 값 이하일 때 1단계 사이렌 (가장 느림)")]
+    [SerializeField] private float sirenThresholdHigh = 50f;
+    [Tooltip("산소 %가 이 값 이하일 때 2단계 사이렌")]
+    [SerializeField] private float sirenThresholdMid = 30f;
+    [Tooltip("산소 %가 이 값 이하일 때 3단계 사이렌 (가장 빠름)")]
+    [SerializeField] private float sirenThresholdLow = 10f;
+    [SerializeField] private float sirenPitchAtHigh = 0.85f;
+    [SerializeField] private float sirenPitchAtMid = 1.15f;
+    [SerializeField] private float sirenPitchAtLow = 1.5f;
+    [SerializeField] [Range(0f, 1f)] private float sirenVolume = 0.7f;
+
     [SerializeField] private GameObject gameOverUI;
     [SerializeField] private GameObject mainHUD;
 
     private AudioSource oxygenRecoverySource;
+    private AudioSource oxygenSirenSource;
+    private int activeSirenTier;
     private bool warnedMissingOxygenSlider;
     private bool warnedMissingGameOverPanel;
     private bool isOxygenGameOver;
@@ -33,6 +48,7 @@ public class PlayerOxygen : MonoBehaviour
     {
         isOxygenGameOver = false;
         currentOxygen = maxOxygen;
+        StopOxygenSiren();
         SyncOxygenVisual();
 
         if (mainHUD != null && !mainHUD.activeSelf)
@@ -43,6 +59,7 @@ public class PlayerOxygen : MonoBehaviour
     {
         RegisterAsPlayerInstanceIfNeeded();
         ConfigureOxygenRecoveryAudioSource();
+        ConfigureOxygenSirenAudioSource();
         TryResolveOxygenSliderReference();
         TryResolveGameOverPanel();
     }
@@ -147,6 +164,7 @@ public class PlayerOxygen : MonoBehaviour
 
         isOxygenGameOver = true;
         currentOxygen = 0f;
+        StopOxygenSiren();
         SyncOxygenVisual();
         PlaySessionStats.EnsureInstance()?.RecordGameOver();
 
@@ -274,6 +292,91 @@ public class PlayerOxygen : MonoBehaviour
         oxygenRecoverySource.spatialBlend = 0f;
     }
 
+    private void ConfigureOxygenSirenAudioSource()
+    {
+        oxygenSirenSource = gameObject.AddComponent<AudioSource>();
+        oxygenSirenSource.playOnAwake = false;
+        oxygenSirenSource.loop = true;
+        oxygenSirenSource.spatialBlend = 0f;
+        oxygenSirenSource.volume = sirenVolume;
+    }
+
+    private void UpdateOxygenSiren()
+    {
+        if (isOxygenGameOver || oxygenSirenClip == null || oxygenSirenSource == null)
+        {
+            StopOxygenSiren();
+            return;
+        }
+
+        int tier = ResolveSirenTier(GetOxygenPercent());
+        if (tier <= 0)
+        {
+            StopOxygenSiren();
+            return;
+        }
+
+        float pitch = ResolveSirenPitch(tier);
+        if (activeSirenTier != tier || !oxygenSirenSource.isPlaying)
+        {
+            activeSirenTier = tier;
+            oxygenSirenSource.clip = oxygenSirenClip;
+            oxygenSirenSource.pitch = pitch;
+            oxygenSirenSource.volume = sirenVolume;
+            if (!oxygenSirenSource.isPlaying)
+                oxygenSirenSource.Play();
+            return;
+        }
+
+        if (!Mathf.Approximately(oxygenSirenSource.pitch, pitch))
+            oxygenSirenSource.pitch = pitch;
+    }
+
+    private float GetOxygenPercent()
+    {
+        if (maxOxygen <= 0f)
+            return 0f;
+
+        return Mathf.Clamp(currentOxygen / maxOxygen * 100f, 0f, 100f);
+    }
+
+    private int ResolveSirenTier(float oxygenPercent)
+    {
+        if (oxygenPercent > sirenThresholdHigh)
+            return 0;
+
+        if (oxygenPercent <= sirenThresholdLow)
+            return 3;
+
+        if (oxygenPercent <= sirenThresholdMid)
+            return 2;
+
+        return 1;
+    }
+
+    private float ResolveSirenPitch(int tier)
+    {
+        switch (tier)
+        {
+            case 3:
+                return sirenPitchAtLow;
+            case 2:
+                return sirenPitchAtMid;
+            case 1:
+                return sirenPitchAtHigh;
+            default:
+                return 1f;
+        }
+    }
+
+    private void StopOxygenSiren()
+    {
+        activeSirenTier = 0;
+
+        if (oxygenSirenSource != null && oxygenSirenSource.isPlaying)
+            oxygenSirenSource.Stop();
+    }
+
     private UIGameOver TryResolveGameOverPanel()
     {
         if (cachedGameOverPanel != null)
@@ -320,6 +423,7 @@ public class PlayerOxygen : MonoBehaviour
 
     private void SyncOxygenVisual()
     {
+        UpdateOxygenSiren();
         SyncBattleOxygenGauges();
         UIMainHUD.TryUpdateOxygenGaugeGlobal(currentOxygen, maxOxygen);
 
