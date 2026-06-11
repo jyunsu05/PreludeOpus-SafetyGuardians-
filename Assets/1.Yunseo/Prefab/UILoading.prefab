@@ -70,6 +70,9 @@ MonoBehaviour:
   minDisplayTime: 2
   InformationText: {fileID: 3781970696439331545}
   mainFactorySceneName: FactoryScene
+  loadingStartClip: {fileID: 8300000, guid: 3e7f68aff59f9eb48bd6e39c60580430, type: 3}
+  loadingCompleteClip: {fileID: 8300000, guid: e422f4bfac371bb41b192ab2954c7ee5, type: 3}
+  loadingButtonClickClip: {fileID: 8300000, guid: ba038388398362f4eba628cac92caef0, type: 3}
 --- !u!1 &310884659410776836
 GameObject:
   m_ObjectHideFlags: 0

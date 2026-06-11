@@ -128,6 +128,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIGameOver
   startSceneName: MainGameScenes
+  gameOverSoundClip: {fileID: 8300000, guid: 45cff3cb5de726540ada4feb3807e1f7, type: 3}
 --- !u!1 &2459256195741538895
 GameObject:
   m_ObjectHideFlags: 0

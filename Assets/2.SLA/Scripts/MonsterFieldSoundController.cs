@@ -95,6 +95,13 @@ public class MonsterFieldSoundController : MonoBehaviour
         if (!gameManagerSubscribed)
             TrySubscribeGameManager();
 
+        if (GameplayAudioGuard.IsBlocked)
+        {
+            CancelPurificationPlayback();
+            StopLoop();
+            return;
+        }
+
         if (IsBattleActive())
         {
             if (purificationPlaying)
@@ -382,7 +389,7 @@ public class MonsterFieldSoundController : MonoBehaviour
 
     public IEnumerator PlayBattleAttackSoundRoutine()
     {
-        if (!IsBattleActive() || attackClip == null || sfxSource == null)
+        if (!GameplayAudioGuard.CanPlay || !IsBattleActive() || attackClip == null || sfxSource == null)
             yield break;
 
         bool resumeLoopAfterAttack = currentLoop != LoopKind.None;
@@ -417,6 +424,9 @@ public class MonsterFieldSoundController : MonoBehaviour
 
     public void PlayBattlePurifySound(float hitAnimationDuration)
     {
+        if (!GameplayAudioGuard.CanPlay)
+            return;
+
         if (!IsBattleActive())
         {
             Debug.LogWarning(

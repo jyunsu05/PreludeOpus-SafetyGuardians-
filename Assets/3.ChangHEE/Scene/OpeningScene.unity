@@ -616,6 +616,7 @@ MonoBehaviour:
   fadeAtTop: 1
   topFadeRange: 220
   gameStartButton: {fileID: 1593333649}
+  buttonClickClip: {fileID: 8300000, guid: 4ea285d9fa9ae3244bfb3c5ac58b49ec, type: 3}
   transitionMode: 0
   nextSceneName: MainGameScenes
   pressAnyKeyMessage: "\uC544\uBB34 \uD0A4\uB098 \uB204\uB974\uC138\uC694"
@@ -883,6 +884,7 @@ GameObject:
   - component: {fileID: 1901498939}
   - component: {fileID: 1901498938}
   - component: {fileID: 1901498937}
+  - component: {fileID: 1901498940}
   m_Layer: 0
   m_Name: EventSystem
   m_TagString: Untagged
@@ -951,6 +953,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1901498940
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1901498936}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b7c8d9e0f1a24365869708b9c0d1e2f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIButtonClickSoundPlayer
+  clickClip: {fileID: 8300000, guid: 4ea285d9fa9ae3244bfb3c5ac58b49ec, type: 3}
+  factoryItemAcquireClip: {fileID: 0}
+  battleItemPopupClip: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

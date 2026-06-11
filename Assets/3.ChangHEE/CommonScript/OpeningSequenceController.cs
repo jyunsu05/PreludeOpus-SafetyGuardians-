@@ -36,6 +36,7 @@ public class OpeningSequenceController : MonoBehaviour
         DeactivateAllChaptersBeforeOpening();
         HideMainContent();
         ApplyBlackCameraBackground();
+        GameplayAudioGuard.Unblock();
 
         if (crawl != null)
             crawl.ConfigureInSceneMode(this);

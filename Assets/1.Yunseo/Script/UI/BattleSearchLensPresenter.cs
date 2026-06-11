@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 
@@ -23,11 +24,15 @@ public class BattleSearchLensPresenter : MonoBehaviour
     [Tooltip("켜면 Animator 클립 길이를 자동으로 대기 시간에 사용합니다.")]
     [SerializeField] private bool useClipLengthForDuration = true;
     [SerializeField] private float animationDuration = 1f;
+    [Tooltip("렌즈가 움직이는 시점(0~1). SearchLens 클립 키프레임과 맞춥니다.")]
+    [SerializeField] private float[] movementBeatNormalizedTimes = { 0f, 0.33333334f, 0.6666667f };
 
     private int searchTriggerHash;
     private int searchStateHash;
+    private Coroutine movementBeatRoutine;
 
     public float AnimationDuration { get; private set; }
+    public event Action OnMovementBeat;
 
     private void Awake()
     {
@@ -99,14 +104,97 @@ public class BattleSearchLensPresenter : MonoBehaviour
         if (!IsSearchStatePlaying())
             PlayAnimatorFromStart();
 
+        movementBeatRoutine = StartCoroutine(WatchMovementBeatsRoutine());
         yield return new WaitForSecondsRealtime(waitDuration);
+        StopMovementBeatRoutine();
         StopSearchAnimation();
     }
 
     public void StopSearchAnimation()
     {
+        StopMovementBeatRoutine();
+
         if (deactivateOnStop)
             gameObject.SetActive(false);
+    }
+
+    /// <summary>Animation Event에서 호출할 수 있는 움직임 비트 알림입니다.</summary>
+    public void OnSearchLensMovementBeat()
+    {
+        OnMovementBeat?.Invoke();
+    }
+
+    private void StopMovementBeatRoutine()
+    {
+        if (movementBeatRoutine == null)
+            return;
+
+        StopCoroutine(movementBeatRoutine);
+        movementBeatRoutine = null;
+    }
+
+    private IEnumerator WatchMovementBeatsRoutine()
+    {
+        float[] beatTimes = GetMovementBeatNormalizedTimes();
+        if (beatTimes.Length == 0)
+            yield break;
+
+        int nextBeatIndex = 0;
+        float lastNormalizedTime = 0f;
+
+        while (nextBeatIndex < beatTimes.Length)
+        {
+            if (animator == null)
+                yield break;
+
+            AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+            if (!IsSearchStateActive(state))
+            {
+                yield return null;
+                continue;
+            }
+
+            float normalizedTime = state.normalizedTime;
+            if (normalizedTime < lastNormalizedTime)
+                nextBeatIndex = 0;
+
+            while (nextBeatIndex < beatTimes.Length && normalizedTime + 0.0001f >= beatTimes[nextBeatIndex])
+            {
+                OnMovementBeat?.Invoke();
+                nextBeatIndex++;
+            }
+
+            lastNormalizedTime = normalizedTime;
+
+            if (normalizedTime >= 0.99f && nextBeatIndex >= beatTimes.Length)
+                yield break;
+
+            yield return null;
+        }
+    }
+
+    private bool IsSearchStateActive(AnimatorStateInfo state)
+    {
+        if (string.IsNullOrEmpty(searchStateName))
+            return true;
+
+        if (!string.IsNullOrEmpty(searchTriggerName) && HasTriggerParameter(searchTriggerName))
+            return true;
+
+        return state.shortNameHash == searchStateHash;
+    }
+
+    private float[] GetMovementBeatNormalizedTimes()
+    {
+        if (movementBeatNormalizedTimes == null || movementBeatNormalizedTimes.Length == 0)
+            return Array.Empty<float>();
+
+        float[] beats = new float[movementBeatNormalizedTimes.Length];
+        for (int i = 0; i < movementBeatNormalizedTimes.Length; i++)
+            beats[i] = Mathf.Clamp01(movementBeatNormalizedTimes[i]);
+
+        Array.Sort(beats);
+        return beats;
     }
 
     private void EnsureHierarchyActive()

@@ -42,6 +42,7 @@ public class ItemPickup : MonoBehaviour
 
         // 인벤토리에 아이템 추가
         InventoryManager.Instance.AddItem(itemId);
+        UIButtonClickSoundPlayer.Instance?.PlayFactoryItemAcquireSound();
 
         // 맵에서 아이템 오브젝트 제거 (먹힘 처리)
         Destroy(gameObject);

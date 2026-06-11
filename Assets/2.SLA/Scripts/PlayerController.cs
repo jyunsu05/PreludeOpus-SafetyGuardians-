@@ -516,7 +516,7 @@ public class PlayerController : MonoBehaviour
 
     private static bool ShouldSuppressBreathingSounds()
     {
-        return UILoading.IsLoadingScreenVisible;
+        return UILoading.IsLoadingScreenVisible || GameplayAudioGuard.IsBlocked;
     }
 
     private void StartIdleLoop()

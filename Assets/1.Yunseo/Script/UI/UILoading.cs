@@ -1,7 +1,11 @@
+using System.Collections;
+using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
-using System.Collections;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 public class UILoading : MonoBehaviour
 {
@@ -18,10 +22,19 @@ public class UILoading : MonoBehaviour
     [SerializeField] private ChapterManager chapterManager;
     [SerializeField] private FactoryChapterController factoryChapterController;
 
+    [Header("--- Loading Sounds ---")]
+    [SerializeField] private AudioClip loadingStartClip;
+    [SerializeField] private AudioClip loadingCompleteClip;
+    [SerializeField] private AudioClip loadingButtonClickClip;
+
     private float panelShownTime;
     private bool waitForTouchDismiss;
     private bool isSceneLoading;
     private Coroutine autoProgressRoutine;
+    private Coroutine loadingSoundRoutine;
+    private Coroutine advanceAfterClickRoutine;
+    private AudioSource loadingSequenceAudioSource;
+    private readonly HashSet<int> registeredLoadingButtonIds = new HashSet<int>();
 
     public static bool IsLoadingScreenVisible
     {
@@ -80,21 +93,12 @@ public class UILoading : MonoBehaviour
     {
         SyncProgressTextFromSlider();
 
-        if (isSceneLoading || loadingPanel == null || !loadingPanel.activeSelf || !CanDismissByInput())
+        if (isSceneLoading || advanceAfterClickRoutine != null ||
+            loadingPanel == null || !loadingPanel.activeSelf || !CanDismissByInput())
             return;
 
-        if (Input.GetMouseButtonDown(0))
-        {
-            AdvanceToNextFactoryChapter();
-            return;
-        }
-
-        if (Input.touchCount > 0)
-        {
-            Touch touch = Input.GetTouch(0);
-            if (touch.phase == TouchPhase.Began)
-                AdvanceToNextFactoryChapter();
-        }
+        if (WasLoadingInputPressed())
+            BeginAdvanceToNextFactoryChapter();
     }
 
     private bool CanDismissByInput()
@@ -109,7 +113,6 @@ public class UILoading : MonoBehaviour
     {
         panelShownTime = Time.time;
         waitForTouchDismiss = false;
-
         if (InformationText != null)
             InformationText.gameObject.SetActive(false);
 
@@ -119,6 +122,9 @@ public class UILoading : MonoBehaviour
             loadingPanel.SetActive(true);
 
         ConfigureProgressBar();
+        StopLoadingSounds();
+        PlayLoadingSounds();
+        RegisterLoadingButtons();
         SetProgress(initialProgress);
         SetLoadingText(message);
     }
@@ -193,6 +199,14 @@ public class UILoading : MonoBehaviour
             autoProgressRoutine = null;
         }
 
+        if (advanceAfterClickRoutine != null)
+        {
+            StopCoroutine(advanceAfterClickRoutine);
+            advanceAfterClickRoutine = null;
+        }
+
+        StopLoadingSounds();
+
         if (loadingPanel != null)
             loadingPanel.SetActive(false);
     }
@@ -216,6 +230,48 @@ public class UILoading : MonoBehaviour
 
         SetProgress(1f);
         autoProgressRoutine = null;
+    }
+
+    static bool WasLoadingInputPressed()
+    {
+#if ENABLE_INPUT_SYSTEM
+        if (Touchscreen.current != null &&
+            Touchscreen.current.primaryTouch.press.wasPressedThisFrame)
+            return true;
+
+        if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
+            return true;
+
+        return false;
+#else
+        if (Input.GetMouseButtonDown(0))
+            return true;
+
+        if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
+            return true;
+
+        return false;
+#endif
+    }
+
+    private void BeginAdvanceToNextFactoryChapter()
+    {
+        if (isSceneLoading || advanceAfterClickRoutine != null)
+            return;
+
+        PlayLoadingButtonClickSound();
+        advanceAfterClickRoutine = StartCoroutine(AdvanceAfterClickSoundRoutine());
+    }
+
+    private IEnumerator AdvanceAfterClickSoundRoutine()
+    {
+        float delay = loadingButtonClickClip != null
+            ? Mathf.Clamp(loadingButtonClickClip.length * 0.35f, 0.05f, 0.2f)
+            : 0.05f;
+
+        yield return new WaitForSecondsRealtime(delay);
+        advanceAfterClickRoutine = null;
+        AdvanceToNextFactoryChapter();
     }
 
     private void AdvanceToNextFactoryChapter()
@@ -312,5 +368,95 @@ public class UILoading : MonoBehaviour
     {
         yield return new WaitForSeconds(delay);
         HideLoading();
+    }
+
+    private void EnsureLoadingSequenceAudioSource()
+    {
+        if (loadingSequenceAudioSource != null)
+            return;
+
+        AudioSource[] sources = GetComponents<AudioSource>();
+        loadingSequenceAudioSource = sources.Length > 0 ? sources[0] : gameObject.AddComponent<AudioSource>();
+
+        loadingSequenceAudioSource.playOnAwake = false;
+        loadingSequenceAudioSource.loop = false;
+        loadingSequenceAudioSource.spatialBlend = 0f;
+        loadingSequenceAudioSource.volume = 1f;
+    }
+
+    private void PreloadClip(AudioClip clip)
+    {
+        if (clip == null || clip.preloadAudioData || clip.loadState != AudioDataLoadState.Unloaded)
+            return;
+
+        clip.LoadAudioData();
+    }
+
+    private void PlayLoadingSounds()
+    {
+        PreloadClip(loadingStartClip);
+        PreloadClip(loadingCompleteClip);
+        loadingSoundRoutine = StartCoroutine(PlayLoadingSoundSequenceRoutine());
+    }
+
+    private IEnumerator PlayLoadingSoundSequenceRoutine()
+    {
+        yield return PlayClipAndWait(loadingStartClip);
+        yield return PlayClipAndWait(loadingCompleteClip);
+        loadingSoundRoutine = null;
+    }
+
+    private IEnumerator PlayClipAndWait(AudioClip clip)
+    {
+        if (clip == null)
+            yield break;
+
+        EnsureLoadingSequenceAudioSource();
+        loadingSequenceAudioSource.PlayOneShot(clip);
+        yield return new WaitForSecondsRealtime(clip.length);
+    }
+
+    private void StopLoadingSounds()
+    {
+        if (loadingSoundRoutine != null)
+        {
+            StopCoroutine(loadingSoundRoutine);
+            loadingSoundRoutine = null;
+        }
+
+        if (loadingSequenceAudioSource != null && loadingSequenceAudioSource.isPlaying)
+            loadingSequenceAudioSource.Stop();
+    }
+
+    private void RegisterLoadingButtons()
+    {
+        if (loadingButtonClickClip == null)
+            return;
+
+        Button[] buttons = GetComponentsInChildren<Button>(true);
+        for (int i = 0; i < buttons.Length; i++)
+            RegisterLoadingButton(buttons[i]);
+    }
+
+    private void RegisterLoadingButton(Button button)
+    {
+        if (button == null || loadingButtonClickClip == null)
+            return;
+
+        int id = button.GetInstanceID();
+        if (registeredLoadingButtonIds.Contains(id))
+            return;
+
+        registeredLoadingButtonIds.Add(id);
+        button.onClick.AddListener(PlayLoadingButtonClickSound);
+    }
+
+    private void PlayLoadingButtonClickSound()
+    {
+        if (loadingButtonClickClip == null)
+            return;
+
+        PreloadClip(loadingButtonClickClip);
+        UIButtonClickSoundPlayer.PlaySurvivingOneShot(loadingButtonClickClip);
     }
 }

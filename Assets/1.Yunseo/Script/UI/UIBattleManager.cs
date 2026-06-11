@@ -71,6 +71,12 @@ public class UIBattleManager : MonoBehaviour
     [FormerlySerializedAs("searchAnimationDuration")]
     [SerializeField] private float searchAnimationDuration = 3f;
 
+    [Header("--- 배틀 UI 버튼 사운드 ---")]
+    [SerializeField] private AudioClip searchSoundClip;
+    [SerializeField] [Range(0f, 5f)] private float searchSoundVolume = 5f;
+    [SerializeField] private AudioClip purificationUiSoundClip;
+    [SerializeField] private AudioClip escapeSoundClip;
+
     private const string DefaultPurifyItemId = "MI-101";
     private const string FireMonsterId = "M-003";
     private static readonly int DoPurifyTrigger = Animator.StringToHash("DoPurify");
@@ -324,19 +330,40 @@ public class UIBattleManager : MonoBehaviour
     {
         IsSearching = true;
 
-        ResolveSearchLensPresenter();
-        if (searchLensPresenter != null)
-            yield return searchLensPresenter.RunSearchSequence();
-        else
+        try
         {
-            Debug.LogWarning("[UIBattleManager] SearchLens presenter를 찾지 못했습니다.");
-            yield return new WaitForSecondsRealtime(Mathf.Max(0.01f, searchAnimationDuration));
+            ResolveSearchLensPresenter();
+            if (searchLensPresenter != null)
+            {
+                searchLensPresenter.OnMovementBeat += HandleSearchMovementBeat;
+                try
+                {
+                    yield return searchLensPresenter.RunSearchSequence();
+                }
+                finally
+                {
+                    searchLensPresenter.OnMovementBeat -= HandleSearchMovementBeat;
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[UIBattleManager] SearchLens presenter를 찾지 못했습니다.");
+                PlaySearchBeatSound();
+                yield return new WaitForSecondsRealtime(ResolveSearchAnimationDuration());
+            }
+        }
+        finally
+        {
+            IsSearching = false;
+            searchAnimationRoutine = null;
         }
 
-        IsSearching = false;
-        searchAnimationRoutine = null;
-
         onCompleted?.Invoke();
+    }
+
+    private void HandleSearchMovementBeat()
+    {
+        PlaySearchBeatSound();
     }
 
     /// <summary>탐색 성공 — 정화 버튼을 켤 수 있는 상태로 전환합니다.</summary>
@@ -448,6 +475,7 @@ public class UIBattleManager : MonoBehaviour
 
         SetPurifyVfxActive(true);
         TriggerPurifyAnimation();
+        PlayPurificationUiSound();
 
         ResolveMonsterSpriteLooper();
         Coroutine hitCoroutine = null;
@@ -458,7 +486,7 @@ public class UIBattleManager : MonoBehaviour
         PlayMonsterPurifySound(hitAnimationDuration);
         OnPurifyPerformed?.Invoke(hitAnimationDuration);
 
-        float purifyWaitDuration = Mathf.Max(0.01f, purifyAnimationDuration);
+        float purifyWaitDuration = ResolvePurifyAnimationDuration();
         yield return new WaitForSecondsRealtime(purifyWaitDuration);
         SetPurifyVfxActive(false);
 
@@ -466,6 +494,7 @@ public class UIBattleManager : MonoBehaviour
             yield return hitCoroutine;
 
         ApplyPurifyDamage(finalPurifyDamage);
+        StopPurificationUiSound();
         FinalizePurifyTurn(basePurifyDamage, finalPurifyDamage);
 
         EndPurifyAttempt(unlockEscape: false);
@@ -538,17 +567,53 @@ public class UIBattleManager : MonoBehaviour
 
     private void ConfigurePlayerHitAudioSource()
     {
-        playerHitAudioSource = GetComponent<AudioSource>();
-        if (playerHitAudioSource == null)
-            playerHitAudioSource = gameObject.AddComponent<AudioSource>();
+        AudioSource[] sources = GetComponents<AudioSource>();
+        playerHitAudioSource = sources.Length > 0 ? sources[0] : gameObject.AddComponent<AudioSource>();
 
         playerHitAudioSource.playOnAwake = false;
         playerHitAudioSource.loop = false;
         playerHitAudioSource.spatialBlend = 0f;
     }
 
+    private UIButtonClickSoundPlayer ResolveUiSoundPlayer()
+    {
+        return UIButtonClickSoundPlayer.Instance;
+    }
+
+    private void PlaySearchBeatSound()
+    {
+        if (searchSoundClip == null)
+            return;
+
+        ResolveUiSoundPlayer()?.PlayOneShotClip(searchSoundClip, searchSoundVolume);
+    }
+
+    private void PlayPurificationUiSound()
+    {
+        if (purificationUiSoundClip == null)
+            return;
+
+        ResolveUiSoundPlayer()?.PlayTrackedClip(purificationUiSoundClip, loop: true);
+    }
+
+    private void StopPurificationUiSound()
+    {
+        ResolveUiSoundPlayer()?.StopTrackedClip();
+    }
+
+    private void PlayEscapeSound()
+    {
+        if (escapeSoundClip == null)
+            return;
+
+        ResolveUiSoundPlayer()?.PlayOneShotClip(escapeSoundClip);
+    }
+
     private void PlayPlayerHitClothSound()
     {
+        if (!GameplayAudioGuard.CanPlay)
+            return;
+
         AudioClip clip = playerHitPresenter != null ? playerHitPresenter.HitClothSoundClip : null;
         if (clip == null || playerHitAudioSource == null)
             return;
@@ -558,6 +623,9 @@ public class UIBattleManager : MonoBehaviour
 
     private void PlayPlayerHitImpactSound()
     {
+        if (!GameplayAudioGuard.CanPlay)
+            return;
+
         AudioClip clip = playerHitPresenter != null ? playerHitPresenter.ImpactHitSoundClip : null;
         if (clip == null || playerHitAudioSource == null)
             return;
@@ -577,7 +645,7 @@ public class UIBattleManager : MonoBehaviour
 
     private IEnumerator PlayFireMonsterAttackLeadInRoutine()
     {
-        if (fireMonsterAttackClip == null || playerHitAudioSource == null)
+        if (!GameplayAudioGuard.CanPlay || fireMonsterAttackClip == null || playerHitAudioSource == null)
             yield break;
 
         playerHitAudioSource.PlayOneShot(fireMonsterAttackClip);
@@ -615,9 +683,38 @@ public class UIBattleManager : MonoBehaviour
     {
         ResolveSearchLensPresenter();
         if (searchLensPresenter != null)
-            return searchLensPresenter.AnimationDuration;
+            return Mathf.Max(0.01f, searchLensPresenter.AnimationDuration);
 
         return Mathf.Max(0.01f, searchAnimationDuration);
+    }
+
+    private float ResolvePurifyAnimationDuration()
+    {
+        ResolvePurifyAnimators();
+
+        float duration = purifyAnimationDuration;
+        duration = Mathf.Max(duration, GetAnimatorClipLength(purificationCircleAnimator));
+        duration = Mathf.Max(duration, GetAnimatorClipLength(purificationParticlesAnimator));
+        return Mathf.Max(0.01f, duration);
+    }
+
+    private static float GetAnimatorClipLength(Animator animator)
+    {
+        if (animator == null || animator.runtimeAnimatorController == null)
+            return 0f;
+
+        float maxLength = 0f;
+        AnimationClip[] clips = animator.runtimeAnimatorController.animationClips;
+        for (int i = 0; i < clips.Length; i++)
+        {
+            AnimationClip clip = clips[i];
+            if (clip == null || clip.length <= 0f)
+                continue;
+
+            maxLength = Mathf.Max(maxLength, clip.length);
+        }
+
+        return maxLength;
     }
 
     private void TriggerPurifyAnimation()
@@ -808,6 +905,7 @@ public class UIBattleManager : MonoBehaviour
     public void ExitBattle()
     {
         StopPurifyAnimationRoutine();
+        StopPurificationUiSound();
         AbortSearchAnimation();
         SetPurifyVfxActive(false);
         monsterSpriteLooper?.StopAll();
@@ -832,6 +930,7 @@ public class UIBattleManager : MonoBehaviour
 
         StopCoroutine(purifyAnimationRoutine);
         purifyAnimationRoutine = null;
+        StopPurificationUiSound();
     }
 
     private void StopSearchAnimationRoutineOnly()
@@ -863,6 +962,7 @@ public class UIBattleManager : MonoBehaviour
         }
 
         isProcessingBattleExit = true;
+        PlayEscapeSound();
         BattleEncounterContext.MarkFleeExit();
         return true;
     }
@@ -1484,6 +1584,7 @@ public class UIBattleManager : MonoBehaviour
         Debug.Log("[UIBattleManager] 오염도 0 도달! 정화 완료.");
 
         CommitPendingPurifyItemOnBattleWin();
+        StopPurificationUiSound();
         OnContaminationEmpty?.Invoke();
     }
 

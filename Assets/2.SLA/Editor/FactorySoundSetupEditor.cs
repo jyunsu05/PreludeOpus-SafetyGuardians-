@@ -156,7 +156,7 @@ namespace SLA.Editor
             so.FindProperty("pipeFirstPlayDelaySeconds").floatValue = 6f;
             so.FindProperty("enableWaterDropAmbience").boolValue = enableWaterDrop;
             so.FindProperty("waterDropAmbienceClip").objectReferenceValue = waterDrop;
-            so.FindProperty("waterDropVolume").floatValue = 0.18f;
+            so.FindProperty("waterDropVolume").floatValue = 0.35f;
             so.FindProperty("waterDropIntervalMinSeconds").floatValue = 8f;
             so.FindProperty("waterDropIntervalMaxSeconds").floatValue = 16f;
             so.FindProperty("waterDropFirstPlayDelaySeconds").floatValue = 3f;
