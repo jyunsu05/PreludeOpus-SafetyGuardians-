@@ -128,6 +128,9 @@ public class UIInventory : MonoBehaviour
             BindSlot(slotIndex, entry.useItemId, entry.displayData, entry.count);
             slotIndex++;
         }
+
+        if (UIButtonClickSoundPlayer.Instance != null)
+            UIButtonClickSoundPlayer.Instance.RegisterButtonsInHierarchy(transform);
     }
 
     private IEnumerable<InventorySlotEntry> BuildVisibleSlotEntries()

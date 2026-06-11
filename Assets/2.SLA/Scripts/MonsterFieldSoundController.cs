@@ -9,6 +9,7 @@ public class MonsterFieldSoundController : MonoBehaviour
     [Header("Clips")]
     [SerializeField] private AudioClip idleClip;
     [SerializeField] private AudioClip runClip;
+    [SerializeField] private AudioClip attackClip;
     [SerializeField] private AudioClip purificationCompleteClip;
 
     [Header("Proximity")]
@@ -275,6 +276,44 @@ public class MonsterFieldSoundController : MonoBehaviour
         Debug.Log($"[MonsterFieldSoundController] {gameObject.name} 배틀 종료 — 필드 사운드 복귀");
         CancelPurificationPlayback();
         UpdateLoopSound();
+    }
+
+    public IEnumerator PlayBattleAttackSoundRoutine()
+    {
+        if (!IsBattleActive() || attackClip == null || sfxSource == null)
+            yield break;
+
+        bool resumeIdleAfterAttack = currentLoop != LoopKind.None;
+
+        if (loopSource != null && loopSource.isPlaying)
+            loopSource.mute = true;
+
+        if (sfxSource.isPlaying)
+            sfxSource.Stop();
+
+        sfxSource.loop = false;
+        sfxSource.clip = attackClip;
+        sfxSource.pitch = 1f;
+        sfxSource.volume = 1f;
+        sfxSource.time = 0f;
+        sfxSource.Play();
+
+        Debug.Log(
+            $"[MonsterFieldSoundController] {gameObject.name} 공격 사운드 재생 — " +
+            $"clip={GetClipName(attackClip)}");
+
+        yield return new WaitForSecondsRealtime(attackClip.length);
+
+        if (sfxSource.isPlaying)
+            sfxSource.Stop();
+
+        if (loopSource != null)
+            loopSource.mute = false;
+
+        if (!resumeIdleAfterAttack || !IsBattleActive() || !IsActiveBattleMonster())
+            yield break;
+
+        UpdateBattleLoopSound();
     }
 
     public void PlayBattlePurifySound(float hitAnimationDuration)

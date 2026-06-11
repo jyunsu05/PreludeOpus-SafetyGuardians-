@@ -15,9 +15,13 @@ public class PlayerOxygen : MonoBehaviour
     [Header("연동할 UI")]
     public Slider oxygenSlider;        // 산소 게이지만 연결 (공장 오염도 슬라이더 금지)
 
+    [Header("산소 회복 사운드")]
+    [SerializeField] private AudioClip oxygenRecoveryClip;
+
     [SerializeField] private GameObject gameOverUI;
     [SerializeField] private GameObject mainHUD;
 
+    private AudioSource oxygenRecoverySource;
     private bool warnedMissingOxygenSlider;
     private bool warnedMissingGameOverPanel;
     private bool isOxygenGameOver;
@@ -38,6 +42,7 @@ public class PlayerOxygen : MonoBehaviour
     void Awake()
     {
         RegisterAsPlayerInstanceIfNeeded();
+        ConfigureOxygenRecoveryAudioSource();
         TryResolveOxygenSliderReference();
         TryResolveGameOverPanel();
     }
@@ -242,10 +247,31 @@ public class PlayerOxygen : MonoBehaviour
         if (isOxygenGameOver || amount <= 0f)
             return;
 
+        float previousOxygen = currentOxygen;
         currentOxygen += amount;
         currentOxygen = Mathf.Clamp(currentOxygen, 0f, maxOxygen);
         SyncOxygenVisual();
+
+        if (currentOxygen > previousOxygen)
+            PlayOxygenRecoverySound();
+
         Debug.Log($"[PlayerOxygen] 배틀 산소 회복 +{amount:0.#} / 현재: {currentOxygen:0.#}");
+    }
+
+    private void PlayOxygenRecoverySound()
+    {
+        if (oxygenRecoveryClip == null || oxygenRecoverySource == null)
+            return;
+
+        oxygenRecoverySource.PlayOneShot(oxygenRecoveryClip);
+    }
+
+    private void ConfigureOxygenRecoveryAudioSource()
+    {
+        oxygenRecoverySource = gameObject.AddComponent<AudioSource>();
+        oxygenRecoverySource.playOnAwake = false;
+        oxygenRecoverySource.loop = false;
+        oxygenRecoverySource.spatialBlend = 0f;
     }
 
     private UIGameOver TryResolveGameOverPanel()

@@ -505,6 +505,8 @@ public class UIBattleManager : MonoBehaviour
 
             if (IsCurrentMonsterFire())
                 yield return PlayFireMonsterAttackLeadInRoutine();
+            else
+                yield return PlayMonsterAttackLeadInRoutine();
 
             if (playerHitPresenter == null)
             {
@@ -580,6 +582,15 @@ public class UIBattleManager : MonoBehaviour
 
         playerHitAudioSource.PlayOneShot(fireMonsterAttackClip);
         yield return new WaitForSecondsRealtime(fireMonsterAttackClip.length);
+    }
+
+    private IEnumerator PlayMonsterAttackLeadInRoutine()
+    {
+        MonsterFieldSoundController soundController = ResolveBattleMonsterSoundController();
+        if (soundController == null)
+            yield break;
+
+        yield return soundController.PlayBattleAttackSoundRoutine();
     }
 
     private void ResolvePlayerHitPresenter()
