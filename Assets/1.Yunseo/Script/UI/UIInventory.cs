@@ -139,62 +139,20 @@ public class UIInventory : MonoBehaviour
             InventoryManager.Instance.GetStackedItems();
         bool filterForBattle = IsBattleInventoryContext();
 
-        if (!filterForBattle)
-        {
-            for (int i = 0; i < stackedItems.Count; i++)
-            {
-                InventoryManager.StackedInventoryItem stackedItem = stackedItems[i];
-                if (string.IsNullOrEmpty(stackedItem.itemId) || stackedItem.count <= 0)
-                    continue;
-
-                ItemData data = DataManager.Instance.GetItemData(stackedItem.itemId);
-                if (data != null)
-                    yield return new InventorySlotEntry(stackedItem.itemId, data, stackedItem.count);
-            }
-
-            yield break;
-        }
-
-        var countsByDisplayId = new Dictionary<string, int>();
-        var useItemIdByDisplayId = new Dictionary<string, string>();
-        var displayDataByDisplayId = new Dictionary<string, ItemData>();
-        var orderedDisplayIds = new List<string>();
-
         for (int i = 0; i < stackedItems.Count; i++)
         {
             InventoryManager.StackedInventoryItem stackedItem = stackedItems[i];
             if (string.IsNullOrEmpty(stackedItem.itemId) || stackedItem.count <= 0)
                 continue;
 
-            if (!DataManager.Instance.TryGetBattleInventorySlot(
-                    stackedItem.itemId,
-                    out string useItemId,
-                    out ItemData displayData) ||
-                displayData == null)
-            {
+            if (filterForBattle && !DataManager.Instance.IsBattleInventoryItem(stackedItem.itemId))
                 continue;
-            }
 
-            string dedupeKey = displayData.id;
-            if (countsByDisplayId.ContainsKey(dedupeKey))
-            {
-                countsByDisplayId[dedupeKey] += stackedItem.count;
+            ItemData data = DataManager.Instance.GetItemData(stackedItem.itemId);
+            if (data == null)
                 continue;
-            }
 
-            countsByDisplayId[dedupeKey] = stackedItem.count;
-            useItemIdByDisplayId[dedupeKey] = useItemId;
-            displayDataByDisplayId[dedupeKey] = displayData;
-            orderedDisplayIds.Add(dedupeKey);
-        }
-
-        for (int i = 0; i < orderedDisplayIds.Count; i++)
-        {
-            string dedupeKey = orderedDisplayIds[i];
-            yield return new InventorySlotEntry(
-                useItemIdByDisplayId[dedupeKey],
-                displayDataByDisplayId[dedupeKey],
-                countsByDisplayId[dedupeKey]);
+            yield return new InventorySlotEntry(stackedItem.itemId, data, stackedItem.count);
         }
     }
 
