@@ -9307,6 +9307,7 @@ GameObject:
   m_Component:
   - component: {fileID: 9126876768041219830}
   - component: {fileID: 1252078631365054271}
+  - component: {fileID: 8102030010000000001}
   m_Layer: 6
   m_Name: FactoryMap_Chapter3_Grid
   m_TagString: Untagged
@@ -9342,6 +9343,27 @@ Grid:
   m_CellGap: {x: 0, y: 0, z: 0}
   m_CellLayout: 0
   m_CellSwizzle: 0
+--- !u!114 &8102030010000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2619055166897143970}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8c4e2f1a9d3476581ab2c3d4e5f6071, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FactoryPipeSmokeSoundZone
+  enablePipeSmokeSound: 0
+  pipeSmokeClip1: {fileID: 8300000, guid: a0a544f63fe25e046a86f266aa431b44, type: 3}
+  pipeSmokeClip2: {fileID: 8300000, guid: 7763ad4c522d8c741bdad3a650d13c7e, type: 3}
+  proximityRadius: 2.5
+  volume: 0.22
+  playChance: 0.35
+  checkIntervalMinSeconds: 2
+  checkIntervalMaxSeconds: 4.5
+  cooldownAfterPlaySeconds: 5
 --- !u!1 &6100030000030000300
 GameObject:
   m_ObjectHideFlags: 0
@@ -9382,6 +9404,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2963294537631870830}
+  - component: {fileID: 7900030000030000300}
   m_Layer: 6
   m_Name: FactoryMap_Chapter3
   m_TagString: Untagged
@@ -9408,3 +9431,34 @@ Transform:
   - {fileID: 6100030000030000301}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7900030000030000300
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8015861829293111725}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4e8a1b2c3d4567890abcdef12345678, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FactoryAmbientSoundController
+  machineLoopClip: {fileID: 8300000, guid: 587cf5fd06b48e848b0702a9feb14a01, type: 3}
+  abandonedFactoryLoopClip: {fileID: 8300000, guid: 0756329bd7309174ead52d2d49a9dc4b, type: 3}
+  machineVolume: 0.28
+  abandonedVolume: 0.85
+  pauseDuringBattle: 1
+  pipeAmbienceClip: {fileID: 8300000, guid: 9d7d955f3ff194c4a9aca19560359ff3, type: 3}
+  pipeVolume: 0.22
+  pipeIntervalMinSeconds: 18
+  pipeIntervalMaxSeconds: 38
+  pipeFirstPlayDelaySeconds: 6
+  enableWaterDropAmbience: 0
+  waterDropAmbienceClip: {fileID: 8300000, guid: 7b9130c25c57be547903f89e9be0776b, type: 3}
+  waterDropVolume: 0.18
+  waterDropIntervalMinSeconds: 8
+  waterDropIntervalMaxSeconds: 16
+  waterDropFirstPlayDelaySeconds: 3
+  doublePlayChance: 0.35
+  doublePlayGapMinSeconds: 0.15
+  doublePlayGapMaxSeconds: 0.45
