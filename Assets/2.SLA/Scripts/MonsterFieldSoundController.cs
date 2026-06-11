@@ -4,8 +4,11 @@ using UnityEngine;
 [DisallowMultipleComponent]
 [RequireComponent(typeof(AudioSource))]
 [RequireComponent(typeof(Rigidbody2D))]
+[DefaultExecutionOrder(200)]
 public class MonsterFieldSoundController : MonoBehaviour
 {
+    private static readonly int IsMovingHash = Animator.StringToHash("IsMoving");
+
     [Header("Clips")]
     [SerializeField] private AudioClip idleClip;
     [SerializeField] private AudioClip runClip;
@@ -15,11 +18,11 @@ public class MonsterFieldSoundController : MonoBehaviour
     [Header("Proximity")]
     [Tooltip("플레이어가 이 거리 안에 들어오면 사운드를 재생합니다.")]
     [SerializeField] private float hearRange = 7f;
-    [Tooltip("몬스터 추적이 시작되는 거리와 맞춥니다. 이 거리 밖에서는 Idle만 재생합니다.")]
-    [SerializeField] private float chaseRange = 5f;
 
     [Header("Movement")]
     [SerializeField] private float movingThreshold = 0.01f;
+    [Tooltip("이동이 잠깐 끊겨도 Run 루프가 바로 Idle로 바뀌지 않도록 유지하는 시간(초)")]
+    [SerializeField] private float runLoopHoldDuration = 0.5f;
 
     private enum LoopKind
     {
@@ -28,11 +31,14 @@ public class MonsterFieldSoundController : MonoBehaviour
         Run
     }
 
-    private AudioSource loopSource;
+    private AudioSource fieldLoopSource;
     private AudioSource sfxSource;
     private Rigidbody2D rb;
+    private Animator animator;
+    private MonsterAnimationController animationController;
     private Transform player;
     private LoopKind currentLoop = LoopKind.None;
+    private float runLoopHoldTimer;
     private bool purificationPlaying;
     private Coroutine purificationRoutine;
     private bool gameManagerSubscribed;
@@ -40,26 +46,24 @@ public class MonsterFieldSoundController : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>();
+        animationController = GetComponent<MonsterAnimationController>();
         ConfigureAudioSources();
     }
 
     private void ConfigureAudioSources()
     {
         AudioSource[] sources = GetComponents<AudioSource>();
-        loopSource = sources[0];
-        loopSource.playOnAwake = false;
-        loopSource.loop = true;
-        loopSource.spatialBlend = 0f;
-        loopSource.volume = 1f;
+        fieldLoopSource = sources.Length > 0 ? sources[0] : gameObject.AddComponent<AudioSource>();
+        fieldLoopSource.playOnAwake = false;
+        fieldLoopSource.loop = true;
+        fieldLoopSource.spatialBlend = 0f;
+        fieldLoopSource.volume = 1f;
 
         if (sources.Length > 1)
-        {
             sfxSource = sources[1];
-        }
         else
-        {
             sfxSource = gameObject.AddComponent<AudioSource>();
-        }
 
         sfxSource.playOnAwake = false;
         sfxSource.loop = false;
@@ -86,7 +90,7 @@ public class MonsterFieldSoundController : MonoBehaviour
         StopLoop();
     }
 
-    private void Update()
+    private void LateUpdate()
     {
         if (!gameManagerSubscribed)
             TrySubscribeGameManager();
@@ -105,6 +109,7 @@ public class MonsterFieldSoundController : MonoBehaviour
         }
 
         UpdateLoopSound();
+        MaintainFieldLoopPlayback();
     }
 
     private void UpdateLoopSound()
@@ -118,21 +123,40 @@ public class MonsterFieldSoundController : MonoBehaviour
             return;
         }
 
-        if (idleClip != null)
+        if (idleClip == null)
         {
-            bool isChasingPlayer = IsPlayerWithinChaseRange() &&
-                rb != null &&
-                rb.linearVelocity.sqrMagnitude > movingThreshold * movingThreshold;
-
-            if (isChasingPlayer && runClip != null)
-                SetLoop(LoopKind.Run, runClip);
-            else
-                SetLoop(LoopKind.Idle, idleClip);
-
+            StopLoop();
             return;
         }
 
-        StopLoop();
+        if (ShouldPlayRunLoop() && runClip != null)
+            SetFieldLoop(LoopKind.Run, runClip);
+        else
+            SetFieldLoop(LoopKind.Idle, idleClip);
+    }
+
+    private void MaintainFieldLoopPlayback()
+    {
+        if (purificationPlaying || currentLoop == LoopKind.None || fieldLoopSource == null)
+            return;
+
+        AudioClip expectedClip = currentLoop == LoopKind.Run ? runClip : idleClip;
+        if (expectedClip == null)
+            return;
+
+        fieldLoopSource.loop = true;
+        fieldLoopSource.mute = false;
+
+        if (fieldLoopSource.clip != expectedClip)
+        {
+            fieldLoopSource.clip = expectedClip;
+            fieldLoopSource.time = 0f;
+            fieldLoopSource.Play();
+            return;
+        }
+
+        if (!fieldLoopSource.isPlaying)
+            fieldLoopSource.Play();
     }
 
     private void TryFindPlayer()
@@ -154,13 +178,57 @@ public class MonsterFieldSoundController : MonoBehaviour
         return distance <= hearRange;
     }
 
-    private bool IsPlayerWithinChaseRange()
+    private bool ShouldPlayRunLoop()
     {
-        if (player == null)
+        if (IsMonsterMoving())
+        {
+            runLoopHoldTimer = runLoopHoldDuration;
+            return true;
+        }
+
+        if (runLoopHoldTimer > 0f)
+        {
+            runLoopHoldTimer -= Time.deltaTime;
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool IsMonsterMoving()
+    {
+        if (IsInLocomotionAnimatorState())
+            return true;
+
+        if (animator != null && animator.isActiveAndEnabled && animator.GetBool(IsMovingHash))
+            return true;
+
+        if (animationController != null && animationController.IsMoving)
+            return true;
+
+        return rb != null &&
+               rb.linearVelocity.sqrMagnitude > movingThreshold * movingThreshold;
+    }
+
+    private bool IsInLocomotionAnimatorState()
+    {
+        if (animator == null || !animator.isActiveAndEnabled)
             return false;
 
-        float distance = Vector2.Distance(transform.position, player.position);
-        return distance <= chaseRange;
+        if (IsLocomotionState(animator.GetCurrentAnimatorStateInfo(0)))
+            return true;
+
+        if (animator.IsInTransition(0) && IsLocomotionState(animator.GetNextAnimatorStateInfo(0)))
+            return true;
+
+        return false;
+    }
+
+    private static bool IsLocomotionState(AnimatorStateInfo stateInfo)
+    {
+        return stateInfo.IsName("Monster_M001_Slime_Move")
+            || stateInfo.IsName("Monster_M002_Mold_Move")
+            || stateInfo.IsName("Monster_M003_Fire_Move");
     }
 
     private bool IsActiveBattleMonster()
@@ -175,42 +243,54 @@ public class MonsterFieldSoundController : MonoBehaviour
     private void UpdateBattleLoopSound()
     {
         if (idleClip != null)
-            SetLoop(LoopKind.Idle, idleClip);
+            SetFieldLoop(LoopKind.Idle, idleClip);
         else
             StopLoop();
     }
 
-    private void SetLoop(LoopKind kind, AudioClip clip)
+    private void SetFieldLoop(LoopKind kind, AudioClip clip)
     {
-        if (purificationPlaying)
+        if (purificationPlaying || clip == null || fieldLoopSource == null)
             return;
 
-        if (currentLoop == kind && loopSource.isPlaying && loopSource.clip == clip)
-            return;
+        bool kindChanged = currentLoop != kind;
+        bool clipChanged = fieldLoopSource.clip != clip;
+
+        fieldLoopSource.loop = true;
+        fieldLoopSource.mute = false;
+
+        if (clipChanged)
+        {
+            fieldLoopSource.clip = clip;
+            fieldLoopSource.time = 0f;
+            fieldLoopSource.Play();
+        }
+        else if (!fieldLoopSource.isPlaying)
+        {
+            fieldLoopSource.time = 0f;
+            fieldLoopSource.Play();
+        }
+
+        if (kindChanged)
+        {
+            Debug.Log(
+                $"[MonsterFieldSoundController] {gameObject.name} 루프 재생 — {kind}, " +
+                $"clip={GetClipName(clip)}, animMove={IsInLocomotionAnimatorState()}, " +
+                $"battle={IsBattleActive()}");
+        }
 
         currentLoop = kind;
-        loopSource.mute = false;
-        loopSource.loop = true;
-        loopSource.clip = clip;
-        loopSource.Play();
-
-        Debug.Log(
-            $"[MonsterFieldSoundController] {gameObject.name} 루프 재생 — {kind}, " +
-            $"clip={GetClipName(clip)}, battle={IsBattleActive()}");
     }
 
     private void StopLoop()
     {
-        bool wasPlaying = loopSource != null && loopSource.isPlaying;
+        bool wasPlaying = fieldLoopSource != null && fieldLoopSource.isPlaying;
         LoopKind previousLoop = currentLoop;
         currentLoop = LoopKind.None;
+        runLoopHoldTimer = 0f;
 
-        if (loopSource == null)
-            return;
-
-        loopSource.mute = false;
-        if (loopSource.isPlaying)
-            loopSource.Stop();
+        if (fieldLoopSource != null && fieldLoopSource.isPlaying)
+            fieldLoopSource.Stop();
 
         if (wasPlaying)
         {
@@ -222,20 +302,42 @@ public class MonsterFieldSoundController : MonoBehaviour
 
     private void SuppressLoopForPurification()
     {
-        bool wasPlaying = loopSource != null && loopSource.isPlaying;
         LoopKind previousLoop = currentLoop;
         currentLoop = LoopKind.None;
 
-        if (loopSource == null)
-            return;
-
-        loopSource.mute = true;
-        if (loopSource.isPlaying)
-            loopSource.Stop();
+        if (fieldLoopSource != null)
+        {
+            if (fieldLoopSource.isPlaying)
+                fieldLoopSource.Stop();
+        }
 
         Debug.Log(
-            $"[MonsterFieldSoundController] {gameObject.name} 정화 연출용 Idle 억제 — " +
-            $"previous={previousLoop}, wasPlaying={wasPlaying}");
+            $"[MonsterFieldSoundController] {gameObject.name} 정화 연출용 루프 억제 — previous={previousLoop}");
+    }
+
+    private void MuteFieldLoopForSfx()
+    {
+        if (fieldLoopSource != null && fieldLoopSource.isPlaying)
+            fieldLoopSource.Pause();
+    }
+
+    private void ResumeFieldLoopAfterSfx()
+    {
+        if (fieldLoopSource == null || currentLoop == LoopKind.None)
+            return;
+
+        AudioClip clip = currentLoop == LoopKind.Run ? runClip : idleClip;
+        if (clip == null)
+            return;
+
+        fieldLoopSource.loop = true;
+        fieldLoopSource.mute = false;
+        fieldLoopSource.clip = clip;
+
+        if (!fieldLoopSource.isPlaying)
+            fieldLoopSource.Play();
+        else
+            fieldLoopSource.UnPause();
     }
 
     private void TrySubscribeGameManager()
@@ -283,10 +385,9 @@ public class MonsterFieldSoundController : MonoBehaviour
         if (!IsBattleActive() || attackClip == null || sfxSource == null)
             yield break;
 
-        bool resumeIdleAfterAttack = currentLoop != LoopKind.None;
+        bool resumeLoopAfterAttack = currentLoop != LoopKind.None;
 
-        if (loopSource != null && loopSource.isPlaying)
-            loopSource.mute = true;
+        MuteFieldLoopForSfx();
 
         if (sfxSource.isPlaying)
             sfxSource.Stop();
@@ -307,13 +408,11 @@ public class MonsterFieldSoundController : MonoBehaviour
         if (sfxSource.isPlaying)
             sfxSource.Stop();
 
-        if (loopSource != null)
-            loopSource.mute = false;
-
-        if (!resumeIdleAfterAttack || !IsBattleActive() || !IsActiveBattleMonster())
+        if (!resumeLoopAfterAttack || !IsBattleActive() || !IsActiveBattleMonster())
             yield break;
 
         UpdateBattleLoopSound();
+        ResumeFieldLoopAfterSfx();
     }
 
     public void PlayBattlePurifySound(float hitAnimationDuration)
@@ -378,11 +477,9 @@ public class MonsterFieldSoundController : MonoBehaviour
             yield break;
         }
 
-        if (loopSource != null)
-            loopSource.mute = false;
-
         Debug.Log($"[MonsterFieldSoundController] {gameObject.name} Idle 루프 재개");
         UpdateBattleLoopSound();
+        ResumeFieldLoopAfterSfx();
     }
 
     private void CancelPurificationPlayback()
@@ -394,9 +491,6 @@ public class MonsterFieldSoundController : MonoBehaviour
         }
 
         purificationPlaying = false;
-
-        if (loopSource != null)
-            loopSource.mute = false;
 
         if (sfxSource != null && sfxSource.isPlaying)
             sfxSource.Stop();

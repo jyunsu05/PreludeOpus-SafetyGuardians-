@@ -21,6 +21,8 @@ public class MonsterAnimationController : MonoBehaviour
     private int isMovingHash;
     private bool hasIsMovingParameter;
 
+    public bool IsMoving { get; private set; }
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -41,12 +43,12 @@ public class MonsterAnimationController : MonoBehaviour
             return;
 
         Vector2 velocity = rb.linearVelocity;
-        bool isMoving = velocity.sqrMagnitude > movingThreshold * movingThreshold;
+        IsMoving = velocity.sqrMagnitude > movingThreshold * movingThreshold;
 
         if (hasIsMovingParameter && animator != null)
-            animator.SetBool(isMovingHash, isMoving);
+            animator.SetBool(isMovingHash, IsMoving);
 
-        if (!isMoving)
+        if (!IsMoving)
             return;
 
         UpdateFacingFromVelocity(velocity);
