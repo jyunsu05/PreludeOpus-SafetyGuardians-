@@ -2734,6 +2734,10 @@ MonoBehaviour:
   deactivateOnStop: 1
   useClipLengthForDuration: 1
   animationDuration: 1
+  movementBeatNormalizedTimes:
+  - 0
+  - 0.33333334
+  - 0.6666667
 --- !u!1 &4911293580507778759
 GameObject:
   m_ObjectHideFlags: 0
@@ -4368,6 +4372,10 @@ MonoBehaviour:
   fireMonsterAttackClip: {fileID: 8300000, guid: c8a71a4906826744dbc60bed74b54573, type: 3}
   searchLensPresenter: {fileID: 6119235269211238354}
   searchAnimationDuration: 1
+  searchSoundClip: {fileID: 8300000, guid: 1b32acbeff8727049bf64599d3fa585a, type: 3}
+  searchSoundVolume: 5
+  purificationUiSoundClip: {fileID: 8300000, guid: 42280de1b22dfda4db176575ca748b20, type: 3}
+  escapeSoundClip: {fileID: 8300000, guid: e9242419f3c62bb429ed3f91a964e0d2, type: 3}
 --- !u!1 &8234567890123456781
 GameObject:
   m_ObjectHideFlags: 0

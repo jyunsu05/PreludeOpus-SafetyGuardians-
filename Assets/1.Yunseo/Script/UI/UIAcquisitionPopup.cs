@@ -44,6 +44,8 @@ public class UIAcquisitionPopup : MonoBehaviour
 
         if (rewardMessageText != null)
             rewardMessageText.text = $"{itemName}을(를) {count}개 수집했습니다.\n아이템은 인벤토리에 자동으로 들어갑니다.";
+
+        UIButtonClickSoundPlayer.Instance?.PlayBattleItemPopupSound();
     }
 
     private string ResolveInventoryItemId(string itemId)

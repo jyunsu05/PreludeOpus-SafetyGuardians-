@@ -58,3 +58,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIButtonClickSoundPlayer
   clickClip: {fileID: 8300000, guid: 4ea285d9fa9ae3244bfb3c5ac58b49ec, type: 3}
+  factoryItemAcquireClip: {fileID: 8300000, guid: e56b0f4d1a3e63244b469142ea60c116, type: 3}
+  battleItemPopupClip: {fileID: 8300000, guid: 7f9a2d43390c59a4b9f591c5bfcb795c, type: 3}

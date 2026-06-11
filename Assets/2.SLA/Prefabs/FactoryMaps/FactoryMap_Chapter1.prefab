@@ -8209,7 +8209,7 @@ MonoBehaviour:
   pipeFirstPlayDelaySeconds: 6
   enableWaterDropAmbience: 1
   waterDropAmbienceClip: {fileID: 8300000, guid: 7b9130c25c57be547903f89e9be0776b, type: 3}
-  waterDropVolume: 0.18
+  waterDropVolume: 0.35
   waterDropIntervalMinSeconds: 8
   waterDropIntervalMaxSeconds: 16
   waterDropFirstPlayDelaySeconds: 3

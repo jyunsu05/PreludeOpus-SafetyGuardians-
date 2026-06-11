@@ -157,6 +157,7 @@ public class GameManager : MonoBehaviour
 
         isFieldMovementFrozen = true;
         StopAllFieldMovementImmediate();
+        GameplayAudioGuard.BlockAndStopAll();
         Debug.Log("[GameManager] 게임오버 — 필드 이동 정지");
     }
 
@@ -170,6 +171,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void ResetAllSystems()
     {
+        GameplayAudioGuard.Unblock();
         ClearFieldMovementFreeze();
         ResetToField();
         BattleEncounterContext.ClearFleeExit();

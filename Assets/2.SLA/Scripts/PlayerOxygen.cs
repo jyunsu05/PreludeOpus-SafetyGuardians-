@@ -303,7 +303,10 @@ public class PlayerOxygen : MonoBehaviour
 
     private void UpdateOxygenSiren()
     {
-        if (isOxygenGameOver || oxygenSirenClip == null || oxygenSirenSource == null)
+        if (!GameplayAudioGuard.CanPlay ||
+            isOxygenGameOver ||
+            oxygenSirenClip == null ||
+            oxygenSirenSource == null)
         {
             StopOxygenSiren();
             return;

@@ -5,6 +5,8 @@ public class UIGameOver : MonoBehaviour
 {
     private const string OpeningSceneName = "OpeningScene";
 
+    [SerializeField] private AudioClip gameOverSoundClip;
+
     public void Show()
     {
         EnsureActiveInHierarchy();
@@ -12,7 +14,17 @@ public class UIGameOver : MonoBehaviour
         transform.SetAsLastSibling();
 
         GameManager.Instance?.EnterGameOverFreeze();
+        PlayGameOverSound();
+        UIButtonClickSoundPlayer.Instance?.RegisterButtonsInHierarchy(transform);
         Debug.Log("[UIGameOver] 게임오버 화면 표시");
+    }
+
+    private void PlayGameOverSound()
+    {
+        if (gameOverSoundClip == null)
+            return;
+
+        UIButtonClickSoundPlayer.Instance?.PlayOneShotClip(gameOverSoundClip, allowWhenBlocked: true);
     }
 
     public void Close()

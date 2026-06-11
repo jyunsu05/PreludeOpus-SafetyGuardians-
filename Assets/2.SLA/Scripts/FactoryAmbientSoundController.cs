@@ -27,7 +27,7 @@ public class FactoryAmbientSoundController : MonoBehaviour
     [Header("Water Drop Ambience")]
     [SerializeField] private bool enableWaterDropAmbience = true;
     [SerializeField] private AudioClip waterDropAmbienceClip;
-    [SerializeField] [Range(0f, 1f)] private float waterDropVolume = 0.18f;
+    [SerializeField] [Range(0f, 1f)] private float waterDropVolume = 0.35f;
     [SerializeField] private float waterDropIntervalMinSeconds = 8f;
     [SerializeField] private float waterDropIntervalMaxSeconds = 16f;
     [SerializeField] private float waterDropFirstPlayDelaySeconds = 3f;
@@ -45,6 +45,7 @@ public class FactoryAmbientSoundController : MonoBehaviour
     private Coroutine waterDropRoutine;
     private bool gameManagerSubscribed;
     private bool ambienceStoppedForBattle;
+    private bool ambienceStoppedForGameplayBlock;
 
     private void Awake()
     {
@@ -54,6 +55,9 @@ public class FactoryAmbientSoundController : MonoBehaviour
     private void OnEnable()
     {
         TrySubscribeGameManager();
+
+        if (!GameplayAudioGuard.IsBlocked)
+            ambienceStoppedForGameplayBlock = false;
 
         if (ShouldPlayAmbience())
             StartAllAmbience();
@@ -73,6 +77,13 @@ public class FactoryAmbientSoundController : MonoBehaviour
         if (!gameManagerSubscribed)
             TrySubscribeGameManager();
 
+        if (GameplayAudioGuard.IsBlocked)
+        {
+            if (!ambienceStoppedForGameplayBlock)
+                StopForGameplayAudioBlock();
+            return;
+        }
+
         if (!pauseDuringBattle)
             return;
 
@@ -80,6 +91,12 @@ public class FactoryAmbientSoundController : MonoBehaviour
             StopAmbienceForBattle();
         else if (ambienceStoppedForBattle)
             ResumeAmbienceAfterBattle();
+    }
+
+    public void StopForGameplayAudioBlock()
+    {
+        ambienceStoppedForGameplayBlock = true;
+        StopAllAmbience();
     }
 
     private void ConfigureAudioSources()
@@ -137,6 +154,9 @@ public class FactoryAmbientSoundController : MonoBehaviour
 
     private bool ShouldPlayAmbience()
     {
+        if (GameplayAudioGuard.IsBlocked || ambienceStoppedForGameplayBlock)
+            return false;
+
         return !pauseDuringBattle || !IsBattleActive();
     }
 

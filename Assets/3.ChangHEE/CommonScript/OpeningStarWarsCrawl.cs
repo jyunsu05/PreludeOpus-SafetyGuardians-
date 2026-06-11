@@ -55,6 +55,9 @@ public class OpeningStarWarsCrawl : MonoBehaviour
     [Header("Game Start Button")]
     public GameObject gameStartButton;
 
+    [Header("UI Sound")]
+    [SerializeField] AudioClip buttonClickClip;
+
     [Header("Transition")]
     [SerializeField] TransitionMode transitionMode = TransitionMode.LoadScene;
     [SerializeField] string nextSceneName = "MainGameScenes";
@@ -149,9 +152,39 @@ public class OpeningStarWarsCrawl : MonoBehaviour
         BuildPressAnyKeyText();
         BuildExitFadeOverlay();
         EnsureOpeningCanvasGroup();
+        PreloadButtonClickClip();
+        GameplayAudioGuard.Unblock();
         BindGameStartButton();
         ResetCrawl();
         BeginEntryFade();
+    }
+
+    void PreloadButtonClickClip()
+    {
+        if (buttonClickClip == null || buttonClickClip.preloadAudioData)
+            return;
+
+        if (buttonClickClip.loadState == AudioDataLoadState.Unloaded)
+            buttonClickClip.LoadAudioData();
+    }
+
+    void PlayGameStartClickSound()
+    {
+        if (buttonClickClip != null)
+        {
+            UIButtonClickSoundPlayer.PlaySurvivingOneShot(buttonClickClip);
+            return;
+        }
+
+        UIButtonClickSoundPlayer.Instance?.PlayClickSound(allowWhenBlocked: true);
+    }
+
+    float GetGameStartClickSoundDelay()
+    {
+        if (buttonClickClip == null)
+            return 0.08f;
+
+        return Mathf.Clamp(buttonClickClip.length * 0.35f, 0.08f, 0.2f);
     }
 
     void BindGameStartButton()
@@ -179,6 +212,13 @@ public class OpeningStarWarsCrawl : MonoBehaviour
         Debug.Log("[OpeningStarWarsCrawl] [게임 시작] 버튼 클릭 — 메인 게임 씬으로 이동합니다.");
         openingFinished = true;
         StopActiveFadeRoutine();
+        StartCoroutine(PlayClickSoundThenTransition());
+    }
+
+    IEnumerator PlayClickSoundThenTransition()
+    {
+        PlayGameStartClickSound();
+        yield return new WaitForSecondsRealtime(GetGameStartClickSoundDelay());
         CompleteOpeningTransition();
     }
 
