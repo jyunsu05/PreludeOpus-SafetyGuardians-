@@ -2890,6 +2890,22 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4191507478829761467, guid: 3733886cf5e0c7940b04d6b0f4238d70, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 178.7696
+      objectReference: {fileID: 0}
+    - target: {fileID: 4191507478829761467, guid: 3733886cf5e0c7940b04d6b0f4238d70, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -317
+      objectReference: {fileID: 0}
+    - target: {fileID: 4316773858495545034, guid: 3733886cf5e0c7940b04d6b0f4238d70, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 167.0909
+      objectReference: {fileID: 0}
+    - target: {fileID: 4316773858495545034, guid: 3733886cf5e0c7940b04d6b0f4238d70, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -98
+      objectReference: {fileID: 0}
     - target: {fileID: 8197307416412204549, guid: 3733886cf5e0c7940b04d6b0f4238d70, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
@@ -3483,6 +3499,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1708929172}
     m_Modifications:
+    - target: {fileID: 230074196624234312, guid: 01d70f8a66948dd4ab664ca39c58a5bb, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 3939047224135020017, guid: 9c0056124d47abe439c5d23d60f47440, type: 3}
     - target: {fileID: 1043694137895513498, guid: 01d70f8a66948dd4ab664ca39c58a5bb, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -3575,6 +3595,10 @@ PrefabInstance:
       propertyPath: m_text
       value: "\uBAAC\uC2A4\uD130\uB97C \uC131\uACF5\uC801\uC73C\uB85C \uC815\uD654\uD558\uC600\uC2B5\uB2C8\uB2E4!\n\uC0B0\uC18C\uAC8C\uC774\uC9C0
         30\uC744 \uD68C\uBCF5\uD588\uC2B5\uB2C8\uB2E4."
+      objectReference: {fileID: 0}
+    - target: {fileID: 6273026351287612135, guid: 01d70f8a66948dd4ab664ca39c58a5bb, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 144.0792
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
