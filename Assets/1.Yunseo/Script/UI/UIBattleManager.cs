@@ -83,6 +83,7 @@ public class UIBattleManager : MonoBehaviour
 
     private Coroutine purifyAnimationRoutine;
     private Coroutine searchAnimationRoutine;
+    private Coroutine revealMonsterImageRoutine;
     private AudioSource playerHitAudioSource;
     private bool isPlayerHitEffectPlaying;
 
@@ -122,8 +123,22 @@ public class UIBattleManager : MonoBehaviour
     void Awake()
     {
         DisableNestedDuplicateManagers();
+        SetMonsterImageVisible(false);
         if (enabled)
             ConfigurePlayerHitAudioSource();
+    }
+
+    public static void PrepareFieldBattlePresentation(GameObject battleSceneRoot, string monsterId)
+    {
+        if (battleSceneRoot == null || string.IsNullOrEmpty(monsterId))
+            return;
+
+        UIBattleManager manager = battleSceneRoot.GetComponentInChildren<UIBattleManager>(true);
+        if (manager == null)
+            return;
+
+        manager.SetMonsterImageVisible(false);
+        manager.SetMonsterById(monsterId);
     }
 
     private void DisableNestedDuplicateManagers()
@@ -213,6 +228,7 @@ public class UIBattleManager : MonoBehaviour
         hasFinalizedContaminationForSession = false;
         isProcessingBattleExit = false;
         SubscribeBattleEnded();
+        SetMonsterImageVisible(false);
         ExitBattle();
         NotifyEscapeUnlockedForNewBattle();
         ResetBattleUIState();
@@ -225,6 +241,7 @@ public class UIBattleManager : MonoBehaviour
         LockPlayerMovementAtBattleEntry();
         LockMonsterMovementAtBattleEntry();
         DisableContaminationSliderDirectInput();
+        ScheduleRevealMonsterImage();
     }
 
     private void ApplyFieldPrepaidBattleEntryState()
@@ -250,6 +267,13 @@ public class UIBattleManager : MonoBehaviour
 
     void OnDisable()
     {
+        if (revealMonsterImageRoutine != null)
+        {
+            StopCoroutine(revealMonsterImageRoutine);
+            revealMonsterImageRoutine = null;
+        }
+
+        SetMonsterImageVisible(false);
         UnsubscribeBattleEnded();
         ExitBattle();
         FinalizeContaminationOnce();
@@ -921,6 +945,54 @@ public class UIBattleManager : MonoBehaviour
         isProcessingBattleExit = false;
         SetEscapeLocked(false);
         UIButtonContainer.SetAllBattleInputBlocked(false);
+        SetMonsterImageVisible(false);
+    }
+
+    private void SetMonsterImageVisible(bool visible)
+    {
+        if (monsterImage == null)
+            return;
+
+        if (!visible)
+        {
+            monsterImage.enabled = false;
+            Color hidden = monsterImage.color;
+            hidden.a = 0f;
+            monsterImage.color = hidden;
+            return;
+        }
+
+        if (monsterImage.sprite == null)
+        {
+            monsterImage.enabled = false;
+            return;
+        }
+
+        Color shown = monsterImage.color;
+        shown.a = 1f;
+        monsterImage.color = shown;
+        monsterImage.enabled = true;
+    }
+
+    private void ScheduleRevealMonsterImage()
+    {
+        if (revealMonsterImageRoutine != null)
+            StopCoroutine(revealMonsterImageRoutine);
+
+        revealMonsterImageRoutine = StartCoroutine(RevealMonsterImageWhenReady());
+    }
+
+    private IEnumerator RevealMonsterImageWhenReady()
+    {
+        SetMonsterImageVisible(false);
+        yield return null;
+        yield return new WaitForEndOfFrame();
+
+        if (monsterImage != null && monsterImage.sprite == null)
+            LoadMonsterFromData();
+
+        SetMonsterImageVisible(monsterImage != null && monsterImage.sprite != null);
+        revealMonsterImageRoutine = null;
     }
 
     private void StopPurifyAnimationRoutine()
@@ -1105,7 +1177,10 @@ public class UIBattleManager : MonoBehaviour
             difficultyText.text = "Unknown";
 
         if (monsterImage != null)
+        {
             monsterImage.sprite = null;
+            SetMonsterImageVisible(false);
+        }
 
         monsterSpriteLooper?.StopAll();
 
@@ -1317,14 +1392,20 @@ public class UIBattleManager : MonoBehaviour
             !string.IsNullOrEmpty(data.image_key) &&
             monsterSpriteLooper.ConfigureFromAtlas(data.image_key))
         {
-            monsterSpriteLooper.PlayIdleLoop();
+            if (monsterSpriteLooper.isActiveAndEnabled)
+                monsterSpriteLooper.PlayIdleLoop();
+
+            SetMonsterImageVisible(false);
             return;
         }
 
         monsterSpriteLooper?.StopAll();
 
         if (monsterImage != null)
+        {
             monsterImage.sprite = GetMonsterSprite(data);
+            SetMonsterImageVisible(monsterImage.sprite != null);
+        }
     }
 
     private void ResolveMonsterSpriteLooper()

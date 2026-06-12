@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 [InitializeOnLoad]
 public static class AutoStartFromOpeningScene
 {
-    private const string OpeningScenePath = "Assets/3.ChangHEE/Scene/OpeningScene.unity";
+    private const string GameStartScreenScenePath = "Assets/Scenes/Game start screen.unity";
 
     static AutoStartFromOpeningScene()
     {
@@ -18,26 +18,26 @@ public static class AutoStartFromOpeningScene
         if (state != PlayModeStateChange.ExitingEditMode)
             return;
 
-        var openingScene = SceneUtility.GetBuildIndexByScenePath(OpeningScenePath);
-        if (openingScene < 0)
+        var gameStartScene = SceneUtility.GetBuildIndexByScenePath(GameStartScreenScenePath);
+        if (gameStartScene < 0)
         {
             Debug.LogWarning(
-                $"[AutoStartFromOpeningScene] '{OpeningScenePath}' is not in Build Settings. " +
+                $"[AutoStartFromOpeningScene] '{GameStartScreenScenePath}' is not in Build Settings. " +
                 "Play mode will start from the currently open scene.");
             return;
         }
 
-        if (openingScene != 0)
+        if (gameStartScene != 0)
         {
             Debug.LogWarning(
-                $"[AutoStartFromOpeningScene] Opening scene is at build index {openingScene}, not 0. " +
+                $"[AutoStartFromOpeningScene] Game start screen is at build index {gameStartScene}, not 0. " +
                 "Please move it to the top of File > Build Settings.");
         }
 
-        var sceneAsset = AssetDatabase.LoadAssetAtPath<SceneAsset>(OpeningScenePath);
+        var sceneAsset = AssetDatabase.LoadAssetAtPath<SceneAsset>(GameStartScreenScenePath);
         if (sceneAsset == null)
         {
-            Debug.LogError($"[AutoStartFromOpeningScene] Failed to load scene asset at '{OpeningScenePath}'.");
+            Debug.LogError($"[AutoStartFromOpeningScene] Failed to load scene asset at '{GameStartScreenScenePath}'.");
             return;
         }
 

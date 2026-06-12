@@ -7,6 +7,8 @@ using UnityEngine;
 [RequireComponent(typeof(Collider2D))]
 public class MonsterBattleRegistration : MonoBehaviour
 {
+    private bool battleSpritesPreloaded;
+
     private void OnTriggerEnter2D(Collider2D other)
     {
         TryRegister(other);
@@ -21,6 +23,13 @@ public class MonsterBattleRegistration : MonoBehaviour
     {
         if (!other.CompareTag("Player"))
             return;
+
+        if (!battleSpritesPreloaded)
+        {
+            GameObject monsterRoot = transform.root != null ? transform.root.gameObject : gameObject;
+            AtlasManager.Instance?.PreloadMonsterBattleSpritesForMonsterObject(monsterRoot);
+            battleSpritesPreloaded = true;
+        }
 
         BattleEncounterContext.SetEncounteredMonsterObject(gameObject);
 
