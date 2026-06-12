@@ -991,7 +991,15 @@ public class UIBattleManager : MonoBehaviour
         if (monsterImage != null && monsterImage.sprite == null)
             LoadMonsterFromData();
 
-        SetMonsterImageVisible(monsterImage != null && monsterImage.sprite != null);
+        bool canShowMonsterImage = monsterImage != null && monsterImage.sprite != null;
+        SetMonsterImageVisible(canShowMonsterImage);
+
+        if (canShowMonsterImage)
+        {
+            ResolveMonsterSpriteLooper();
+            monsterSpriteLooper?.PlayIdleLoop();
+        }
+
         revealMonsterImageRoutine = null;
     }
 
@@ -1392,9 +1400,7 @@ public class UIBattleManager : MonoBehaviour
             !string.IsNullOrEmpty(data.image_key) &&
             monsterSpriteLooper.ConfigureFromAtlas(data.image_key))
         {
-            if (monsterSpriteLooper.isActiveAndEnabled)
-                monsterSpriteLooper.PlayIdleLoop();
-
+            monsterSpriteLooper.PlayIdleLoop();
             SetMonsterImageVisible(false);
             return;
         }
