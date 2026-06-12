@@ -10,7 +10,10 @@ using TMPro;
 /// </summary>
 public class UIGameClearStats : MonoBehaviour
 {
-    public static bool IsVisible { get; private set; }
+    private static UIGameClearStats visibleInstance;
+
+    public static bool IsVisible =>
+        visibleInstance != null && visibleInstance.gameObject.activeInHierarchy;
 
     private const int DetailPageGraph = 0;
     private const int DetailPageStats = 1;
@@ -75,12 +78,15 @@ public class UIGameClearStats : MonoBehaviour
     [Header("--- Options ---")]
     [SerializeField] private bool showScoreInSummary = true;
 
+    [Header("--- Audio ---")]
+    [SerializeField] private AudioClip gameClearSoundClip;
+
     private bool hasShownMainPanel;
+    private bool hasPlayedClearSound;
     private int detailPageIndex = DetailPageGraph;
 
     private void Awake()
     {
-        IsVisible = false;
         ResolveReferences();
         WireButtons();
         SetDetailPage(DetailPageGraph);
@@ -89,7 +95,8 @@ public class UIGameClearStats : MonoBehaviour
 
     private void OnDisable()
     {
-        IsVisible = false;
+        if (visibleInstance == this)
+            visibleInstance = null;
     }
 
     private void Start()
@@ -101,7 +108,9 @@ public class UIGameClearStats : MonoBehaviour
     public void ResetShowState()
     {
         hasShownMainPanel = false;
-        IsVisible = false;
+        hasPlayedClearSound = false;
+        if (visibleInstance == this)
+            visibleInstance = null;
         SetDetailPage(DetailPageGraph);
     }
 
@@ -118,13 +127,25 @@ public class UIGameClearStats : MonoBehaviour
         EnsureOnRootCanvas();
         transform.SetAsLastSibling();
         hasShownMainPanel = true;
-        IsVisible = true;
         gameObject.SetActive(true);
+        visibleInstance = this;
+        PlayGameClearSound();
+    }
+
+    private void PlayGameClearSound()
+    {
+        if (hasPlayedClearSound || gameClearSoundClip == null)
+            return;
+
+        hasPlayedClearSound = true;
+        UIButtonClickSoundPlayer.Instance?.PlayOneShotClip(gameClearSoundClip, allowWhenBlocked: true);
     }
 
     public void Close()
     {
-        IsVisible = false;
+        if (visibleInstance == this)
+            visibleInstance = null;
+
         gameObject.SetActive(false);
     }
 

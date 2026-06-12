@@ -7620,6 +7620,7 @@ MonoBehaviour:
     dataText: {fileID: 2134818070191406227}
   clearIconAtlas: {fileID: 100100200, guid: 43a83389671c7ce41ad60f3d4ed0f773, type: 3}
   showScoreInSummary: 1
+  gameClearSoundClip: {fileID: 8300000, guid: 9c5743483f053164698c1232a703dd89, type: 3}
 --- !u!1 &8004874831961342650
 GameObject:
   m_ObjectHideFlags: 0
