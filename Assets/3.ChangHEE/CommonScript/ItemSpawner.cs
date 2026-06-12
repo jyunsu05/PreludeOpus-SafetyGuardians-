@@ -94,10 +94,17 @@ public class ItemSpawner : MonoBehaviour
             return;
         }
 
+        if (Application.isPlaying)
+        {
+            MapInitializer.RefreshActiveMapColliders();
+            Physics2D.SyncTransforms();
+        }
+
         int count = Mathf.Min(spawnCount, pointCount);
         List<Transform> spawnPoints = GetShuffledSpawnPoints();
         List<int> itemTypeOrder = GetItemTypeOrder(count);
         int[] itemTypeCounts = new int[ItemTypeCount];
+        List<Vector2> usedSpawnPositions = new List<Vector2>(count);
         int spawnedCount = 0;
 
         for (int i = 0; i < count; i++)
@@ -111,10 +118,17 @@ public class ItemSpawner : MonoBehaviour
             if (prefab == null)
                 continue;
 
-            GameObject item = Instantiate(prefab, spawnPoint.position, spawnPoint.rotation);
+            float pickupRadius = FieldSpawnSafety.GetItemPickupRadius(prefab);
+            Vector3 spawnPosition = FieldSpawnSafety.ResolveSpawnPosition(
+                spawnPoint.position,
+                pickupRadius,
+                usedSpawnPositions);
+
+            GameObject item = Instantiate(prefab, spawnPosition, spawnPoint.rotation);
             if (item == null)
                 continue;
 
+            usedSpawnPositions.Add(spawnPosition);
             GameManager.EnsureFieldEntityVisible(item);
             spawnedItems.Add(item);
             itemTypeCounts[itemType]++;
@@ -205,6 +219,13 @@ public class ItemSpawner : MonoBehaviour
 
     private void OnValidate()
     {
+        if (itemSpawnPointParent == null)
+        {
+            Transform child = transform.Find("ItemSpawnPoints");
+            if (child != null)
+                itemSpawnPointParent = child;
+        }
+
         EnsureSpawnCountsByStage();
 
         if (itemPrefabs == null || itemPrefabs.Length != ItemTypeCount)

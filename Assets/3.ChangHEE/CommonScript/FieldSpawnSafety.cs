@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Tilemaps;
 
 /// <summary>
-/// 필드 몬스터 스폰 위치가 벽 타일·콜라이더와 겹치지 않도록 보정합니다.
+/// 필드 몬스터·아이템 스폰 위치가 벽 타일·콜라이더와 겹치지 않도록 보정합니다.
 /// </summary>
 public static class FieldSpawnSafety
 {
@@ -11,6 +11,31 @@ public static class FieldSpawnSafety
     private const float ClearancePadding = 0.08f;
     private const int MaxSearchRings = 14;
     private const float MinSpawnSeparationMultiplier = 1.75f;
+
+    private const float DefaultItemPickupRadius = 0.45f;
+
+    public static float GetItemPickupRadius(GameObject prefab)
+    {
+        if (prefab == null)
+            return DefaultItemPickupRadius;
+
+        float scale = Mathf.Max(
+            Mathf.Abs(prefab.transform.lossyScale.x),
+            Mathf.Abs(prefab.transform.lossyScale.y));
+
+        CircleCollider2D circle = prefab.GetComponent<CircleCollider2D>();
+        if (circle != null && circle.enabled && circle.isTrigger)
+            return Mathf.Max(circle.radius * scale, DefaultItemPickupRadius);
+
+        CapsuleCollider2D capsule = prefab.GetComponent<CapsuleCollider2D>();
+        if (capsule != null && capsule.enabled && capsule.isTrigger)
+        {
+            float halfExtent = Mathf.Max(capsule.size.x, capsule.size.y) * 0.5f * scale;
+            return Mathf.Max(halfExtent, DefaultItemPickupRadius);
+        }
+
+        return DefaultItemPickupRadius;
+    }
 
     public static float GetMonsterBodyRadius(GameObject prefab)
     {
