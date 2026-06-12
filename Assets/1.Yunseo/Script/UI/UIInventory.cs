@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -259,8 +260,15 @@ public class UIInventory : MonoBehaviour
             return;
         }
 
+        bool isPurifyItem = IsMonsterPurifyBattleItem(itemId, battleManager);
+        if (!isPurifyItem)
+            BattleAutoManager.Instance?.BlockAutoTurnForManualAction();
+
         if (!battleManager.UseItem(itemId))
             return;
+
+        if (isPurifyItem)
+            BattleAutoManager.Instance?.EngageAutoBattleAfterManualPurify();
 
         if (battleManager.IsScanned)
         {
@@ -269,6 +277,21 @@ public class UIInventory : MonoBehaviour
                 battleManager.GetDescriptionDisplayText(),
                 battleManager.BuildInventoryStatusText());
         }
+    }
+
+    private static bool IsMonsterPurifyBattleItem(string itemId, UIBattleManager battleManager)
+    {
+        if (string.IsNullOrEmpty(itemId) || battleManager == null || DataManager.Instance == null)
+            return false;
+
+        if (!DataManager.Instance.IsMonsterPurificationItem(itemId))
+            return false;
+
+        string requiredItemId = battleManager.GetRequiredPurifyItemId();
+        if (InventoryManager.Instance != null)
+            return InventoryManager.Instance.IsConsumableForRequirement(itemId, requiredItemId);
+
+        return string.Equals(itemId, requiredItemId, StringComparison.Ordinal);
     }
 
     private UIBattleManager ResolveBattleManager()
