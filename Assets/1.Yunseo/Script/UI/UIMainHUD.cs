@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -23,6 +24,7 @@ public class UIMainHUD : MonoBehaviour
     private bool chapterSubscribed;
     private bool pollutionSubscribed;
     private bool inventorySubscribed;
+    private Coroutine bagPulseRoutine;
 
     private void Awake()
     {
@@ -135,6 +137,54 @@ public class UIMainHUD : MonoBehaviour
             if (huds[i] != null)
                 huds[i].RefreshTargetProgressTexts();
         }
+    }
+
+    public static void PlayBagAcquirePulseGlobal()
+    {
+        UIMainHUD[] huds = FindObjectsByType<UIMainHUD>(FindObjectsInactive.Include);
+        for (int i = 0; i < huds.Length; i++)
+        {
+            if (huds[i] != null)
+                huds[i].PlayBagAcquirePulse();
+        }
+    }
+
+    public void PlayBagAcquirePulse()
+    {
+        if (bagButton == null)
+            return;
+
+        if (bagPulseRoutine != null)
+            StopCoroutine(bagPulseRoutine);
+
+        bagPulseRoutine = StartCoroutine(BagAcquirePulseRoutine());
+    }
+
+    private IEnumerator BagAcquirePulseRoutine()
+    {
+        Transform buttonTransform = bagButton.transform;
+        Vector3 originalScale = buttonTransform.localScale;
+        Vector3 enlargedScale = originalScale * 1.12f;
+        const float halfDuration = 0.18f;
+
+        float elapsed = 0f;
+        while (elapsed < halfDuration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            buttonTransform.localScale = Vector3.Lerp(originalScale, enlargedScale, elapsed / halfDuration);
+            yield return null;
+        }
+
+        elapsed = 0f;
+        while (elapsed < halfDuration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            buttonTransform.localScale = Vector3.Lerp(enlargedScale, originalScale, elapsed / halfDuration);
+            yield return null;
+        }
+
+        buttonTransform.localScale = originalScale;
+        bagPulseRoutine = null;
     }
 
     private void TryResolveGaugeTextReferences()

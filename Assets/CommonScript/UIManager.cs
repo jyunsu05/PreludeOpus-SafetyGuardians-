@@ -13,6 +13,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private UIMainHUD mainHUD;
     [SerializeField] private UIResult resultPanel;
     [SerializeField] private UIGameClearStats gameClearStatsPanel;
+    [SerializeField] private UIItemAcquireToast itemAcquireToast;
 
     [Header("--- 선택: 오염도 UI ---")]
     [SerializeField] private Slider pollutionSlider;
@@ -38,6 +39,7 @@ public class UIManager : MonoBehaviour
 
     private bool gameManagerSubscribed;
     private bool pollutionSubscribed;
+    private bool inventorySubscribed;
     private Coroutine showStageResultRoutine;
 
     void OnEnable()
@@ -49,6 +51,8 @@ public class UIManager : MonoBehaviour
     {
         TrySubscribeGameManager();
         TrySubscribePollutionManager();
+        TrySubscribeInventoryManager();
+        EnsureItemAcquireToast();
     }
 
     void Update()
@@ -58,12 +62,16 @@ public class UIManager : MonoBehaviour
 
         if (!pollutionSubscribed)
             TrySubscribePollutionManager();
+
+        if (!inventorySubscribed)
+            TrySubscribeInventoryManager();
     }
 
     void OnDestroy()
     {
         UnsubscribeGameManager();
         UnsubscribePollutionManager();
+        UnsubscribeInventoryManager();
     }
 
     private void TrySubscribePollutionManager()
@@ -162,6 +170,67 @@ public class UIManager : MonoBehaviour
         bool isOpen = inventory.gameObject.activeSelf;
         if (isOpen) inventory.Close();
         else inventory.Open();
+    }
+
+    private void TrySubscribeInventoryManager()
+    {
+        if (inventorySubscribed || InventoryManager.Instance == null)
+            return;
+
+        InventoryManager.Instance.OnItemAcquired -= HandleItemAcquired;
+        InventoryManager.Instance.OnItemAcquired += HandleItemAcquired;
+        inventorySubscribed = true;
+    }
+
+    private void UnsubscribeInventoryManager()
+    {
+        if (!inventorySubscribed || InventoryManager.Instance == null)
+            return;
+
+        InventoryManager.Instance.OnItemAcquired -= HandleItemAcquired;
+        inventorySubscribed = false;
+    }
+
+    private void HandleItemAcquired(string itemId)
+    {
+        if (IsBattleUiVisible())
+            return;
+
+        ShowItemAcquireToast(itemId);
+        UIMainHUD.PlayBagAcquirePulseGlobal();
+    }
+
+    public void ShowItemAcquireToast(string itemId)
+    {
+        UIItemAcquireToast toast = ResolveItemAcquireToast();
+        if (toast == null)
+        {
+            Debug.LogWarning("[UIManager] itemAcquireToast를 찾거나 생성하지 못했습니다.");
+            return;
+        }
+
+        toast.Show(itemId);
+    }
+
+    private UIItemAcquireToast ResolveItemAcquireToast()
+    {
+        if (itemAcquireToast != null)
+            return itemAcquireToast;
+
+        itemAcquireToast = FindAnyObjectByType<UIItemAcquireToast>(FindObjectsInactive.Include);
+        if (itemAcquireToast != null)
+            return itemAcquireToast;
+
+        EnsureItemAcquireToast();
+        return itemAcquireToast;
+    }
+
+    private void EnsureItemAcquireToast()
+    {
+        if (itemAcquireToast != null)
+            return;
+
+        itemAcquireToast = UIItemAcquireToast.EnsureInstance(ResolveRootCanvas(null));
     }
 
     // --- 아이템 획득 팝업 (데이터 전달 + 화면 갱신) ---

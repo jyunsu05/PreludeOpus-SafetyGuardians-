@@ -93,7 +93,7 @@ public class UIAcquisitionPopup : MonoBehaviour
         if (addToInventoryOnConfirm)
         {
             if (InventoryManager.Instance != null)
-                InventoryManager.Instance.AddItem(pendingItemId);
+                InventoryManager.Instance.AddItem(pendingItemId, showAcquireToast: false);
             else
                 Debug.LogWarning("[UIAcquisitionPopup] InventoryManager가 없습니다!");
         }
