@@ -13,6 +13,37 @@ public class ItemSpawner : MonoBehaviour
 
     private readonly List<GameObject> spawnedItems = new List<GameObject>();
 
+    public int SpawnTotalForCurrentStage { get; private set; }
+
+    public int GetAcquiredItemCount()
+    {
+        PruneDestroyedItems();
+        return Mathf.Max(0, SpawnTotalForCurrentStage - spawnedItems.Count);
+    }
+
+    public static bool TryGetChapterFactoryItemProgress(out int acquired, out int max)
+    {
+        acquired = 0;
+        max = 0;
+
+        ItemSpawner[] spawners =
+            FindObjectsByType<ItemSpawner>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+        bool foundActiveSpawner = false;
+        for (int i = 0; i < spawners.Length; i++)
+        {
+            ItemSpawner spawner = spawners[i];
+            if (spawner == null || !spawner.isActiveAndEnabled)
+                continue;
+
+            foundActiveSpawner = true;
+            max += spawner.SpawnTotalForCurrentStage;
+            acquired += spawner.GetAcquiredItemCount();
+        }
+
+        return foundActiveSpawner;
+    }
+
     public void NextFactoryStage()
     {
         if (!Application.isPlaying)
@@ -82,8 +113,13 @@ public class ItemSpawner : MonoBehaviour
         int spawnCount = GetSpawnCountForStage();
         if (spawnCount <= 0)
         {
+            SpawnTotalForCurrentStage = 0;
+
             if (logResult)
                 Debug.Log($"ItemSpawner Stage {stageLevel} : Cleared factory, spawned 0 items");
+
+            if (Application.isPlaying)
+                UIMainHUD.RefreshTargetProgressGlobal();
 
             return;
         }
@@ -135,8 +171,13 @@ public class ItemSpawner : MonoBehaviour
             spawnedCount++;
         }
 
+        SpawnTotalForCurrentStage = spawnedCount;
+
         if (logResult)
             LogSpawnResult(spawnedCount, itemTypeCounts);
+
+        if (Application.isPlaying)
+            UIMainHUD.RefreshTargetProgressGlobal();
     }
 
     private int GetSpawnCountForStage()
@@ -256,6 +297,7 @@ public class ItemSpawner : MonoBehaviour
         }
 
         spawnedItems.Clear();
+        SpawnTotalForCurrentStage = 0;
     }
 
     private void EnsureSpawnCountsByStage()

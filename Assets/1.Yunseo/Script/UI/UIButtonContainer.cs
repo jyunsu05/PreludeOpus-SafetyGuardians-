@@ -461,7 +461,8 @@ public class UIButtonContainer : MonoBehaviour
         if (!purifyButton.gameObject.activeSelf)
             return;
 
-        purifyButton.interactable = uiManager.IsScanned && !uiManager.IsSearching;
+        purifyButton.interactable =
+            uiManager.IsScanned && !uiManager.IsSearching && CanUsePlayerTurnAction();
     }
 
     private void HandleTurnPhaseChanged(BattleTurnController.BattleTurnPhase phase)

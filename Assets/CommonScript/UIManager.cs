@@ -418,8 +418,12 @@ public class UIManager : MonoBehaviour
             return;
 
         float max = maxPollution > 0f ? maxPollution : PollutionManager.DefaultInitialPollution;
+        float clamped = Mathf.Clamp(currentPollution, pollutionSlider.minValue, max);
         pollutionSlider.maxValue = max;
-        pollutionSlider.value = Mathf.Clamp(currentPollution, pollutionSlider.minValue, max);
+        pollutionSlider.value = clamped;
+
+        if (mainHUD != null)
+            mainHUD.UpdatePollutionGauge(clamped, max);
     }
 
     // --- 범용 ---
