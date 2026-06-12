@@ -32,6 +32,9 @@ public class InventoryManager : MonoBehaviour
     // 인벤토리 변화 시 UI에 알리는 이벤트
     public event Action OnInventoryChanged;
 
+    /// <summary>아이템이 새로 추가되었을 때 (토스트 등 즉시 피드백용)</summary>
+    public event Action<string> OnItemAcquired;
+
     void Awake()
     {
         if (Instance == null)
@@ -46,7 +49,7 @@ public class InventoryManager : MonoBehaviour
     }
 
     // 아이템 추가
-    public void AddItem(string id)
+    public void AddItem(string id, bool showAcquireToast = true)
     {
         if (DataManager.Instance == null)
         {
@@ -74,6 +77,9 @@ public class InventoryManager : MonoBehaviour
         Debug.Log($"[InventoryManager] 아이템 추가됨: {id} (내구도 {durability})");
         PlaySessionStats.EnsureInstance()?.RecordSessionItem(id);
         OnInventoryChanged?.Invoke();
+
+        if (showAcquireToast)
+            OnItemAcquired?.Invoke(id);
     }
 
     // 아이템 제거
