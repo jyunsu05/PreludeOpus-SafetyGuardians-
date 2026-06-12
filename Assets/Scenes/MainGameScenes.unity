@@ -5959,6 +5959,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1657685625664848699, guid: 670e2a2f4876d9b43af120ca18810067, type: 3}
+      propertyPath: playerFeedbackMinDisplayDuration
+      value: 20
+      objectReference: {fileID: 0}
     - target: {fileID: 1802623979999114019, guid: 670e2a2f4876d9b43af120ca18810067, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0

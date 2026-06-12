@@ -296,8 +296,19 @@ public class UIInventory : MonoBehaviour
         if (!isPurifyItem)
             BattleAutoManager.Instance?.BlockAutoTurnForManualAction();
 
-        if (!battleManager.UseItem(itemId))
+        if (isPurifyItem && battleManager.TryGetPurifyBlockReason(out string blockMessage, itemId))
+        {
+            battleManager.ShowPlayerFeedback(blockMessage);
             return;
+        }
+
+        if (!battleManager.UseItem(itemId))
+        {
+            if (isPurifyItem)
+                battleManager.ShowPlayerFeedback("정화에 실패했습니다. 잠시 후 다시 시도하세요.");
+
+            return;
+        }
 
         if (isPurifyItem)
             BattleAutoManager.Instance?.EngageAutoBattleAfterManualPurify();

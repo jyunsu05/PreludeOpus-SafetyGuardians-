@@ -300,31 +300,34 @@ public class UIButtonContainer : MonoBehaviour
 
     public void OnPurifyClick()
     {
-        if (isEscaping || uiManager == null || !CanUsePlayerTurnAction())
+        if (isEscaping || uiManager == null)
             return;
 
-        string itemId = uiManager.GetRequiredPurifyItemId();
-        if (!uiManager.CanPurifyWithInventory(itemId))
+        if (uiManager.TryGetPurifyBlockReason(out string blockMessage))
         {
-            Debug.LogWarning($"[UIButtonContainer] 정화 아이템 없음: {itemId}");
-            uiManager.RevealScannedInfo(
-                GetInfectionTypeText(),
-                GetDescriptionText(),
-                uiManager.BuildInventoryStatusText());
+            uiManager.ShowPlayerFeedback(blockMessage);
+            if (uiManager.IsScanned)
+            {
+                uiManager.RevealScannedInfo(
+                    GetInfectionTypeText(),
+                    GetDescriptionText(),
+                    uiManager.BuildInventoryStatusText());
+            }
+
             UpdatePurifyButtonInteractable();
             return;
         }
 
         if (!uiManager.OnClickPurify(out _))
         {
+            uiManager.ShowPlayerFeedback("정화에 실패했습니다. 잠시 후 다시 시도하세요.");
             UpdatePurifyButtonInteractable();
             return;
         }
 
         BattleAutoManager.Instance?.EngageAutoBattleAfterManualPurify();
 
-        if (purifyButton != null)
-            purifyButton.interactable = uiManager.CanPurifyWithInventory(itemId);
+        UpdatePurifyButtonInteractable();
 
         uiManager.RevealScannedInfo(
             GetInfectionTypeText(),
@@ -458,7 +461,7 @@ public class UIButtonContainer : MonoBehaviour
         if (!purifyButton.gameObject.activeSelf)
             return;
 
-        purifyButton.interactable = CanUsePlayerTurnAction() && uiManager.CanPurifyWithInventory();
+        purifyButton.interactable = uiManager.IsScanned && !uiManager.IsSearching;
     }
 
     private void HandleTurnPhaseChanged(BattleTurnController.BattleTurnPhase phase)
