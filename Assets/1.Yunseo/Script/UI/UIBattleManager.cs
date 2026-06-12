@@ -450,6 +450,98 @@ public class UIBattleManager : MonoBehaviour
         return true;
     }
 
+    /// <summary>정화가 불가능한 이유를 반환합니다. itemId를 넘기면 인벤토리 슬롯 사용 시 아이템 적합성도 검사합니다.</summary>
+    public bool TryGetPurifyBlockReason(out string message, string itemId = null)
+    {
+        message = null;
+
+        if (hasBattleWon)
+        {
+            message = "이미 정화가 완료되었습니다.";
+            return true;
+        }
+
+        if (isProcessingBattleExit)
+        {
+            message = "전투를 종료하는 중입니다.";
+            return true;
+        }
+
+        if (IsPurifying)
+        {
+            message = "정화 연출이 진행 중입니다.";
+            return true;
+        }
+
+        if (IsSearching)
+        {
+            message = "탐색 연출이 진행 중입니다.";
+            return true;
+        }
+
+        if (!IsScanned)
+        {
+            message = "오염원을 먼저 [탐색]하세요.";
+            return true;
+        }
+
+        ResolveTurnController();
+        if (turnController == null)
+        {
+            message = "지금은 행동할 수 없습니다.";
+            return true;
+        }
+
+        if (!turnController.IsPlayerTurn)
+        {
+            message = "몬스터 턴입니다. 잠시 기다려 주세요.";
+            return true;
+        }
+
+        if (turnController.IsResolvingTurn)
+        {
+            message = "턴이 진행 중입니다.";
+            return true;
+        }
+
+        if (isProcessingPlayerItemUse)
+        {
+            message = "다른 행동을 처리하는 중입니다.";
+            return true;
+        }
+
+        string requiredItemId = GetRequiredPurifyItemId();
+        if (!string.IsNullOrEmpty(itemId) &&
+            InventoryManager.Instance != null &&
+            !InventoryManager.Instance.IsConsumableForRequirement(itemId, requiredItemId))
+        {
+            string requiredName = ResolveItemDisplayName(requiredItemId);
+            message = $"이 몬스터는 {requiredName}(으)로 정화해야 합니다.";
+            return true;
+        }
+
+        if (!CanPurifyWithInventory(requiredItemId))
+        {
+            string itemName = ResolveItemDisplayName(requiredItemId);
+            message = $"정화에 {itemName}이(가) 필요합니다.";
+            return true;
+        }
+
+        return false;
+    }
+
+    public void ShowPlayerFeedback(string message)
+    {
+        if (string.IsNullOrEmpty(message))
+            return;
+
+        ResolveTurnController();
+        if (turnController != null)
+            turnController.ShowPlayerFeedback(message);
+        else
+            Debug.LogWarning($"[UIBattleManager] {message}");
+    }
+
     private bool ExecutePurifyItemUse(string itemId, out int appliedEffect)
     {
         appliedEffect = 0;

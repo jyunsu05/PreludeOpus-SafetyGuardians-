@@ -84,6 +84,10 @@ public class BattleTurnController : MonoBehaviour
 
     [SerializeField] private float monsterTurnDelay = 0.6f;
 
+    [Header("--- 피드백 로그 ---")]
+    [Tooltip("정화 불가 등 플레이어 피드백 메시지 최소 표시 시간(초). 턴 로그는 이후에 이어서 표시됩니다.")]
+    [SerializeField] private float playerFeedbackMinDisplayDuration = 4f;
+
 
 
     public event Action<BattleTurnPhase> OnTurnPhaseChanged;
@@ -110,6 +114,12 @@ public class BattleTurnController : MonoBehaviour
 
     private bool isBattleActive;
 
+    private float feedbackProtectedUntil;
+
+    private string pendingBattleLogMessage;
+
+    private Coroutine feedbackHoldRoutine;
+
 
 
     private void Awake()
@@ -127,6 +137,8 @@ public class BattleTurnController : MonoBehaviour
     {
 
         StopMonsterTurnRoutine();
+
+        ClearFeedbackHoldState();
 
         isBattleActive = false;
 
@@ -173,6 +185,8 @@ public class BattleTurnController : MonoBehaviour
         }
 
 
+
+        ClearFeedbackHoldState();
 
         isBattleActive = true;
 
@@ -980,6 +994,20 @@ public class BattleTurnController : MonoBehaviour
 
 
 
+    /// <summary>플레이어 행동 불가 등 즉각 안내를 배틀 로그에 표시합니다.</summary>
+    public void ShowPlayerFeedback(string message)
+    {
+        if (string.IsNullOrEmpty(message))
+            return;
+
+        Debug.Log($"[BattleTurnController] {message}");
+        OnBattleLog?.Invoke(message);
+
+        ApplyBattleLogText(message);
+        feedbackProtectedUntil = Time.unscaledTime + Mathf.Max(0f, playerFeedbackMinDisplayDuration);
+        RestartFeedbackHoldRoutine();
+    }
+
     private void LogAction(string message)
 
     {
@@ -990,10 +1018,57 @@ public class BattleTurnController : MonoBehaviour
 
 
 
+        if (Time.unscaledTime < feedbackProtectedUntil)
+        {
+            pendingBattleLogMessage = message;
+            return;
+        }
+
+        ApplyBattleLogText(message);
+
+    }
+
+    private void ApplyBattleLogText(string message)
+    {
         if (battleLogText != null)
-
             battleLogText.text = message;
+    }
 
+    private void RestartFeedbackHoldRoutine()
+    {
+        if (feedbackHoldRoutine != null)
+            StopCoroutine(feedbackHoldRoutine);
+
+        feedbackHoldRoutine = StartCoroutine(ReleaseFeedbackProtectionRoutine());
+    }
+
+    private IEnumerator ReleaseFeedbackProtectionRoutine()
+    {
+        float wait = feedbackProtectedUntil - Time.unscaledTime;
+        if (wait > 0f)
+            yield return new WaitForSecondsRealtime(wait);
+
+        feedbackHoldRoutine = null;
+        feedbackProtectedUntil = 0f;
+
+        if (string.IsNullOrEmpty(pendingBattleLogMessage))
+            yield break;
+
+        string pending = pendingBattleLogMessage;
+        pendingBattleLogMessage = null;
+        ApplyBattleLogText(pending);
+    }
+
+    private void ClearFeedbackHoldState()
+    {
+        if (feedbackHoldRoutine != null)
+        {
+            StopCoroutine(feedbackHoldRoutine);
+            feedbackHoldRoutine = null;
+        }
+
+        feedbackProtectedUntil = 0f;
+        pendingBattleLogMessage = null;
     }
 
 }
