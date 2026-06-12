@@ -1277,6 +1277,24 @@ public class ChapterManager : MonoBehaviour
             rb.simulated = restoreSimulated;
     }
 
+    /// <summary>활성 챕터의 PlayerSpawn(또는 SpawnPoint) 월드 좌표. 없으면 false.</summary>
+    public static bool TryGetActiveChapterPlayerSpawnPosition(out Vector3 worldPosition)
+    {
+        worldPosition = Vector3.zero;
+
+        ChapterManager manager = Instance;
+        if (manager == null)
+            return false;
+
+        GameObject activeChapter = manager.GetActiveChapterRoot();
+        if (activeChapter == null)
+            return false;
+
+        Transform spawn = FindSpawnPoint(activeChapter.transform);
+        worldPosition = spawn != null ? spawn.position : activeChapter.transform.position;
+        return true;
+    }
+
     private static Transform FindSpawnPoint(Transform chapterRoot)
     {
         Transform byName = FindChildByName(chapterRoot, SpawnObjectName);
