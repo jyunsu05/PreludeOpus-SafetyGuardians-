@@ -219,11 +219,17 @@ public class UIMainHUD : MonoBehaviour
 
     private static void ResolveFactoryItemProgress(out int acquired, out int max)
     {
-        if (!ItemSpawner.TryGetChapterFactoryItemProgress(out acquired, out max))
-        {
-            acquired = 0;
-            max = 0;
-        }
+        acquired = 0;
+        max = 0;
+
+        if (InventoryManager.Instance != null)
+            acquired = InventoryManager.Instance.GetFactoryPurificationItemCount();
+
+        PollutionManager manager = PollutionManager.EnsureInstance();
+        if (manager != null)
+            max = Mathf.Max(manager.TotalMonstersThisChapter, acquired);
+        else
+            max = acquired;
     }
 
     private void TrySubscribeProgressSources()

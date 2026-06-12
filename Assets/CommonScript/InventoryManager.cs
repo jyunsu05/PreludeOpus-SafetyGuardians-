@@ -135,6 +135,22 @@ public class InventoryManager : MonoBehaviour
     public int GetBattleConsumableCount(string requiredMonsterItemId)
         => GetEquivalentInventoryCount(requiredMonsterItemId);
 
+    /// <summary>HUD 진행도용 — 공장 정화 아이템(FI) 보유 수만 집계합니다. 몬스터 정화(MI)는 제외합니다.</summary>
+    public int GetFactoryPurificationItemCount()
+    {
+        if (DataManager.Instance == null)
+            return 0;
+
+        int total = 0;
+        for (int i = 0; i < items.Count; i++)
+        {
+            if (DataManager.Instance.IsFactoryPurificationItem(items[i].id))
+                total++;
+        }
+
+        return total;
+    }
+
     /// <summary>배틀 탐색 UI용 — 몬스터 정화 아이템(MI) 보유 수만 집계합니다. 공장 정화(FI)는 제외합니다.</summary>
     public int GetMonsterPurificationItemCount(string monsterItemId = null)
     {
