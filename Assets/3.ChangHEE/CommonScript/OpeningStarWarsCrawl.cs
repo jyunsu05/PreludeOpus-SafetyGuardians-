@@ -45,12 +45,18 @@ public class OpeningStarWarsCrawl : MonoBehaviour
     [SerializeField] float textBoxWidth = 1200f;
 
     [Header("Credits Scroll")]
+    [Tooltip("스토리 텍스트가 잘리는 영역. 비우면 자식 'Mask'를 찾거나 자동 생성합니다.")]
+    [SerializeField] RectTransform creditsMask;
     [SerializeField] float crawlSpeed = 55f;
     [SerializeField] float startOffsetFromBottom = 40f;
     [Tooltip("마지막 줄이 화면 위로 사라진 뒤 추가 대기(px). 0에 가까울수록 빨리 '아무 키나'가 뜹니다.")]
     [SerializeField] float finishPadding = 0f;
     [SerializeField] bool fadeAtTop = true;
     [SerializeField] float topFadeRange = 220f;
+    [Tooltip("크롤 종료 후 마우스 휠 스크롤 속도(px).")]
+    [SerializeField] float manualScrollWheelSpeed = 80f;
+    [Tooltip("크롤 종료 후 드래그 스크롤 감도. 1이면 손가락/마우스 이동량과 동일.")]
+    [SerializeField] float manualScrollDragScale = 1f;
 
     [Header("Game Start Button")]
     public GameObject gameStartButton;
@@ -75,6 +81,7 @@ public class OpeningStarWarsCrawl : MonoBehaviour
         InScene
     }
 
+    const string CreditsMaskObjectName = "Mask";
     const string CreditsObjectName = "StoryCreditsText";
     const string PressAnyKeyObjectName = "PressAnyKeyText";
     const string ExitFadeOverlayObjectName = "ExitFadeOverlay";
@@ -84,6 +91,7 @@ public class OpeningStarWarsCrawl : MonoBehaviour
     RectTransform canvasRect;
     Canvas rootCanvas;
     OpeningSequenceController inSceneController;
+    RectTransform creditsMaskRect;
     TextMeshProUGUI creditsText;
     RectTransform creditsRect;
     TextMeshProUGUI pressAnyKeyText;
@@ -104,6 +112,13 @@ public class OpeningStarWarsCrawl : MonoBehaviour
     bool openingFinished;
     bool gameStartButtonShown;
     Coroutine activeFadeRoutine;
+    bool appHasFocus = true;
+    float unfocusedRealtime = -1f;
+    bool suppressSkipUntilPointerReleased;
+    bool manualReviewMode;
+    bool isDraggingManualScroll;
+    float manualDragStartPointerY;
+    float manualDragStartScrollOffset;
 
     const string StoryText =
         "인류는 끊임없는 발전과 풍요라는 달콤한 과실을 따기 위해, 매일같이 과학의 한계를 시험대 위에 올렸다. " +
@@ -222,26 +237,76 @@ public class OpeningStarWarsCrawl : MonoBehaviour
         CompleteOpeningTransition();
     }
 
-    void Update()
+    void OnApplicationFocus(bool hasFocus)
     {
+        HandleApplicationFocusChange(hasFocus);
+    }
+
+    void OnApplicationPause(bool paused)
+    {
+        HandleApplicationFocusChange(!paused);
+    }
+
+    void HandleApplicationFocusChange(bool hasFocus)
+    {
+        if (appHasFocus == hasFocus)
+            return;
+
+        appHasFocus = hasFocus;
+
         if (openingFinished || gameStartButtonShown)
             return;
 
-        if (phase == CrawlPhase.Scrolling && WasScreenTouched())
+        if (!hasFocus)
+        {
+            if (unfocusedRealtime < 0f)
+                unfocusedRealtime = Time.realtimeSinceStartup;
+            return;
+        }
+
+        if (unfocusedRealtime < 0f)
+            return;
+
+        float unfocusedDuration = Time.realtimeSinceStartup - unfocusedRealtime;
+        unfocusedRealtime = -1f;
+
+        if (unfocusedDuration > 0f)
+            AdvanceCrawlByDelta(unfocusedDuration);
+
+        suppressSkipUntilPointerReleased = true;
+    }
+
+    void Update()
+    {
+        if (openingFinished)
+            return;
+
+        if (phase == CrawlPhase.WaitingForInput)
+        {
+            UpdateManualScroll();
+            return;
+        }
+
+        if (suppressSkipUntilPointerReleased)
+        {
+            if (!IsAnyPointerPressed())
+                suppressSkipUntilPointerReleased = false;
+        }
+        else if (phase == CrawlPhase.Scrolling && WasScreenTouched())
         {
             SkipCrawlToEnd();
             return;
         }
 
-        AdvanceCrawlTimer();
-
-        if (phase == CrawlPhase.Scrolling)
-            UpdateScroll();
+        AdvanceCrawlByDelta(Time.unscaledDeltaTime);
     }
 
-    void AdvanceCrawlTimer()
+    void AdvanceCrawlByDelta(float deltaTime)
     {
-        elapsed += Time.deltaTime;
+        if (deltaTime <= 0f)
+            return;
+
+        elapsed += deltaTime;
         if (elapsed < initialDelay)
             return;
 
@@ -254,16 +319,13 @@ public class OpeningStarWarsCrawl : MonoBehaviour
                 Debug.Log("[OpeningTimer] 크롤 시작 — 0.0초 (글자 스크롤 시작)");
         }
 
-        crawlTimer += Time.deltaTime;
+        crawlTimer += deltaTime;
         LogCrawlTimerIfNeeded();
-    }
 
-    void UpdateScroll()
-    {
-        if (!crawlTimerStarted)
+        if (phase != CrawlPhase.Scrolling || !crawlTimerStarted)
             return;
 
-        scrollOffset += crawlSpeed * Time.deltaTime;
+        scrollOffset += crawlSpeed * deltaTime;
         UpdateCreditsTransform();
         TrackTextVisuallyGone();
         LogTextGoneIfNeeded();
@@ -376,11 +438,13 @@ public class OpeningStarWarsCrawl : MonoBehaviour
 
         gameStartButtonShown = true;
         phase = CrawlPhase.WaitingForInput;
+        manualReviewMode = true;
+        scrollOffset = ClampScrollOffset(scrollOffset);
+        UpdateCreditsTransform();
+        EnsureMaskDragReceiver();
 
         if (logCrawlTimerToConsole)
             Debug.Log($"[OpeningTimer] 크롤 완료 — [게임 시작] 버튼 표시 ({crawlTimer:F1}초)");
-
-        HideCreditsText();
 
         if (pressAnyKeyText != null)
             pressAnyKeyText.gameObject.SetActive(false);
@@ -397,6 +461,86 @@ public class OpeningStarWarsCrawl : MonoBehaviour
         }
     }
 
+    void UpdateManualScroll()
+    {
+        float wheelDelta = GetScrollWheelDelta();
+        if (Mathf.Abs(wheelDelta) > 0.01f)
+        {
+            scrollOffset = ClampScrollOffset(scrollOffset + wheelDelta * manualScrollWheelSpeed);
+            UpdateCreditsTransform();
+        }
+
+        if (WasPointerPressedThisFrame() && IsPointerOverCreditsMask())
+        {
+            isDraggingManualScroll = true;
+            manualDragStartPointerY = GetPointerScreenY();
+            manualDragStartScrollOffset = scrollOffset;
+        }
+
+        if (isDraggingManualScroll && IsAnyPointerPressed())
+        {
+            float deltaY = GetPointerScreenY() - manualDragStartPointerY;
+            scrollOffset = ClampScrollOffset(manualDragStartScrollOffset + deltaY * manualScrollDragScale);
+            UpdateCreditsTransform();
+            return;
+        }
+
+        isDraggingManualScroll = false;
+    }
+
+    void EnsureMaskDragReceiver()
+    {
+        if (creditsMaskRect == null)
+            return;
+
+        Image dragReceiver = creditsMaskRect.GetComponent<Image>();
+        if (dragReceiver == null)
+        {
+            dragReceiver = creditsMaskRect.gameObject.AddComponent<Image>();
+            dragReceiver.color = new Color(0f, 0f, 0f, 0f);
+        }
+
+        dragReceiver.raycastTarget = true;
+    }
+
+    bool IsPointerOverCreditsMask()
+    {
+        if (creditsMaskRect == null)
+            return false;
+
+        Canvas canvas = creditsMaskRect.GetComponentInParent<Canvas>();
+        Camera eventCamera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
+            ? canvas.worldCamera
+            : null;
+
+        return RectTransformUtility.RectangleContainsScreenPoint(
+            creditsMaskRect,
+            GetPointerScreenPosition(),
+            eventCamera);
+    }
+
+    float ClampScrollOffset(float offset)
+    {
+        float min = GetMinScrollOffset();
+        float max = GetMaxScrollOffset();
+        if (min > max)
+            return Mathf.Clamp(offset, max, min);
+
+        return Mathf.Clamp(offset, min, max);
+    }
+
+    float GetMinScrollOffset()
+    {
+        float yAtBottom = GetBottomY() + startOffsetFromBottom + textScrollHeight;
+        return yAtBottom - runtimeStartY;
+    }
+
+    float GetMaxScrollOffset()
+    {
+        float yAtTop = GetTopY() - finishPadding;
+        return yAtTop - runtimeStartY;
+    }
+
     void EnableGameStartInteraction()
     {
         if (openingCanvasGroup == null)
@@ -404,16 +548,6 @@ public class OpeningStarWarsCrawl : MonoBehaviour
 
         openingCanvasGroup.interactable = true;
         openingCanvasGroup.blocksRaycasts = true;
-    }
-
-    void HideCreditsText()
-    {
-        if (creditsText == null)
-            return;
-
-        Color hidden = textColor;
-        hidden.a = 0f;
-        creditsText.color = hidden;
     }
 
     void UpdatePressKeyFade()
@@ -677,14 +811,131 @@ public class OpeningStarWarsCrawl : MonoBehaviour
         return false;
     }
 
+    static bool IsAnyPointerPressed()
+    {
+#if ENABLE_INPUT_SYSTEM
+        if (Mouse.current != null && Mouse.current.leftButton.isPressed)
+            return true;
+
+        if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.isPressed)
+            return true;
+#else
+        if (Input.GetMouseButton(0))
+            return true;
+#endif
+        return false;
+    }
+
+    static bool WasPointerPressedThisFrame()
+    {
+#if ENABLE_INPUT_SYSTEM
+        if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
+            return true;
+
+        if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.wasPressedThisFrame)
+            return true;
+#else
+        if (Input.GetMouseButtonDown(0))
+            return true;
+
+        if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
+            return true;
+#endif
+        return false;
+    }
+
+    static float GetScrollWheelDelta()
+    {
+#if ENABLE_INPUT_SYSTEM
+        if (Mouse.current != null)
+            return Mouse.current.scroll.ReadValue().y;
+
+        return 0f;
+#else
+        return Input.mouseScrollDelta.y;
+#endif
+    }
+
+    static Vector2 GetPointerScreenPosition()
+    {
+#if ENABLE_INPUT_SYSTEM
+        if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.isPressed)
+            return Touchscreen.current.primaryTouch.position.ReadValue();
+
+        if (Mouse.current != null)
+            return Mouse.current.position.ReadValue();
+#else
+        return Input.mousePosition;
+#endif
+        return Vector2.zero;
+    }
+
+    static float GetPointerScreenY()
+    {
+        return GetPointerScreenPosition().y;
+    }
+
+    void EnsureCreditsMask()
+    {
+        if (creditsMask != null)
+        {
+            creditsMaskRect = creditsMask;
+            EnsureMaskClipping(creditsMaskRect.gameObject);
+            return;
+        }
+
+        Transform existing = transform.Find(CreditsMaskObjectName);
+        if (existing != null)
+        {
+            creditsMaskRect = existing as RectTransform;
+            EnsureMaskClipping(creditsMaskRect.gameObject);
+            return;
+        }
+
+        GameObject maskGo = new GameObject(CreditsMaskObjectName, typeof(RectTransform), typeof(RectMask2D));
+        maskGo.transform.SetParent(transform, false);
+
+        creditsMaskRect = maskGo.GetComponent<RectTransform>();
+        creditsMaskRect.anchorMin = Vector2.zero;
+        creditsMaskRect.anchorMax = Vector2.one;
+        creditsMaskRect.offsetMin = Vector2.zero;
+        creditsMaskRect.offsetMax = Vector2.zero;
+        creditsMaskRect.pivot = new Vector2(0.5f, 0.5f);
+
+        PlaceCreditsMaskAboveBackground();
+    }
+
+    static void EnsureMaskClipping(GameObject maskObject)
+    {
+        if (maskObject.GetComponent<RectMask2D>() != null || maskObject.GetComponent<Mask>() != null)
+            return;
+
+        maskObject.AddComponent<RectMask2D>();
+    }
+
+    void PlaceCreditsMaskAboveBackground()
+    {
+        if (creditsMaskRect == null)
+            return;
+
+        Transform background = transform.Find("Background_MIilkway");
+        if (background == null)
+            background = transform.Find("Background_Milkyway");
+
+        int targetIndex = background != null ? background.GetSiblingIndex() + 1 : 0;
+        creditsMaskRect.SetSiblingIndex(targetIndex);
+    }
+
     void BuildCreditsText()
     {
-        Transform old = transform.Find(CreditsObjectName);
+        EnsureCreditsMask();
+
+        Transform old = creditsMaskRect.Find(CreditsObjectName);
         if (old != null)
             Destroy(old.gameObject);
 
         GameObject go = new GameObject(CreditsObjectName, typeof(RectTransform), typeof(TextMeshProUGUI));
-        go.transform.SetParent(transform, false);
+        go.transform.SetParent(creditsMaskRect, false);
 
         creditsText = go.GetComponent<TextMeshProUGUI>();
         creditsRect = creditsText.rectTransform;
@@ -705,6 +956,7 @@ public class OpeningStarWarsCrawl : MonoBehaviour
         creditsText.enableWordWrapping = true;
         creditsText.overflowMode = TextOverflowModes.Overflow;
         creditsText.raycastTarget = false;
+        creditsText.maskable = true;
 
         creditsText.ForceMeshUpdate();
         textScrollHeight = creditsText.preferredHeight;
@@ -819,6 +1071,11 @@ public class OpeningStarWarsCrawl : MonoBehaviour
         phase = CrawlPhase.Scrolling;
         openingFinished = false;
         gameStartButtonShown = false;
+        appHasFocus = Application.isFocused;
+        unfocusedRealtime = -1f;
+        suppressSkipUntilPointerReleased = false;
+        manualReviewMode = false;
+        isDraggingManualScroll = false;
         runtimeStartY = GetBottomY() - startOffsetFromBottom;
         UpdateCreditsTransform();
 
@@ -840,7 +1097,7 @@ public class OpeningStarWarsCrawl : MonoBehaviour
         creditsRect.anchoredPosition = new Vector2(0f, y);
 
         Color c = textColor;
-        if (fadeAtTop)
+        if (!manualReviewMode && fadeAtTop)
         {
             float bottomOfText = y - textScrollHeight;
             float fadeStart = GetBottomY();
@@ -858,7 +1115,8 @@ public class OpeningStarWarsCrawl : MonoBehaviour
     {
         Canvas.ForceUpdateCanvases();
 
-        float height = canvasRect != null ? canvasRect.rect.height : 0f;
+        RectTransform scrollArea = creditsMaskRect != null ? creditsMaskRect : canvasRect;
+        float height = scrollArea != null ? scrollArea.rect.height : 0f;
         if (height < 1f)
             height = Screen.height;
 
