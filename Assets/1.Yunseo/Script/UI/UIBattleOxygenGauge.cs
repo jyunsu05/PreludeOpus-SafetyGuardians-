@@ -121,5 +121,12 @@ public class UIBattleOxygenGauge : MonoBehaviour
         }
 
         oxygenSlider.interactable = false;
+        TryResolveValueTextReference();
+    }
+
+    private void TryResolveValueTextReference()
+    {
+        if (oxygenValueText == null)
+            oxygenValueText = GetComponentInChildren<TextMeshProUGUI>(true);
     }
 }

@@ -27,6 +27,7 @@ public class UIBattleManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI monsterNameText;       // 몬스터: name
     [SerializeField] private TextMeshProUGUI difficultyText;        // 포획 난이도: New Text
     [SerializeField] private Slider contaminationSlider;            // 오염도 게이지 바
+    [SerializeField] private TextMeshProUGUI contaminationValueText;
     [SerializeField] private string defaultMonsterId = string.Empty;
 
     [Header("--- 탐색 시 통째로 열리는 부모 Panel ---")]
@@ -124,6 +125,7 @@ public class UIBattleManager : MonoBehaviour
     {
         DisableNestedDuplicateManagers();
         SetMonsterImageVisible(false);
+        TryResolveContaminationValueText();
         if (enabled)
             ConfigurePlayerHitAudioSource();
     }
@@ -1288,6 +1290,7 @@ public class UIBattleManager : MonoBehaviour
         {
             contaminationSlider.maxValue = DefaultContaminationLevel;
             contaminationSlider.value = DefaultContaminationLevel;
+            SyncContaminationValueText();
         }
     }
 
@@ -1686,6 +1689,7 @@ public class UIBattleManager : MonoBehaviour
         GetComponent<EnemyStatus>()?.ConfigureStatusText(difficultyText, difficulty);
         contaminationSlider.maxValue = maxContamination;
         contaminationSlider.value = Mathf.Clamp(currentContamination, 0, maxContamination);
+        SyncContaminationValueText();
     }
 
     // [탐색] 버튼을 눌렀을 때 실행될 함수
@@ -1725,6 +1729,7 @@ public class UIBattleManager : MonoBehaviour
     public void UpdateContaminationGauge(int currentContamination)
     {
         contaminationSlider.value = currentContamination;
+        SyncContaminationValueText();
     }
 
     public void ReduceContamination(int amount)
@@ -1734,6 +1739,7 @@ public class UIBattleManager : MonoBehaviour
 
         contaminationSlider.value = Mathf.Max(0, contaminationSlider.value - amount);
         CacheCurrentMonsterContamination((int)contaminationSlider.value);
+        SyncContaminationValueText();
         Debug.Log($"[UIBattleManager] 오염도 감소: {contaminationSlider.value}");
 
         if (contaminationSlider.value <= 0)
@@ -1758,7 +1764,10 @@ public class UIBattleManager : MonoBehaviour
 
         ClearCurrentMonsterContamination();
         if (contaminationSlider != null)
+        {
             contaminationSlider.value = 0;
+            SyncContaminationValueText();
+        }
 
         Debug.Log("[UIBattleManager] 오염도 0 도달! 정화 완료.");
 
@@ -1975,6 +1984,54 @@ public class UIBattleManager : MonoBehaviour
 
         contaminationSlider.maxValue = maxContamination;
         contaminationSlider.value = Mathf.Clamp(initialContamination, 0, maxContamination);
+        SyncContaminationValueText();
+    }
+
+    private void TryResolveContaminationValueText()
+    {
+        if (contaminationValueText != null || contaminationSlider == null)
+            return;
+
+        Transform barRoot = contaminationSlider.transform.parent;
+        if (barRoot == null)
+            return;
+
+        TextMeshProUGUI[] texts = barRoot.GetComponentsInChildren<TextMeshProUGUI>(true);
+        for (int i = 0; i < texts.Length; i++)
+        {
+            if (texts[i].gameObject.name == "Text (TMP) (1)")
+            {
+                contaminationValueText = texts[i];
+                return;
+            }
+        }
+
+        for (int i = 0; i < texts.Length; i++)
+        {
+            if (texts[i].gameObject.name.IndexOf("Value", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                contaminationValueText = texts[i];
+                return;
+            }
+        }
+
+        for (int i = 0; i < texts.Length; i++)
+        {
+            if (texts[i].gameObject.name != "PollutionDegreeText")
+            {
+                contaminationValueText = texts[i];
+                return;
+            }
+        }
+    }
+
+    private void SyncContaminationValueText()
+    {
+        if (contaminationValueText == null || contaminationSlider == null)
+            return;
+
+        contaminationValueText.text =
+            $"{Mathf.CeilToInt(contaminationSlider.value)}/{Mathf.CeilToInt(contaminationSlider.maxValue)}";
     }
 
     private int GetMonsterMaxContamination(MonsterData data)
@@ -2034,7 +2091,10 @@ public class UIBattleManager : MonoBehaviour
         contaminationProgressByMonsterId[currentMonsterId] = restored;
 
         if (contaminationSlider != null)
+        {
             contaminationSlider.value = Mathf.Clamp(restored, 0, contaminationSlider.maxValue);
+            SyncContaminationValueText();
+        }
 
         Debug.Log($"[UIBattleManager] 도망 → 오염도 진행도 복구: {currentMonsterId} = {restored}");
     }

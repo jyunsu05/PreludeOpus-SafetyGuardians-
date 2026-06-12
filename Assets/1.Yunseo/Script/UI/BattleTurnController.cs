@@ -824,7 +824,17 @@ public class BattleTurnController : MonoBehaviour
 
     {
 
+        BattleTurnPhase previous = CurrentPhase;
+
         CurrentPhase = phase;
+
+
+
+        if (phase == BattleTurnPhase.PlayerTurn && previous == BattleTurnPhase.MonsterTurn)
+
+            ClearFeedbackHoldState();
+
+
 
         OnTurnPhaseChanged?.Invoke(phase);
 
@@ -944,7 +954,7 @@ public class BattleTurnController : MonoBehaviour
 
     {
 
-        LogAction($"▶ {phaseName}");
+        LogAction($"▶ {phaseName}", forceImmediate: true);
 
     }
 
@@ -1004,11 +1014,26 @@ public class BattleTurnController : MonoBehaviour
         OnBattleLog?.Invoke(message);
 
         ApplyBattleLogText(message);
-        feedbackProtectedUntil = Time.unscaledTime + Mathf.Max(0f, playerFeedbackMinDisplayDuration);
+
+        float holdDuration = ShouldUseBriefFeedbackHold(message)
+            ? Mathf.Min(1.2f, playerFeedbackMinDisplayDuration)
+            : Mathf.Max(0f, playerFeedbackMinDisplayDuration);
+
+        feedbackProtectedUntil = Time.unscaledTime + holdDuration;
         RestartFeedbackHoldRoutine();
     }
 
-    private void LogAction(string message)
+    private static bool ShouldUseBriefFeedbackHold(string message)
+    {
+        if (string.IsNullOrEmpty(message))
+            return false;
+
+        return message.Contains("몬스터 턴")
+               || message.Contains("턴이 진행 중")
+               || message.Contains("다른 행동을 처리");
+    }
+
+    private void LogAction(string message, bool forceImmediate = false)
 
     {
 
@@ -1018,7 +1043,7 @@ public class BattleTurnController : MonoBehaviour
 
 
 
-        if (Time.unscaledTime < feedbackProtectedUntil)
+        if (!forceImmediate && Time.unscaledTime < feedbackProtectedUntil)
         {
             pendingBattleLogMessage = message;
             return;
