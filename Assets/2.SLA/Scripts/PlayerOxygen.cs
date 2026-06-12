@@ -217,13 +217,13 @@ public class PlayerOxygen : MonoBehaviour
 
     private bool ShouldPauseOxygenSimulation()
     {
+        if (UIGameClearStats.IsVisible)
+            return true;
+
         if (GameManager.Instance == null)
             return false;
 
         if (GameManager.Instance.IsAwaitingPostOpeningPlaySession)
-            return true;
-
-        if (UIGameClearStats.IsVisible)
             return true;
 
         // 배틀 중에는 필드 감소를 멈추고 턴 행동으로만 산소가 변합니다.

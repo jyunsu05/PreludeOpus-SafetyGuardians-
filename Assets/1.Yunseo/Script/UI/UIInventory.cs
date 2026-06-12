@@ -138,7 +138,31 @@ public class UIInventory : MonoBehaviour
     {
         IReadOnlyList<InventoryManager.StackedInventoryItem> stackedItems =
             InventoryManager.Instance.GetStackedItems();
-        bool filterForBattle = IsBattleInventoryContext();
+
+        if (IsBattleInventoryContext())
+            return BuildBattleSlotEntries(stackedItems);
+
+        var entries = new List<InventorySlotEntry>();
+        for (int i = 0; i < stackedItems.Count; i++)
+        {
+            InventoryManager.StackedInventoryItem stackedItem = stackedItems[i];
+            if (string.IsNullOrEmpty(stackedItem.itemId) || stackedItem.count <= 0)
+                continue;
+
+            ItemData data = DataManager.Instance.GetItemData(stackedItem.itemId);
+            if (data == null)
+                continue;
+
+            entries.Add(new InventorySlotEntry(stackedItem.itemId, data, stackedItem.count));
+        }
+
+        return entries;
+    }
+
+    private List<InventorySlotEntry> BuildBattleSlotEntries(
+        IReadOnlyList<InventoryManager.StackedInventoryItem> stackedItems)
+    {
+        var entries = new List<InventorySlotEntry>();
 
         for (int i = 0; i < stackedItems.Count; i++)
         {
@@ -146,15 +170,26 @@ public class UIInventory : MonoBehaviour
             if (string.IsNullOrEmpty(stackedItem.itemId) || stackedItem.count <= 0)
                 continue;
 
-            if (filterForBattle && !DataManager.Instance.IsBattleInventoryItem(stackedItem.itemId))
+            // 배틀 인벤토리에는 MI(몬스터 정화)만 표시합니다. FI(공장 정화)는 제외합니다.
+            if (DataManager.Instance.IsFactoryPurificationItem(stackedItem.itemId))
                 continue;
 
-            ItemData data = DataManager.Instance.GetItemData(stackedItem.itemId);
-            if (data == null)
+            if (!DataManager.Instance.TryGetBattleInventorySlot(
+                    stackedItem.itemId,
+                    out string useItemId,
+                    out ItemData displayData) ||
+                displayData == null)
+            {
                 continue;
+            }
 
-            yield return new InventorySlotEntry(stackedItem.itemId, data, stackedItem.count);
+            entries.Add(new InventorySlotEntry(
+                string.IsNullOrEmpty(useItemId) ? stackedItem.itemId : useItemId,
+                displayData,
+                stackedItem.count));
         }
+
+        return entries;
     }
 
     private void BindSlot(int slotIndex, string itemId, ItemData data, int count)
@@ -230,14 +265,10 @@ public class UIInventory : MonoBehaviour
         if (UIManager.Instance != null && UIManager.Instance.IsBattleUiVisible())
             return true;
 
-        if (ResolveBattleManager() != null)
-            return true;
-
-        BattleTurnController turnController =
-            FindAnyObjectByType<BattleTurnController>(FindObjectsInactive.Include);
-        return turnController != null &&
-               turnController.isActiveAndEnabled &&
-               turnController.gameObject.activeInHierarchy;
+        UIBattleManager battleManager = ResolveBattleManager();
+        return battleManager != null &&
+               battleManager.isActiveAndEnabled &&
+               battleManager.gameObject.activeInHierarchy;
     }
 
     private bool IsBattleItemUseEnabled() => IsBattleInventoryContext();
@@ -284,8 +315,11 @@ public class UIInventory : MonoBehaviour
         if (string.IsNullOrEmpty(itemId) || battleManager == null || DataManager.Instance == null)
             return false;
 
-        if (!DataManager.Instance.IsMonsterPurificationItem(itemId))
+        if (!DataManager.Instance.IsMonsterPurificationItem(itemId) &&
+            !DataManager.Instance.IsFactoryPurificationItem(itemId))
+        {
             return false;
+        }
 
         string requiredItemId = battleManager.GetRequiredPurifyItemId();
         if (InventoryManager.Instance != null)
