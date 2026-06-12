@@ -71,9 +71,17 @@ public class FactoryPipeSmokeSoundZone : MonoBehaviour
     private bool ShouldCheckProximity()
     {
         return enablePipeSmokeSound &&
-               !GameplayAudioGuard.IsBlocked &&
+               GameplayAudioGuard.CanPlayFieldCharacterSounds &&
                !IsBattleActive() &&
                IsPlayerNearWalls();
+    }
+
+    public void StopForInventoryPause()
+    {
+        StopChecking();
+
+        if (sfxSource != null && sfxSource.isPlaying)
+            sfxSource.Stop();
     }
 
     private void TryResolveWallCollider()

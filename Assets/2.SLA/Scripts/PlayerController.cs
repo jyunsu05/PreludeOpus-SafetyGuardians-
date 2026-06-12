@@ -149,6 +149,12 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
+        if (IsInventoryPaused())
+        {
+            PauseFieldMovementForInventory();
+            return;
+        }
+
         // --- 물리 복구 감시자 (Watchdog) ---
         // 배틀이 종료되고 필드로 돌아온 최초 시점에 물리 연산(simulated) 상태를 복구시킵니다.
         // 이를 통해 이벤트 도중 대화창이나 일시정지 창에서 물리가 강제로 켜지는 버그를 원천 차단합니다.
@@ -213,7 +219,7 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (IsFieldMovementFrozen() || IsBattleActive())
+        if (IsFieldMovementFrozen() || IsInventoryPaused() || IsBattleActive())
             return;
 
         // 물리 프레임 주기에 맞추어 플레이어 실제 이동 연산 수행
@@ -241,6 +247,26 @@ public class PlayerController : MonoBehaviour
         rb.linearVelocity = Vector2.zero;
         rb.angularVelocity = 0f;
         rb.simulated = false;
+    }
+
+    /// <summary>필드 인벤토리를 연 동안 조작과 이동 속도만 멈춥니다. 닫으면 이어서 플레이합니다.</summary>
+    public void PauseFieldMovementForInventory()
+    {
+        movementInput = Vector2.zero;
+
+        if (animator != null)
+            animator.SetInteger("State", IdleAnimatorState);
+
+        wasFieldWalking = false;
+        CancelIdleCoughSequence();
+        StopWalkingSound();
+        StopIdleLoop();
+
+        if (rb == null)
+            return;
+
+        rb.linearVelocity = Vector2.zero;
+        rb.angularVelocity = 0f;
     }
 
     // 도망친 직후의 잠금 코루틴을 호출하는 허브 메서드
@@ -302,7 +328,7 @@ public class PlayerController : MonoBehaviour
     // 트리거 영역(Collider) 안에 플레이어가 계속 머물러 있는 동안 배틀 트리거를 예외 검사하는 부분
     private void OnTriggerStay2D(Collider2D other)
     {
-        if (IsBattleActive() || IsFieldMovementFrozen())
+        if (IsBattleActive() || IsFieldMovementFrozen() || IsInventoryPaused())
             return;
 
         if (hasEnteredBattle && !IsBattleUiVisible())
@@ -328,7 +354,7 @@ public class PlayerController : MonoBehaviour
     // 충돌 상태를 기반으로 플레이어가 현재 배틀에 들어갈 자격이 되는지 정밀 검사
     private bool CanStartBattleFromCollision(Collider2D other)
     {
-        if (IsBattleActive() || IsFieldMovementFrozen())
+        if (IsBattleActive() || IsFieldMovementFrozen() || IsInventoryPaused())
             return false;
 
         if (hasEnteredBattle && !IsBattleUiVisible())
@@ -439,6 +465,11 @@ public class PlayerController : MonoBehaviour
         return GameManager.Instance != null && GameManager.Instance.IsFieldMovementFrozen;
     }
 
+    private static bool IsInventoryPaused()
+    {
+        return GameManager.Instance != null && GameManager.Instance.IsInventoryPaused;
+    }
+
     private bool IsBattleUiVisible()
     {
         if (battleSceneUI != null && battleSceneUI.activeInHierarchy)
@@ -529,7 +560,8 @@ public class PlayerController : MonoBehaviour
 
     private static bool ShouldSuppressBreathingSounds()
     {
-        return UILoading.IsLoadingScreenVisible || GameplayAudioGuard.IsBlocked;
+        return UILoading.IsLoadingScreenVisible ||
+               !GameplayAudioGuard.CanPlayFieldCharacterSounds;
     }
 
     private void StartIdleLoop()
