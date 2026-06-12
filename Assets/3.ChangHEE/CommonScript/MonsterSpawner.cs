@@ -152,8 +152,16 @@ public class MonsterSpawner : MonoBehaviour
             Physics2D.SyncTransforms();
         }
 
-        int count = Mathf.Min(spawnCount, pointCount);
-        List<Transform> spawnPoints = GetShuffledSpawnPoints();
+        List<Transform> eligibleSpawnPoints = GetEligibleSpawnPoints();
+        if (eligibleSpawnPoints.Count == 0)
+        {
+            Debug.LogWarning(
+                $"[MonsterSpawner] {name}: 플레이어 스폰 근처를 제외하면 사용 가능한 몬스터 스폰 위치가 없습니다.");
+            return;
+        }
+
+        int count = Mathf.Min(spawnCount, eligibleSpawnPoints.Count);
+        List<Transform> spawnPoints = GetShuffledSpawnPoints(eligibleSpawnPoints);
         List<int> monsterTypeOrder = GetMonsterTypeOrder(count);
         int[] monsterTypeCounts = new int[MonsterTypeCount];
         List<Vector2> usedSpawnPositions = new List<Vector2>(count);
@@ -175,6 +183,9 @@ public class MonsterSpawner : MonoBehaviour
                 spawnPoint.position,
                 bodyRadius,
                 usedSpawnPositions);
+
+            if (FieldSpawnSafety.IsTooCloseToPlayerSpawn(spawnPosition))
+                continue;
 
             GameObject monster = Instantiate(prefab, spawnPosition, spawnPoint.rotation);
             usedSpawnPositions.Add(spawnPosition);
@@ -205,12 +216,21 @@ public class MonsterSpawner : MonoBehaviour
         return spawnCountsByStage[index];
     }
 
-    private List<Transform> GetShuffledSpawnPoints()
+    private List<Transform> GetEligibleSpawnPoints()
     {
         List<Transform> spawnPoints = new List<Transform>();
 
         for (int i = 0; i < spawnPointParent.childCount; i++)
             spawnPoints.Add(spawnPointParent.GetChild(i));
+
+        return FieldSpawnSafety.FilterMonsterSpawnPointsAwayFromPlayer(spawnPoints);
+    }
+
+    private static List<Transform> GetShuffledSpawnPoints(IReadOnlyList<Transform> sourcePoints)
+    {
+        List<Transform> spawnPoints = new List<Transform>(sourcePoints.Count);
+        for (int i = 0; i < sourcePoints.Count; i++)
+            spawnPoints.Add(sourcePoints[i]);
 
         for (int i = 0; i < spawnPoints.Count; i++)
         {

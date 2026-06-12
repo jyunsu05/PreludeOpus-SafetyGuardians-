@@ -14,6 +14,9 @@ public static class FieldSpawnSafety
 
     private const float DefaultItemPickupRadius = 0.45f;
 
+    /// <summary>플레이어 스폰 지점 주변 몬스터 스폰 금지 반경(월드 단위).</summary>
+    public const float PlayerSpawnExclusionRadius = 6f;
+
     public static float GetItemPickupRadius(GameObject prefab)
     {
         if (prefab == null)
@@ -56,6 +59,49 @@ public static class FieldSpawnSafety
         }
 
         return DefaultBodyRadius;
+    }
+
+    public static bool IsTooCloseToPlayerSpawn(
+        Vector3 worldPosition,
+        float exclusionRadius = PlayerSpawnExclusionRadius)
+    {
+        if (!ChapterManager.TryGetActiveChapterPlayerSpawnPosition(out Vector3 playerSpawn))
+            return false;
+
+        return Vector2.Distance(worldPosition, playerSpawn) < exclusionRadius;
+    }
+
+    public static List<Transform> FilterMonsterSpawnPointsAwayFromPlayer(
+        IReadOnlyList<Transform> spawnPoints,
+        float exclusionRadius = PlayerSpawnExclusionRadius)
+    {
+        var filtered = new List<Transform>(spawnPoints.Count);
+
+        if (!ChapterManager.TryGetActiveChapterPlayerSpawnPosition(out Vector3 playerSpawn))
+        {
+            for (int i = 0; i < spawnPoints.Count; i++)
+            {
+                if (spawnPoints[i] != null)
+                    filtered.Add(spawnPoints[i]);
+            }
+
+            return filtered;
+        }
+
+        Vector2 spawnFlat = playerSpawn;
+        for (int i = 0; i < spawnPoints.Count; i++)
+        {
+            Transform point = spawnPoints[i];
+            if (point == null)
+                continue;
+
+            if (Vector2.Distance(point.position, spawnFlat) < exclusionRadius)
+                continue;
+
+            filtered.Add(point);
+        }
+
+        return filtered;
     }
 
     public static Vector3 ResolveSpawnPosition(
