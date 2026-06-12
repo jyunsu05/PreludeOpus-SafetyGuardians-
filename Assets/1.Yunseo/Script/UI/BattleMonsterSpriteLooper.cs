@@ -19,6 +19,7 @@ public class BattleMonsterSpriteLooper : MonoBehaviour
     private Sprite[] idleSprites;
     private Sprite[] hitSprites;
     private Coroutine activeRoutine;
+    private bool wantsIdleLoop;
 
     private const int MaxAtlasFrameProbe = 128;
 
@@ -30,9 +31,17 @@ public class BattleMonsterSpriteLooper : MonoBehaviour
         targetImage = GetComponent<Image>();
     }
 
+    private void OnEnable()
+    {
+        if (wantsIdleLoop && !IsPlayingHit)
+            PlayIdleLoop();
+    }
+
     private void OnDisable()
     {
-        StopAll();
+        StopActiveRoutine();
+        IsPlayingIdle = false;
+        IsPlayingHit = false;
     }
 
     public bool ConfigureFromAtlas(string baseKey)
@@ -53,7 +62,10 @@ public class BattleMonsterSpriteLooper : MonoBehaviour
         }
 
         if (HasValidSprites(idleSprites))
+        {
+            wantsIdleLoop = true;
             ApplyIdleFrame(0);
+        }
 
         return HasValidSprites(idleSprites);
     }
@@ -63,8 +75,11 @@ public class BattleMonsterSpriteLooper : MonoBehaviour
         if (!HasValidSprites(idleSprites))
         {
             Debug.LogWarning($"[{nameof(BattleMonsterSpriteLooper)}] Idle Atlas 프레임을 찾지 못했습니다.");
+            wantsIdleLoop = false;
             return;
         }
+
+        wantsIdleLoop = true;
 
         if (!isActiveAndEnabled)
         {
@@ -98,7 +113,7 @@ public class BattleMonsterSpriteLooper : MonoBehaviour
         for (int i = 0; i < hitSprites.Length; i++)
         {
             ApplySprite(hitSprites[i]);
-            yield return new WaitForSeconds(interval);
+            yield return new WaitForSecondsRealtime(interval);
         }
 
         IsPlayingHit = false;
@@ -107,6 +122,7 @@ public class BattleMonsterSpriteLooper : MonoBehaviour
 
     public void StopAll()
     {
+        wantsIdleLoop = false;
         StopActiveRoutine();
         IsPlayingIdle = false;
         IsPlayingHit = false;
@@ -125,7 +141,7 @@ public class BattleMonsterSpriteLooper : MonoBehaviour
         {
             ApplyIdleFrame(frameIndex);
             frameIndex = (frameIndex + 1) % idleSprites.Length;
-            yield return new WaitForSeconds(interval);
+            yield return new WaitForSecondsRealtime(interval);
         }
     }
 
