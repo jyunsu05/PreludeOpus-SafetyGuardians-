@@ -267,6 +267,7 @@ public class UIButtonContainer : MonoBehaviour
         if (!uiManager.CanBeginSearch())
             return;
 
+        BattleAutoManager.Instance?.BlockAutoTurnForManualAction();
         SetBattleActionsLocked(true);
         uiManager.PrepareSearchLensForPlayback();
 
@@ -288,9 +289,6 @@ public class UIButtonContainer : MonoBehaviour
     private void ApplySearchScanResults()
     {
         uiManager.NotifySearchCompleted();
-
-        if (searchButton != null)
-            searchButton.interactable = true;
 
         SyncPurifyButtonVisibility();
 
@@ -323,6 +321,8 @@ public class UIButtonContainer : MonoBehaviour
             return;
         }
 
+        BattleAutoManager.Instance?.EngageAutoBattleAfterManualPurify();
+
         if (purifyButton != null)
             purifyButton.interactable = uiManager.CanPurifyWithInventory(itemId);
 
@@ -336,6 +336,8 @@ public class UIButtonContainer : MonoBehaviour
     {
         if (isEscaping || uiManager == null || !CanUsePlayerTurnAction())
             return;
+
+        BattleAutoManager.Instance?.BlockAutoTurnForManualAction();
 
         if (!uiManager.CanAttemptEscape)
             return;

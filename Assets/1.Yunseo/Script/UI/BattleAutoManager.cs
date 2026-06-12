@@ -5,7 +5,7 @@ using UnityEngine;
 /// <summary>
 /// 챕터에 따라 배틀 씬 자동/수동 모드를 결정하고, 오토 모드일 때 플레이어 턴에 정화 행동을 대행합니다.
 /// Ch.1: 수동 (IsAutoBattle = false)
-/// Ch.2+: 자동 (IsAutoBattle = true, 플레이어 턴마다 ExecutePurify 흐름)
+/// Ch.2+: 하이브리드 — 첫 정화는 수동, 이후 플레이어 턴마다 자동 탐색·정화
 /// </summary>
 [DisallowMultipleComponent]
 public class BattleAutoManager : MonoBehaviour
@@ -49,6 +49,12 @@ public class BattleAutoManager : MonoBehaviour
 
     public bool IsProcessingAutoTurn { get; private set; }
 
+    /// <summary>이번 플레이어 턴에 탐색·도망 등으로 자동 행동을 막아야 하는지 여부.</summary>
+    public bool HasManualPlayerControlThisTurn { get; private set; }
+
+    /// <summary>플레이어가 한 번이라도 수동 정화에 성공했는지(이후 자동 전투 진행).</summary>
+    public bool IsAutoBattleEngaged { get; private set; }
+
     private Coroutine autoTurnRoutine;
 
     private void Awake()
@@ -68,6 +74,8 @@ public class BattleAutoManager : MonoBehaviour
     private void OnEnable()
     {
         ResolveReferences();
+        IsAutoBattleEngaged = false;
+        HasManualPlayerControlThisTurn = false;
         InitializeAutoModeFromChapter();
         SubscribeTurnEvents();
         TryScheduleAutoTurnForCurrentPhase();
@@ -118,7 +126,7 @@ public class BattleAutoManager : MonoBehaviour
             }
         }
 
-        SetAutoBattleBadgeVisible(IsAutoBattle);
+        SetAutoBattleBadgeVisible(IsAutoBattle && IsAutoBattleEngaged);
     }
 
     private void HandleTurnPhaseChanged(BattleTurnController.BattleTurnPhase phase)
@@ -126,17 +134,49 @@ public class BattleAutoManager : MonoBehaviour
         if (phase != BattleTurnController.BattleTurnPhase.PlayerTurn)
         {
             StopAutoTurnRoutine();
+            HasManualPlayerControlThisTurn = false;
             if (IsAutoBattle)
                 SetOverlayVisible(false);
             return;
         }
 
+        HasManualPlayerControlThisTurn = false;
         TryScheduleAutoTurnForCurrentPhase();
+    }
+
+    /// <summary>
+    /// 탐색·도망·산소 아이템 등 수동 행동 시 이번 턴 자동 코루틴만 중단합니다.
+    /// (수동 정화와 달리 자동 전투 해금에는 사용하지 않습니다.)
+    /// </summary>
+    public void BlockAutoTurnForManualAction()
+    {
+        HasManualPlayerControlThisTurn = true;
+        StopAutoTurnRoutine();
+        SetOverlayVisible(false);
+
+        if (IsAutoBattle)
+            UIButtonContainer.SetAllBattleInputBlocked(false);
+    }
+
+    /// <summary>플레이어가 수동 정화에 성공한 뒤, 이후 턴부터 자동 전투를 진행합니다.</summary>
+    public void EngageAutoBattleAfterManualPurify()
+    {
+        if (!IsAutoBattle)
+            return;
+
+        IsAutoBattleEngaged = true;
+        HasManualPlayerControlThisTurn = false;
+        StopAutoTurnRoutine();
+        SetOverlayVisible(false);
+        UIButtonContainer.SetAllBattleInputBlocked(false);
+        SetAutoBattleBadgeVisible(IsAutoBattle && IsAutoBattleEngaged);
+
+        Debug.Log("[BattleAutoManager] 수동 정화 완료 — 이후 턴부터 자동 전투를 진행합니다.");
     }
 
     private void TryScheduleAutoTurnForCurrentPhase()
     {
-        if (!IsAutoBattle || turnController == null)
+        if (!IsAutoBattle || !IsAutoBattleEngaged || turnController == null)
             return;
 
         if (!turnController.IsPlayerTurn || turnController.IsResolvingTurn)
@@ -160,9 +200,29 @@ public class BattleAutoManager : MonoBehaviour
         UIButtonContainer.SetAllBattleInputBlocked(true);
 
         if (autoActionDelaySeconds > 0f)
-            yield return new WaitForSecondsRealtime(autoActionDelaySeconds);
+        {
+            float waited = 0f;
+            while (waited < autoActionDelaySeconds)
+            {
+                if (HasManualPlayerControlThisTurn)
+                {
+                    CompleteAutoTurnCleanup();
+                    yield break;
+                }
+
+                yield return null;
+                waited += Time.unscaledDeltaTime;
+            }
+        }
 
         if (!IsAutoBattle || turnController == null || !turnController.IsPlayerTurn)
+        {
+            CompleteAutoTurnCleanup();
+            yield break;
+        }
+
+        if (HasManualPlayerControlThisTurn ||
+            (battleManager != null && battleManager.IsSearching))
         {
             CompleteAutoTurnCleanup();
             yield break;
@@ -172,6 +232,13 @@ public class BattleAutoManager : MonoBehaviour
         {
             SetOverlayVisible(true, autoSearchIndicatorMessage);
             yield return ExecuteAutoSearchRoutine();
+        }
+
+        if (HasManualPlayerControlThisTurn ||
+            (battleManager != null && battleManager.IsSearching))
+        {
+            CompleteAutoTurnCleanup();
+            yield break;
         }
 
         if (!CanExecutePurifyNow())

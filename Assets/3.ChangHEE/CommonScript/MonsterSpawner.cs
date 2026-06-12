@@ -146,10 +146,17 @@ public class MonsterSpawner : MonoBehaviour
             return;
         }
 
+        if (Application.isPlaying)
+        {
+            MapInitializer.RefreshActiveMapColliders();
+            Physics2D.SyncTransforms();
+        }
+
         int count = Mathf.Min(spawnCount, pointCount);
         List<Transform> spawnPoints = GetShuffledSpawnPoints();
         List<int> monsterTypeOrder = GetMonsterTypeOrder(count);
         int[] monsterTypeCounts = new int[MonsterTypeCount];
+        List<Vector2> usedSpawnPositions = new List<Vector2>(count);
         int spawnedCount = 0;
 
         for (int i = 0; i < count; i++)
@@ -163,7 +170,14 @@ public class MonsterSpawner : MonoBehaviour
             if (prefab == null)
                 continue;
 
-            GameObject monster = Instantiate(prefab, spawnPoint.position, spawnPoint.rotation);
+            float bodyRadius = FieldSpawnSafety.GetMonsterBodyRadius(prefab);
+            Vector3 spawnPosition = FieldSpawnSafety.ResolveSpawnPosition(
+                spawnPoint.position,
+                bodyRadius,
+                usedSpawnPositions);
+
+            GameObject monster = Instantiate(prefab, spawnPosition, spawnPoint.rotation);
+            usedSpawnPositions.Add(spawnPosition);
             if (monster == null)
                 continue;
 
