@@ -107,14 +107,19 @@ public class UIBattleOxygenGauge : MonoBehaviour
 
     private void TryResolveSliderReference()
     {
-        if (oxygenSlider != null)
-            return;
-
-        if (!autoFindSliderInChildren)
-            return;
-
-        oxygenSlider = GetComponentInChildren<Slider>(true);
         if (oxygenSlider == null)
-            Debug.LogWarning($"[UIBattleOxygenGauge] Slider가 연결되지 않았습니다. ({gameObject.name})");
+        {
+            if (!autoFindSliderInChildren)
+                return;
+
+            oxygenSlider = GetComponentInChildren<Slider>(true);
+            if (oxygenSlider == null)
+            {
+                Debug.LogWarning($"[UIBattleOxygenGauge] Slider가 연결되지 않았습니다. ({gameObject.name})");
+                return;
+            }
+        }
+
+        oxygenSlider.interactable = false;
     }
 }
