@@ -66,6 +66,7 @@ public class UIInventory : MonoBehaviour
     void OnDisable()
     {
         RestoreBattleActionPanelIfHidden();
+        TryExitFieldInventoryPause();
     }
 
     void OnDestroy()
@@ -501,7 +502,9 @@ public class UIInventory : MonoBehaviour
 
     public void Open()
     {
-        if (IsBattleInventoryContext())
+        bool isFieldInventory = !IsBattleInventoryContext();
+
+        if (!isFieldInventory)
         {
             UIButtonContainer.SetAllBattleActionPanelsVisible(false);
             battleActionPanelHiddenByInventory = true;
@@ -509,12 +512,27 @@ public class UIInventory : MonoBehaviour
 
         gameObject.SetActive(true);
         RefreshUI(); // 열 때마다 최신 상태 반영
+
+        if (isFieldInventory)
+            GameManager.Instance?.EnterInventoryPause();
     }
 
     public void Close()
     {
+        bool wasFieldInventoryPauseActive =
+            gameObject.activeSelf && GameManager.Instance != null && GameManager.Instance.IsInventoryPaused;
+
         RestoreBattleActionPanelIfHidden();
         gameObject.SetActive(false);
+
+        if (wasFieldInventoryPauseActive)
+            GameManager.Instance?.ExitInventoryPause();
+    }
+
+    private static void TryExitFieldInventoryPause()
+    {
+        if (GameManager.Instance != null && GameManager.Instance.IsInventoryPaused)
+            GameManager.Instance.ExitInventoryPause();
     }
 
     private void RestoreBattleActionPanelIfHidden()

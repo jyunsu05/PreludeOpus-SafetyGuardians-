@@ -54,7 +54,7 @@ public class MonsterController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (IsFieldMovementFrozen())
+        if (IsFieldMovementFrozen() || IsInventoryPaused())
         {
             StopMoving();
             return;
@@ -139,9 +139,22 @@ public class MonsterController : MonoBehaviour
         }
     }
 
+    public void PauseFieldMovementForInventory()
+    {
+        StopMoving();
+
+        if (rb != null)
+            rb.angularVelocity = 0f;
+    }
+
     private static bool IsFieldMovementFrozen()
     {
         return GameManager.Instance != null && GameManager.Instance.IsFieldMovementFrozen;
+    }
+
+    private static bool IsInventoryPaused()
+    {
+        return GameManager.Instance != null && GameManager.Instance.IsInventoryPaused;
     }
 
     private void StopMoving()

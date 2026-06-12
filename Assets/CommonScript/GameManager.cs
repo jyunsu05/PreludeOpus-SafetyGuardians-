@@ -60,12 +60,17 @@ public class GameManager : MonoBehaviour
     private bool hasCachedOpeningPlayerPosition;
     private bool isFullResetOpeningInProgress;
     private bool isFieldMovementFrozen;
+    private bool isInventoryPaused;
+    private float timeScaleBeforeInventoryPause = 1f;
 
     /// <summary>오프닝 직후 StartNewGameAfterOpening에서 BeginNewPlaySession을 호출할 예정이면 true.</summary>
     public bool IsAwaitingPostOpeningPlaySession => isFullResetOpeningInProgress;
 
     /// <summary>산소 게임오버 등으로 필드에서 플레이어·몬스터 이동이 멈춘 상태입니다.</summary>
     public bool IsFieldMovementFrozen => isFieldMovementFrozen;
+
+    /// <summary>필드에서 가방 인벤토리를 연 동안 게임이 일시정지된 상태입니다.</summary>
+    public bool IsInventoryPaused => isInventoryPaused;
 
     private void Awake()
     {
@@ -147,6 +152,7 @@ public class GameManager : MonoBehaviour
         if (isFieldMovementFrozen)
             return;
 
+        ExitInventoryPause();
         ResetToField();
         BattleEncounterContext.ClearFleeExit();
 
@@ -169,12 +175,39 @@ public class GameManager : MonoBehaviour
         isFieldMovementFrozen = false;
     }
 
+    /// <summary>필드 가방 인벤토리를 열 때 화면·조작·몬스터 추적을 일시정지합니다.</summary>
+    public void EnterInventoryPause()
+    {
+        if (isInventoryPaused || isFieldMovementFrozen || IsInBattle)
+            return;
+
+        isInventoryPaused = true;
+        timeScaleBeforeInventoryPause = Time.timeScale > 0f ? Time.timeScale : 1f;
+        Time.timeScale = 0f;
+        PauseFieldMovementVelocities();
+        GameplayAudioGuard.SuppressFieldSoundsForInventory();
+        Debug.Log("[GameManager] 인벤토리 열림 — 필드 일시정지");
+    }
+
+    /// <summary>필드 가방 인벤토리를 닫을 때 일시정지를 해제합니다.</summary>
+    public void ExitInventoryPause()
+    {
+        if (!isInventoryPaused)
+            return;
+
+        isInventoryPaused = false;
+        Time.timeScale = timeScaleBeforeInventoryPause > 0f ? timeScaleBeforeInventoryPause : 1f;
+        GameplayAudioGuard.ResumeFieldSoundsFromInventory();
+        Debug.Log("[GameManager] 인벤토리 닫힘 — 필드 재개");
+    }
+
     /// <summary>
     /// 게임오버 표시·재시작 직전에 호출. 배틀 UI·버튼·Rigidbody2D.simulated 등 런타임 상태를 정리합니다.
     /// </summary>
     public void ResetAllSystems()
     {
         GameplayAudioGuard.Unblock();
+        ExitInventoryPause();
         ClearFieldMovementFreeze();
         ResetToField();
         BattleEncounterContext.ClearFleeExit();
@@ -202,6 +235,19 @@ public class GameManager : MonoBehaviour
             FindObjectsByType<MonsterController>(FindObjectsInactive.Include);
         for (int i = 0; i < monsters.Length; i++)
             monsters[i]?.StopFieldMovementImmediate();
+    }
+
+    private static void PauseFieldMovementVelocities()
+    {
+        PlayerController[] players =
+            FindObjectsByType<PlayerController>(FindObjectsInactive.Include);
+        for (int i = 0; i < players.Length; i++)
+            players[i]?.PauseFieldMovementForInventory();
+
+        MonsterController[] monsters =
+            FindObjectsByType<MonsterController>(FindObjectsInactive.Include);
+        for (int i = 0; i < monsters.Length; i++)
+            monsters[i]?.PauseFieldMovementForInventory();
     }
 
     public bool IsInBattle => CurrentState == GameState.Battle;

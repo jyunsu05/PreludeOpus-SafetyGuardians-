@@ -148,7 +148,7 @@ public class PlayerOxygen : MonoBehaviour
     {
         if (ShouldPauseOxygenSimulation() || isOxygenGameOver)
         {
-            if (UIGameClearStats.IsVisible)
+            if (UIGameClearStats.IsVisible || !GameplayAudioGuard.CanPlayFieldCharacterSounds)
                 StopOxygenSiren();
 
             return;
@@ -224,6 +224,9 @@ public class PlayerOxygen : MonoBehaviour
             return false;
 
         if (GameManager.Instance.IsAwaitingPostOpeningPlaySession)
+            return true;
+
+        if (GameManager.Instance.IsInventoryPaused)
             return true;
 
         // 배틀 중에는 필드 감소를 멈추고 턴 행동으로만 산소가 변합니다.
@@ -309,9 +312,17 @@ public class PlayerOxygen : MonoBehaviour
         oxygenSirenSource.volume = sirenVolume;
     }
 
+    public void PauseFieldAudioForInventory()
+    {
+        StopOxygenSiren();
+
+        if (oxygenRecoverySource != null && oxygenRecoverySource.isPlaying)
+            oxygenRecoverySource.Stop();
+    }
+
     private void UpdateOxygenSiren()
     {
-        if (!GameplayAudioGuard.CanPlay ||
+        if (!GameplayAudioGuard.CanPlayFieldCharacterSounds ||
             isOxygenGameOver ||
             oxygenSirenClip == null ||
             oxygenSirenSource == null)

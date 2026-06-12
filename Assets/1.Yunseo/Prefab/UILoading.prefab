@@ -69,7 +69,8 @@ MonoBehaviour:
   loadingMessageText: {fileID: 803113438915388431}
   minDisplayTime: 2
   InformationText: {fileID: 3781970696439331545}
-  mainFactorySceneName: FactoryScene
+  chapterManager: {fileID: 0}
+  factoryChapterController: {fileID: 0}
   loadingStartClip: {fileID: 8300000, guid: 3e7f68aff59f9eb48bd6e39c60580430, type: 3}
   loadingCompleteClip: {fileID: 8300000, guid: e422f4bfac371bb41b192ab2954c7ee5, type: 3}
   loadingButtonClickClip: {fileID: 8300000, guid: ba038388398362f4eba628cac92caef0, type: 3}
@@ -443,8 +444,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 749, y: -284}
-  m_SizeDelta: {x: 200, y: 50}
+  m_AnchoredPosition: {x: 713.9968, y: -284}
+  m_SizeDelta: {x: 392.944, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4324286963810221140
 CanvasRenderer:
@@ -583,7 +584,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: -278}
-  m_SizeDelta: {x: 1256.5112, y: 164.4421}
+  m_SizeDelta: {x: 957.645, y: 92.7142}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &3483961522556758496
 MonoBehaviour:
@@ -745,8 +746,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -755, y: -284}
-  m_SizeDelta: {x: 200, y: 50}
+  m_AnchoredPosition: {x: -716.08386, y: -284}
+  m_SizeDelta: {x: 422.2244, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2128310128271135046
 CanvasRenderer:

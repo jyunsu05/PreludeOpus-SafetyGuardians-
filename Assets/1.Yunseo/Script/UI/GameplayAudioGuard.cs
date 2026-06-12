@@ -6,12 +6,32 @@ using UnityEngine;
 public static class GameplayAudioGuard
 {
     public static bool IsBlocked { get; private set; }
+    public static bool IsInventoryFieldSoundsSuppressed { get; private set; }
 
     public static bool CanPlay => !IsBlocked;
+
+    /// <summary>몬스터·플레이어 등 필드 캐릭터 사운드 재생 가능 여부. 공장 배경음은 별도로 재생됩니다.</summary>
+    public static bool CanPlayFieldCharacterSounds =>
+        !IsBlocked && !IsInventoryFieldSoundsSuppressed;
+
+    public static void SuppressFieldSoundsForInventory()
+    {
+        if (IsInventoryFieldSoundsSuppressed)
+            return;
+
+        IsInventoryFieldSoundsSuppressed = true;
+        StopInventorySuppressedAudio();
+    }
+
+    public static void ResumeFieldSoundsFromInventory()
+    {
+        IsInventoryFieldSoundsSuppressed = false;
+    }
 
     public static void BlockAndStopAll()
     {
         IsBlocked = true;
+        IsInventoryFieldSoundsSuppressed = false;
         StopAllAudioSources();
 
         UIButtonClickSoundPlayer uiSoundPlayer = UIButtonClickSoundPlayer.Instance;
@@ -31,6 +51,29 @@ public static class GameplayAudioGuard
     public static void Unblock()
     {
         IsBlocked = false;
+        IsInventoryFieldSoundsSuppressed = false;
+    }
+
+    private static void StopInventorySuppressedAudio()
+    {
+        MonsterFieldSoundController[] monsterSounds =
+            Object.FindObjectsByType<MonsterFieldSoundController>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None);
+
+        for (int i = 0; i < monsterSounds.Length; i++)
+            monsterSounds[i]?.StopFieldSoundsForInventoryPause();
+
+        PlayerOxygen oxygen = PlayerOxygen.ResolveRuntime();
+        oxygen?.PauseFieldAudioForInventory();
+
+        FactoryPipeSmokeSoundZone[] pipeZones =
+            Object.FindObjectsByType<FactoryPipeSmokeSoundZone>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None);
+
+        for (int i = 0; i < pipeZones.Length; i++)
+            pipeZones[i]?.StopForInventoryPause();
     }
 
     private static void StopAllAudioSources()
