@@ -268,11 +268,24 @@ public class PlayerController : MonoBehaviour
         ConfirmBattleEntryFromField(resolvedMonsterId);
     }
 
-    /// <summary>몬스터 충돌 시 배틀 씬으로 즉시 전환합니다.</summary>
+    /// <summary>몬스터 충돌 시 배틀 씬으로 전환합니다.</summary>
     public void ConfirmBattleEntryFromField(string resolvedMonsterId)
+    {
+        StartCoroutine(ConfirmBattleEntryFromFieldRoutine(resolvedMonsterId));
+    }
+
+    private IEnumerator ConfirmBattleEntryFromFieldRoutine(string resolvedMonsterId)
     {
         BattleEncounterContext.SetEncounteredMonsterId(resolvedMonsterId);
         hasEnteredBattle = true;
+
+        AtlasManager.Instance?.PreloadMonsterBattleSpritesForId(resolvedMonsterId);
+
+        if (battleSceneUI != null)
+            UIBattleManager.PrepareFieldBattlePresentation(battleSceneUI, resolvedMonsterId);
+
+        yield return null;
+        yield return new WaitForEndOfFrame();
 
         if (GameManager.Instance != null)
             GameManager.Instance.EnterBattle();

@@ -52,6 +52,9 @@ public class BattleMonsterSpriteLooper : MonoBehaviour
                 $"[{nameof(BattleMonsterSpriteLooper)}] Idle 프레임이 1장뿐입니다. Atlas 슬라이스 이름/개수를 확인하세요: {baseKey}");
         }
 
+        if (HasValidSprites(idleSprites))
+            ApplyIdleFrame(0);
+
         return HasValidSprites(idleSprites);
     }
 
@@ -60,6 +63,12 @@ public class BattleMonsterSpriteLooper : MonoBehaviour
         if (!HasValidSprites(idleSprites))
         {
             Debug.LogWarning($"[{nameof(BattleMonsterSpriteLooper)}] Idle Atlas 프레임을 찾지 못했습니다.");
+            return;
+        }
+
+        if (!isActiveAndEnabled)
+        {
+            ApplyIdleFrame(0);
             return;
         }
 
@@ -122,6 +131,9 @@ public class BattleMonsterSpriteLooper : MonoBehaviour
 
     private void StartRoutine(IEnumerator routine)
     {
+        if (!isActiveAndEnabled)
+            return;
+
         StopActiveRoutine();
         activeRoutine = StartCoroutine(routine);
     }
@@ -186,7 +198,7 @@ public class BattleMonsterSpriteLooper : MonoBehaviour
 
     private void ApplySprite(Sprite sprite)
     {
-        if (targetImage == null || sprite == null)
+        if (targetImage == null)
             return;
 
         targetImage.sprite = sprite;

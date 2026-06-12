@@ -147,7 +147,12 @@ public class PlayerOxygen : MonoBehaviour
     void Update()
     {
         if (ShouldPauseOxygenSimulation() || isOxygenGameOver)
+        {
+            if (UIGameClearStats.IsVisible)
+                StopOxygenSiren();
+
             return;
+        }
 
         currentOxygen -= decayRate * Time.deltaTime;
         currentOxygen = Mathf.Clamp(currentOxygen, 0f, maxOxygen);
@@ -216,6 +221,9 @@ public class PlayerOxygen : MonoBehaviour
             return false;
 
         if (GameManager.Instance.IsAwaitingPostOpeningPlaySession)
+            return true;
+
+        if (UIGameClearStats.IsVisible)
             return true;
 
         // 배틀 중에는 필드 감소를 멈추고 턴 행동으로만 산소가 변합니다.

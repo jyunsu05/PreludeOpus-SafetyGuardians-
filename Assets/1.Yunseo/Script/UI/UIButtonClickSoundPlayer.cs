@@ -84,6 +84,7 @@ public class UIButtonClickSoundPlayer : MonoBehaviour
         if (clip == null || (!allowWhenBlocked && !GameplayAudioGuard.CanPlay))
             return;
 
+        EnsureClipLoaded(clip);
         EnsureAudioSources();
         if (audioSource == null)
             return;
@@ -214,6 +215,15 @@ public class UIButtonClickSoundPlayer : MonoBehaviour
         source.PlayOneShot(clip);
 
         Object.Destroy(host, clip.length + 0.25f);
+    }
+
+    private static void EnsureClipLoaded(AudioClip clip)
+    {
+        if (clip == null)
+            return;
+
+        if (!clip.preloadAudioData && clip.loadState == AudioDataLoadState.Unloaded)
+            clip.LoadAudioData();
     }
 
     static bool ShouldSkipAutoRegistration(Button button)

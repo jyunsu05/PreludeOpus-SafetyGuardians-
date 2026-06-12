@@ -27,6 +27,9 @@ public class GameManager : MonoBehaviour
     [Tooltip("처음부터 시작(fullReset) 시 로드할 오프닝 씬")]
     [SerializeField] private string openingSceneName = "OpeningScene";
 
+    [Tooltip("클리어 후 돌아갈 타이틀(게임 시작) 씬")]
+    [SerializeField] private string gameStartScreenSceneName = "Game start screen";
+
     [Tooltip("오프닝 씬이 빌드에 없을 때 사용할 대체 씬")]
     [SerializeField] private string openingSceneFallbackName = "MainGameScenes";
 
@@ -295,6 +298,37 @@ public class GameManager : MonoBehaviour
             isRestartInProgress = false;
             isFullResetOpeningInProgress = false;
             Debug.LogError($"[GameManager] OpeningScene 로드 실패: {e.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 게임 클리어 UI 닫기 등에서 호출. 게임플레이 UI를 정리한 뒤 Game start screen으로 이동합니다.
+    /// </summary>
+    public void LoadGameStartScreen()
+    {
+        if (isRestartInProgress)
+        {
+            Debug.LogWarning("[GameManager] 재시작이 이미 진행 중입니다.");
+            return;
+        }
+
+        if (!CanLoadScene(gameStartScreenSceneName))
+            return;
+
+        isRestartInProgress = true;
+
+        try
+        {
+            GameplayAudioGuard.Unblock();
+            CloseGameplayOverlays();
+            HidePersistentGameplayUiForOpeningScene();
+            Debug.Log($"[GameManager] Game start screen 로드: {gameStartScreenSceneName}");
+            SceneManager.LoadScene(gameStartScreenSceneName);
+        }
+        catch (Exception e)
+        {
+            isRestartInProgress = false;
+            Debug.LogError($"[GameManager] Game start screen 로드 실패: {e.Message}");
         }
     }
 
@@ -1009,6 +1043,12 @@ public class GameManager : MonoBehaviour
         if (scene.name == openingSceneName)
         {
             Debug.Log("[GameManager] OpeningScene 진입");
+            return;
+        }
+
+        if (scene.name == gameStartScreenSceneName)
+        {
+            Debug.Log("[GameManager] Game start screen 진입");
             return;
         }
 

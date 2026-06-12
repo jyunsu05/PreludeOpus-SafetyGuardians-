@@ -10,6 +10,8 @@ using TMPro;
 /// </summary>
 public class UIGameClearStats : MonoBehaviour
 {
+    public static bool IsVisible { get; private set; }
+
     private const int DetailPageGraph = 0;
     private const int DetailPageStats = 1;
     private const int DetailPageItems = 2;
@@ -78,10 +80,16 @@ public class UIGameClearStats : MonoBehaviour
 
     private void Awake()
     {
+        IsVisible = false;
         ResolveReferences();
         WireButtons();
         SetDetailPage(DetailPageGraph);
         ShowMainPanelOnly();
+    }
+
+    private void OnDisable()
+    {
+        IsVisible = false;
     }
 
     private void Start()
@@ -93,6 +101,7 @@ public class UIGameClearStats : MonoBehaviour
     public void ResetShowState()
     {
         hasShownMainPanel = false;
+        IsVisible = false;
         SetDetailPage(DetailPageGraph);
     }
 
@@ -109,20 +118,19 @@ public class UIGameClearStats : MonoBehaviour
         EnsureOnRootCanvas();
         transform.SetAsLastSibling();
         hasShownMainPanel = true;
+        IsVisible = true;
         gameObject.SetActive(true);
     }
 
     public void Close()
     {
+        IsVisible = false;
         gameObject.SetActive(false);
     }
 
     public void OnCloseClick()
     {
-        Close();
-
-        if (GameManager.Instance != null)
-            GameManager.Instance.LoadOpeningScene();
+        ReturnToGameStartScreen();
     }
 
     public void OnFromBeginningClick()
@@ -149,7 +157,29 @@ public class UIGameClearStats : MonoBehaviour
 
     public void OnBackFromDetailClick()
     {
-        ShowMainPanelOnly();
+        ReturnToGameStartScreen();
+    }
+
+    private void ReturnToGameStartScreen()
+    {
+        Close();
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.LoadGameStartScreen();
+            return;
+        }
+
+        const string gameStartScreenSceneName = "Game start screen";
+        if (!Application.CanStreamedLevelBeLoaded(gameStartScreenSceneName))
+        {
+            Debug.LogError(
+                $"[UIGameClearStats] '{gameStartScreenSceneName}' 씬을 로드할 수 없습니다. " +
+                "Build Settings에 씬이 포함되어 있는지 확인하세요.");
+            return;
+        }
+
+        UnityEngine.SceneManagement.SceneManager.LoadScene(gameStartScreenSceneName);
     }
 
     public void OnDetailPrevClick()
