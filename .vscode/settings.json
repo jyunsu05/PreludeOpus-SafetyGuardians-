@@ -67,6 +67,6 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "PreludeOpus-SafetyGuardians.slnx",
+    "dotnet.defaultSolution": "PreludeOpus-SafetyGuardians-.slnx",
     "dotnet.enableWorkspaceBasedDevelopment": false
 }
