@@ -61,6 +61,12 @@ public class OpeningStarWarsCrawl : MonoBehaviour
     [Header("Game Start Button")]
     public GameObject gameStartButton;
 
+    [Header("Tutorial Panel")]
+    [Tooltip("게임 시작 버튼 클릭 시 숨길 오프닝 UI 루트 오브젝트입니다.\n비워두면 gameStartButton만 숨깁니다.")]
+    public GameObject openingUIRoot;
+    [Tooltip("게임 시작 버튼 클릭 시 표시할 튜토리얼 패널입니다.\n비워두면 기존처럼 바로 씬 전환합니다.")]
+    public GameObject tutorialPanel;
+
     [Header("UI Sound")]
     [SerializeField] AudioClip buttonClickClip;
 
@@ -224,10 +230,53 @@ public class OpeningStarWarsCrawl : MonoBehaviour
         if (openingFinished)
             return;
 
+        // tutorialPanel이 연결되어 있으면 튜토리얼 화면으로 전환합니다.
+        if (tutorialPanel != null)
+        {
+            Debug.Log("[OpeningStarWarsCrawl] [게임 시작] 버튼 클릭 — 튜토리얼 패널을 표시합니다.");
+            PlayGameStartClickSound();
+
+            if (openingUIRoot != null)
+                openingUIRoot.SetActive(false);
+            else if (gameStartButton != null)
+                gameStartButton.SetActive(false);
+
+            tutorialPanel.SetActive(true);
+            return;
+        }
+
+        // tutorialPanel이 없으면 기존처럼 바로 씬 전환합니다.
         Debug.Log("[OpeningStarWarsCrawl] [게임 시작] 버튼 클릭 — 메인 게임 씬으로 이동합니다.");
         openingFinished = true;
         StopActiveFadeRoutine();
         StartCoroutine(PlayClickSoundThenTransition());
+    }
+
+    /// <summary>튜토리얼 패널의 [공장 들어가기] 버튼 OnClick에 연결합니다.</summary>
+    public void OnEnterFactoryButtonClicked()
+    {
+        if (openingFinished)
+            return;
+
+        Debug.Log("[OpeningStarWarsCrawl] [공장 들어가기] 버튼 클릭 — 메인 게임 씬으로 이동합니다.");
+        openingFinished = true;
+        StopActiveFadeRoutine();
+
+        // tutorialPanel을 즉시 숨기지 않습니다.
+        // exitFade가 화면 전체를 검은색으로 덮은 뒤 씬 전환하므로
+        // 씬 로드 대기 중 오프닝 배경이 노출되는 현상을 방지합니다.
+        StartCoroutine(PlayClickSoundThenExitTransition());
+    }
+
+    IEnumerator PlayClickSoundThenExitTransition()
+    {
+        PlayGameStartClickSound();
+        yield return new WaitForSecondsRealtime(GetGameStartClickSoundDelay());
+
+        if (exitFadeOutSeconds > 0f)
+            activeFadeRoutine = StartCoroutine(ExitFadeThenTransition());
+        else
+            CompleteOpeningTransition();
     }
 
     IEnumerator PlayClickSoundThenTransition()

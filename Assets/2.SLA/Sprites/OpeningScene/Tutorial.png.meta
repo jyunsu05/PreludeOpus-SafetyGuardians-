@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 1bbb18ad0bef1a545983b4a87db77487
+guid: b8f0b9c28f4fec548b517fa4953c9def
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 5800008212171948682
-    second: UIButton_Inventory_0
+      213: -2521409195606705084
+    second: Tutorial_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 0
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -75,7 +75,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 2
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: UIButton_Inventory_0
+      name: Tutorial_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 1024
-        height: 1024
+        width: 1672
+        height: 941
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: a828bdc3db4cd7050800000000000000
-      internalID: 5800008212171948682
+      spriteID: 44c757212b7220dd0800000000000000
+      internalID: -2521409195606705084
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      UIButton_Inventory_0: 5800008212171948682
+      Tutorial_0: -2521409195606705084
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
