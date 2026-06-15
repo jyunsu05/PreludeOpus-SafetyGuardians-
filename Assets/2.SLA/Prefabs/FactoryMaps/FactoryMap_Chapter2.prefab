@@ -237,8 +237,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FactoryAmbientSoundController
   machineLoopClip: {fileID: 8300000, guid: 587cf5fd06b48e848b0702a9feb14a01, type: 3}
   abandonedFactoryLoopClip: {fileID: 8300000, guid: 0756329bd7309174ead52d2d49a9dc4b, type: 3}
-  machineVolume: 0.4
-  abandonedVolume: 0.82
+  machineVolume: 0.35
+  abandonedVolume: 0.74
   pauseDuringBattle: 1
   pipeAmbienceClip: {fileID: 8300000, guid: 9d7d955f3ff194c4a9aca19560359ff3, type: 3}
   pipeVolume: 0.32

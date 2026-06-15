@@ -122,6 +122,7 @@ public class UILoading : MonoBehaviour
             loadingPanel.SetActive(true);
 
         ConfigureProgressBar();
+        GameplayAudioGuard.SuppressForLoading();
         StopLoadingSounds();
         PlayLoadingSounds();
         RegisterLoadingButtons();
@@ -209,6 +210,8 @@ public class UILoading : MonoBehaviour
 
         if (loadingPanel != null)
             loadingPanel.SetActive(false);
+
+        GameplayAudioGuard.ResumeFromLoading();
     }
 
     private IEnumerator AutoProgressRoutine(float duration)

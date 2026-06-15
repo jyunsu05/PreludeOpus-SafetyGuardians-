@@ -146,8 +146,8 @@ namespace SLA.Editor
             SerializedObject so = new SerializedObject(ambient);
             so.FindProperty("machineLoopClip").objectReferenceValue = machine;
             so.FindProperty("abandonedFactoryLoopClip").objectReferenceValue = abandoned;
-            so.FindProperty("machineVolume").floatValue = 0.4f;
-            so.FindProperty("abandonedVolume").floatValue = 0.82f;
+            so.FindProperty("machineVolume").floatValue = 0.35f;
+            so.FindProperty("abandonedVolume").floatValue = 0.74f;
             so.FindProperty("pauseDuringBattle").boolValue = true;
             so.FindProperty("pipeAmbienceClip").objectReferenceValue = pipe;
             so.FindProperty("pipeVolume").floatValue = 0.32f;

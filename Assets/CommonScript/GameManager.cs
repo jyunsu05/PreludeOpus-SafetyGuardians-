@@ -1338,7 +1338,7 @@ public class GameManager : MonoBehaviour
         if (args.ChapterIndex < 1)
             return;
 
-        StartFactoryExplorationBgm();
+        RestartFactoryExplorationBgmFromBeginning();
     }
 
     private void StartFactoryExplorationBgm()
@@ -1350,6 +1350,27 @@ public class GameManager : MonoBehaviour
         factoryExplorationBgmActive = true;
         factoryExplorationBgmPausedForBattle = false;
         SyncFactoryExplorationBgmPlayback();
+    }
+
+    private void RestartFactoryExplorationBgmFromBeginning()
+    {
+        if (factoryExplorationBgmClip == null)
+            return;
+
+        ConfigureFactoryExplorationBgmSource();
+        factoryExplorationBgmActive = true;
+        factoryExplorationBgmPausedForBattle = false;
+
+        if (factoryExplorationBgmPlayRoutine != null)
+        {
+            StopCoroutine(factoryExplorationBgmPlayRoutine);
+            factoryExplorationBgmPlayRoutine = null;
+        }
+
+        if (factoryExplorationBgmSource != null && factoryExplorationBgmSource.isPlaying)
+            factoryExplorationBgmSource.Stop();
+
+        factoryExplorationBgmPlayRoutine = StartCoroutine(PlayFactoryExplorationBgmFromBeginningRoutine());
     }
 
     private void StopFactoryExplorationBgm()
@@ -1367,10 +1388,28 @@ public class GameManager : MonoBehaviour
             factoryExplorationBgmSource.Stop();
     }
 
+    private void StopFactoryExplorationBgmPlaybackOnly()
+    {
+        if (factoryExplorationBgmPlayRoutine != null)
+        {
+            StopCoroutine(factoryExplorationBgmPlayRoutine);
+            factoryExplorationBgmPlayRoutine = null;
+        }
+
+        if (factoryExplorationBgmSource != null && factoryExplorationBgmSource.isPlaying)
+            factoryExplorationBgmSource.Stop();
+    }
+
     private void PauseFactoryExplorationBgmForBattle()
     {
         if (!factoryExplorationBgmActive || factoryExplorationBgmSource == null)
             return;
+
+        if (factoryExplorationBgmPlayRoutine != null)
+        {
+            StopCoroutine(factoryExplorationBgmPlayRoutine);
+            factoryExplorationBgmPlayRoutine = null;
+        }
 
         if (factoryExplorationBgmSource.isPlaying)
             factoryExplorationBgmSource.Pause();
@@ -1383,7 +1422,7 @@ public class GameManager : MonoBehaviour
         if (!factoryExplorationBgmActive || factoryExplorationBgmSource == null || !factoryExplorationBgmPausedForBattle)
             return;
 
-        if (IsInBattle || IsBattlePresentationVisible() || GameplayAudioGuard.IsBlocked)
+        if (IsInBattle || IsBattlePresentationVisible() || GameplayAudioGuard.IsBlocked || UILoading.IsLoadingScreenVisible)
             return;
 
         factoryExplorationBgmSource.UnPause();
@@ -1397,6 +1436,13 @@ public class GameManager : MonoBehaviour
 
         if (factoryExplorationBgmSource != null)
             factoryExplorationBgmSource.volume = factoryExplorationBgmVolume;
+
+        if (UILoading.IsLoadingScreenVisible)
+        {
+            StopFactoryExplorationBgmPlaybackOnly();
+            factoryExplorationBgmPausedForBattle = false;
+            return;
+        }
 
         if (GameplayAudioGuard.IsBlocked)
         {
@@ -1418,7 +1464,10 @@ public class GameManager : MonoBehaviour
         if (!factoryExplorationBgmActive || factoryExplorationBgmClip == null)
             return;
 
-        if (IsInBattle || IsBattlePresentationVisible() || GameplayAudioGuard.IsBlocked)
+        if (UILoading.IsLoadingScreenVisible ||
+            IsInBattle ||
+            IsBattlePresentationVisible() ||
+            GameplayAudioGuard.IsBlocked)
             return;
 
         ConfigureFactoryExplorationBgmSource();
@@ -1463,6 +1512,59 @@ public class GameManager : MonoBehaviour
         factoryExplorationBgmPlayRoutine = null;
     }
 
+    private IEnumerator PlayFactoryExplorationBgmFromBeginningRoutine()
+    {
+        EnsureFactoryExplorationBgmClipLoaded();
+
+        float timeoutAt = Time.unscaledTime + 5f;
+        while (factoryExplorationBgmClip.loadState == AudioDataLoadState.Loading && Time.unscaledTime < timeoutAt)
+            yield return null;
+
+        if (factoryExplorationBgmClip.loadState != AudioDataLoadState.Loaded)
+        {
+            Debug.LogWarning(
+                $"[GameManager] 공장 탐험 BGM 로드 실패: {factoryExplorationBgmClip.loadState}");
+            factoryExplorationBgmPlayRoutine = null;
+            yield break;
+        }
+
+        if (!factoryExplorationBgmActive ||
+            IsInBattle ||
+            IsBattlePresentationVisible() ||
+            GameplayAudioGuard.IsBlocked)
+        {
+            factoryExplorationBgmPlayRoutine = null;
+            yield break;
+        }
+
+        float loadingWaitUntil = Time.unscaledTime + 10f;
+        while (UILoading.IsLoadingScreenVisible &&
+               factoryExplorationBgmActive &&
+               Time.unscaledTime < loadingWaitUntil)
+        {
+            yield return null;
+        }
+
+        if (!factoryExplorationBgmActive ||
+            UILoading.IsLoadingScreenVisible ||
+            IsInBattle ||
+            IsBattlePresentationVisible() ||
+            GameplayAudioGuard.IsBlocked)
+        {
+            factoryExplorationBgmPlayRoutine = null;
+            yield break;
+        }
+
+        ConfigureFactoryExplorationBgmSource();
+        factoryExplorationBgmSource.clip = factoryExplorationBgmClip;
+        factoryExplorationBgmSource.volume = factoryExplorationBgmVolume;
+        factoryExplorationBgmSource.loop = true;
+        factoryExplorationBgmSource.time = 0f;
+        factoryExplorationBgmSource.Play();
+        factoryExplorationBgmPausedForBattle = false;
+        factoryExplorationBgmPlayRoutine = null;
+    }
+
     private static bool IsBattlePresentationVisible()
     {
         GameObject battleRoot = GameObject.Find("UIBattlescene");
@@ -1496,7 +1598,9 @@ public class GameManager : MonoBehaviour
 
     private void SyncBattleSceneBgmState()
     {
-        bool battleUiVisible = IsBattleSceneUiVisible() && !GameplayAudioGuard.IsBlocked;
+        bool battleUiVisible = IsBattleSceneUiVisible() &&
+                               !GameplayAudioGuard.IsBlocked &&
+                               !UILoading.IsLoadingScreenVisible;
 
         if (battleUiVisible && !wasBattleSceneUiVisible)
             StartBattleSceneBgmFromBeginning();
@@ -1553,7 +1657,7 @@ public class GameManager : MonoBehaviour
             yield break;
         }
 
-        if (!IsBattleSceneUiVisible() || GameplayAudioGuard.IsBlocked)
+        if (!IsBattleSceneUiVisible() || GameplayAudioGuard.IsBlocked || UILoading.IsLoadingScreenVisible)
         {
             battleSceneBgmPlayRoutine = null;
             yield break;

@@ -46,6 +46,7 @@ public class PlayerController : MonoBehaviour
     private Coroutine coughRoutine;
 
     private const int IdleAnimatorState = 4;
+    private const float IdleCoughVolumeScale = 0.8f;
 
     // 실시간 제어 상태 플래그 변수들
     private Vector2 movementInput; // 현재 프레임에서 입력된 방향 벡터 (X, Y)
@@ -531,13 +532,13 @@ public class PlayerController : MonoBehaviour
     {
         if (idleCoughClip1 != null)
         {
-            coughSource.PlayOneShot(idleCoughClip1);
+            coughSource.PlayOneShot(idleCoughClip1, IdleCoughVolumeScale);
             yield return new WaitForSeconds(idleCoughClip1.length);
         }
 
         if (idleCoughClip2 != null)
         {
-            coughSource.PlayOneShot(idleCoughClip2);
+            coughSource.PlayOneShot(idleCoughClip2, IdleCoughVolumeScale);
             yield return new WaitForSeconds(idleCoughClip2.length);
         }
 

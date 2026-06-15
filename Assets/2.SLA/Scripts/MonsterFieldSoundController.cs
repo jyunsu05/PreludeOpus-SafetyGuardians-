@@ -58,7 +58,7 @@ public class MonsterFieldSoundController : MonoBehaviour
         fieldLoopSource.playOnAwake = false;
         fieldLoopSource.loop = true;
         fieldLoopSource.spatialBlend = 0f;
-        fieldLoopSource.volume = ResolveFieldLoopVolume();
+        fieldLoopSource.volume = ResolveFieldLoopVolume(LoopKind.Idle);
 
         if (sources.Length > 1)
             sfxSource = sources[1];
@@ -265,7 +265,7 @@ public class MonsterFieldSoundController : MonoBehaviour
 
         fieldLoopSource.loop = true;
         fieldLoopSource.mute = false;
-        fieldLoopSource.volume = ResolveFieldLoopVolume();
+        fieldLoopSource.volume = ResolveFieldLoopVolume(kind);
 
         if (clipChanged)
         {
@@ -340,6 +340,7 @@ public class MonsterFieldSoundController : MonoBehaviour
 
         fieldLoopSource.loop = true;
         fieldLoopSource.mute = false;
+        fieldLoopSource.volume = ResolveFieldLoopVolume(currentLoop);
         fieldLoopSource.clip = clip;
 
         if (!fieldLoopSource.isPlaying)
@@ -529,15 +530,42 @@ public class MonsterFieldSoundController : MonoBehaviour
         return encountered != null ? encountered.name : "(none)";
     }
 
-    private static float ResolveFieldLoopVolume()
+    private float ResolveFieldLoopVolume(LoopKind kind)
     {
+        float volume;
         if (GameManager.Instance != null && GameManager.Instance.IsInBattle)
-            return GameManager.Instance.GetBattleSfxVolume(0.48f);
+            volume = GameManager.Instance.GetBattleSfxVolume(0.48f);
+        else if (GameManager.Instance != null)
+            volume = GameManager.Instance.GetFactorySfxVolume(0.55f);
+        else
+            volume = 0.275f;
 
-        if (GameManager.Instance != null)
-            return GameManager.Instance.GetFactorySfxVolume(0.45f);
+        return volume * ResolveMonsterLoopVolumeScale(kind);
+    }
 
-        return 0.225f;
+    private float ResolveMonsterLoopVolumeScale(LoopKind kind)
+    {
+        if (kind == LoopKind.Run && IsFireMonster())
+            return 1.18f;
+
+        if (kind == LoopKind.Idle && IsSlimeMonster())
+            return 1.5f;
+
+        return 1f;
+    }
+
+    private bool IsFireMonster()
+    {
+        string objectName = gameObject.name;
+        return objectName.IndexOf("M003", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+               objectName.IndexOf("Fire", System.StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
+    private bool IsSlimeMonster()
+    {
+        string objectName = gameObject.name;
+        return objectName.IndexOf("M001", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+               objectName.IndexOf("Slime", System.StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
     private static float ResolveBattleMonsterSfxVolume()
