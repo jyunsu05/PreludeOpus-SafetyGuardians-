@@ -12,14 +12,14 @@ public class FactoryAmbientSoundController : MonoBehaviour
     [SerializeField] private AudioClip machineLoopClip;
     [SerializeField] private AudioClip abandonedFactoryLoopClip;
 
-    [Header("Mix")]
-    [SerializeField] [Range(0f, 1f)] private float machineVolume = 0.28f;
-    [SerializeField] [Range(0f, 1f)] private float abandonedVolume = 0.85f;
+    [Header("Mix (BGM 대비 비율)")]
+    [SerializeField] [Range(0f, 1f)] private float machineVolume = 0.4f;
+    [SerializeField] [Range(0f, 1f)] private float abandonedVolume = 0.82f;
     [SerializeField] private bool pauseDuringBattle = true;
 
     [Header("Pipe Ambience")]
     [SerializeField] private AudioClip pipeAmbienceClip;
-    [SerializeField] [Range(0f, 1f)] private float pipeVolume = 0.22f;
+    [SerializeField] [Range(0f, 1f)] private float pipeVolume = 0.32f;
     [SerializeField] private float pipeIntervalMinSeconds = 18f;
     [SerializeField] private float pipeIntervalMaxSeconds = 38f;
     [SerializeField] private float pipeFirstPlayDelaySeconds = 6f;
@@ -27,7 +27,7 @@ public class FactoryAmbientSoundController : MonoBehaviour
     [Header("Water Drop Ambience")]
     [SerializeField] private bool enableWaterDropAmbience = true;
     [SerializeField] private AudioClip waterDropAmbienceClip;
-    [SerializeField] [Range(0f, 1f)] private float waterDropVolume = 0.35f;
+    [SerializeField] [Range(0f, 1f)] private float waterDropVolume = 0.34f;
     [SerializeField] private float waterDropIntervalMinSeconds = 8f;
     [SerializeField] private float waterDropIntervalMaxSeconds = 16f;
     [SerializeField] private float waterDropFirstPlayDelaySeconds = 3f;
@@ -105,25 +105,25 @@ public class FactoryAmbientSoundController : MonoBehaviour
         machineSource.playOnAwake = false;
         machineSource.loop = true;
         machineSource.spatialBlend = 0f;
-        machineSource.volume = machineVolume;
+        machineSource.volume = ResolveAmbientVolume(machineVolume);
 
         abandonedSource = gameObject.AddComponent<AudioSource>();
         abandonedSource.playOnAwake = false;
         abandonedSource.loop = true;
         abandonedSource.spatialBlend = 0f;
-        abandonedSource.volume = abandonedVolume;
+        abandonedSource.volume = ResolveAmbientVolume(abandonedVolume);
 
         pipeSource = gameObject.AddComponent<AudioSource>();
         pipeSource.playOnAwake = false;
         pipeSource.loop = false;
         pipeSource.spatialBlend = 0f;
-        pipeSource.volume = pipeVolume;
+        pipeSource.volume = ResolveAmbientVolume(pipeVolume);
 
         waterDropSource = gameObject.AddComponent<AudioSource>();
         waterDropSource.playOnAwake = false;
         waterDropSource.loop = false;
         waterDropSource.spatialBlend = 0f;
-        waterDropSource.volume = waterDropVolume;
+        waterDropSource.volume = ResolveAmbientVolume(waterDropVolume);
     }
 
     private void StartAllAmbience()
@@ -142,8 +142,8 @@ public class FactoryAmbientSoundController : MonoBehaviour
 
     private void StartAmbientLoops()
     {
-        PlayLoop(machineSource, machineLoopClip, machineVolume);
-        PlayLoop(abandonedSource, abandonedFactoryLoopClip, abandonedVolume);
+        PlayLoop(machineSource, machineLoopClip, ResolveAmbientVolume(machineVolume));
+        PlayLoop(abandonedSource, abandonedFactoryLoopClip, ResolveAmbientVolume(abandonedVolume));
     }
 
     private void StopAmbientLoops()
@@ -229,7 +229,7 @@ public class FactoryAmbientSoundController : MonoBehaviour
         if (pipeAmbienceClip == null || pipeSource == null)
             return;
 
-        pipeSource.volume = pipeVolume;
+        pipeSource.volume = ResolveAmbientVolume(pipeVolume);
         pipeSource.PlayOneShot(pipeAmbienceClip);
     }
 
@@ -276,7 +276,7 @@ public class FactoryAmbientSoundController : MonoBehaviour
         if (waterDropAmbienceClip == null || waterDropSource == null)
             yield break;
 
-        waterDropSource.volume = waterDropVolume;
+        waterDropSource.volume = ResolveAmbientVolume(waterDropVolume);
         waterDropSource.PlayOneShot(waterDropAmbienceClip);
 
         if (Random.value > doublePlayChance)
@@ -286,8 +286,16 @@ public class FactoryAmbientSoundController : MonoBehaviour
         float gapMax = Mathf.Max(gapMin, doublePlayGapMaxSeconds);
         yield return new WaitForSeconds(Random.Range(gapMin, gapMax));
 
-        waterDropSource.volume = waterDropVolume;
+        waterDropSource.volume = ResolveAmbientVolume(waterDropVolume);
         waterDropSource.PlayOneShot(waterDropAmbienceClip);
+    }
+
+    private static float ResolveAmbientVolume(float bgmRatio)
+    {
+        if (GameManager.Instance != null)
+            return GameManager.Instance.GetFactorySfxVolume(bgmRatio);
+
+        return Mathf.Clamp01(0.5f * bgmRatio);
     }
 
     private void StopAmbienceForBattle()

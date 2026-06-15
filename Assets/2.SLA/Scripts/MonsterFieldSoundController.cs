@@ -58,7 +58,7 @@ public class MonsterFieldSoundController : MonoBehaviour
         fieldLoopSource.playOnAwake = false;
         fieldLoopSource.loop = true;
         fieldLoopSource.spatialBlend = 0f;
-        fieldLoopSource.volume = 1f;
+        fieldLoopSource.volume = ResolveFieldLoopVolume();
 
         if (sources.Length > 1)
             sfxSource = sources[1];
@@ -265,6 +265,7 @@ public class MonsterFieldSoundController : MonoBehaviour
 
         fieldLoopSource.loop = true;
         fieldLoopSource.mute = false;
+        fieldLoopSource.volume = ResolveFieldLoopVolume();
 
         if (clipChanged)
         {
@@ -408,7 +409,7 @@ public class MonsterFieldSoundController : MonoBehaviour
         sfxSource.loop = false;
         sfxSource.clip = attackClip;
         sfxSource.pitch = 1f;
-        sfxSource.volume = 1f;
+        sfxSource.volume = ResolveBattleMonsterSfxVolume();
         sfxSource.time = 0f;
         sfxSource.Play();
 
@@ -468,7 +469,7 @@ public class MonsterFieldSoundController : MonoBehaviour
         sfxSource.loop = false;
         sfxSource.clip = purificationCompleteClip;
         sfxSource.pitch = 1f;
-        sfxSource.volume = 1f;
+        sfxSource.volume = ResolveBattlePurifySfxVolume();
         sfxSource.time = 0f;
         sfxSource.Play();
 
@@ -526,5 +527,32 @@ public class MonsterFieldSoundController : MonoBehaviour
     {
         GameObject encountered = BattleEncounterContext.PeekEncounteredMonsterObject();
         return encountered != null ? encountered.name : "(none)";
+    }
+
+    private static float ResolveFieldLoopVolume()
+    {
+        if (GameManager.Instance != null && GameManager.Instance.IsInBattle)
+            return GameManager.Instance.GetBattleSfxVolume(0.48f);
+
+        if (GameManager.Instance != null)
+            return GameManager.Instance.GetFactorySfxVolume(0.45f);
+
+        return 0.225f;
+    }
+
+    private static float ResolveBattleMonsterSfxVolume()
+    {
+        if (GameManager.Instance != null)
+            return GameManager.Instance.GetBattleSfxVolume(0.72f);
+
+        return 0.36f;
+    }
+
+    private static float ResolveBattlePurifySfxVolume()
+    {
+        if (GameManager.Instance != null)
+            return GameManager.Instance.GetBattleSfxVolume(0.62f);
+
+        return 0.31f;
     }
 }

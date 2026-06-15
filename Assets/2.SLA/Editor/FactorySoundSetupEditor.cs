@@ -146,17 +146,17 @@ namespace SLA.Editor
             SerializedObject so = new SerializedObject(ambient);
             so.FindProperty("machineLoopClip").objectReferenceValue = machine;
             so.FindProperty("abandonedFactoryLoopClip").objectReferenceValue = abandoned;
-            so.FindProperty("machineVolume").floatValue = 0.28f;
-            so.FindProperty("abandonedVolume").floatValue = 0.85f;
+            so.FindProperty("machineVolume").floatValue = 0.4f;
+            so.FindProperty("abandonedVolume").floatValue = 0.82f;
             so.FindProperty("pauseDuringBattle").boolValue = true;
             so.FindProperty("pipeAmbienceClip").objectReferenceValue = pipe;
-            so.FindProperty("pipeVolume").floatValue = 0.22f;
+            so.FindProperty("pipeVolume").floatValue = 0.32f;
             so.FindProperty("pipeIntervalMinSeconds").floatValue = 18f;
             so.FindProperty("pipeIntervalMaxSeconds").floatValue = 38f;
             so.FindProperty("pipeFirstPlayDelaySeconds").floatValue = 6f;
             so.FindProperty("enableWaterDropAmbience").boolValue = enableWaterDrop;
             so.FindProperty("waterDropAmbienceClip").objectReferenceValue = waterDrop;
-            so.FindProperty("waterDropVolume").floatValue = 0.35f;
+            so.FindProperty("waterDropVolume").floatValue = enableWaterDrop ? 0.34f : 0.28f;
             so.FindProperty("waterDropIntervalMinSeconds").floatValue = 8f;
             so.FindProperty("waterDropIntervalMaxSeconds").floatValue = 16f;
             so.FindProperty("waterDropFirstPlayDelaySeconds").floatValue = 3f;
@@ -177,8 +177,8 @@ namespace SLA.Editor
             so.FindProperty("pipeSmokeClip1").objectReferenceValue = smoke1;
             so.FindProperty("pipeSmokeClip2").objectReferenceValue = smoke2;
             so.FindProperty("proximityRadius").floatValue = 2.5f;
-            so.FindProperty("volume").floatValue = 0.22f;
-            so.FindProperty("playChance").floatValue = 0.35f;
+            so.FindProperty("volume").floatValue = 0.28f;
+            so.FindProperty("playChance").floatValue = 0.3f;
             so.FindProperty("checkIntervalMinSeconds").floatValue = 2f;
             so.FindProperty("checkIntervalMaxSeconds").floatValue = 4.5f;
             so.FindProperty("cooldownAfterPlaySeconds").floatValue = 5f;
@@ -211,7 +211,7 @@ namespace SLA.Editor
                 so.FindProperty("sirenPitchAtHigh").floatValue = 0.85f;
                 so.FindProperty("sirenPitchAtMid").floatValue = 1.15f;
                 so.FindProperty("sirenPitchAtLow").floatValue = 1.5f;
-                so.FindProperty("sirenVolume").floatValue = 0.7f;
+                so.FindProperty("sirenVolume").floatValue = 0.55f;
                 so.ApplyModifiedPropertiesWithoutUndo();
 
                 PrefabUtility.SaveAsPrefabAsset(playerRoot, PlayerPrefabPath);

@@ -45,7 +45,24 @@ public class UIAcquisitionPopup : MonoBehaviour
         if (rewardMessageText != null)
             rewardMessageText.text = $"{itemName}을(를) {count}개 수집했습니다.\n아이템은 인벤토리에 자동으로 들어갑니다.";
 
+        RegisterPopupButtons();
         UIButtonClickSoundPlayer.Instance?.PlayBattleItemPopupSound();
+    }
+
+    private void OnEnable()
+    {
+        RegisterPopupButtons();
+    }
+
+    private void RegisterPopupButtons()
+    {
+        UIButtonClickSoundPlayer player = UIButtonClickSoundPlayer.Instance;
+        if (player == null)
+            return;
+
+        Button[] buttons = GetComponentsInChildren<Button>(true);
+        for (int i = 0; i < buttons.Length; i++)
+            player.RegisterButton(buttons[i]);
     }
 
     private string ResolveInventoryItemId(string itemId)
@@ -88,6 +105,8 @@ public class UIAcquisitionPopup : MonoBehaviour
     // [확인] 버튼과 연결할 함수
     public void OnConfirmButtonClick()
     {
+        UIButtonClickSoundPlayer.Instance?.PlayAcquisitionPopupClickSound();
+
         Debug.Log("[UIAcquisitionPopup] 확인 버튼 클릭.");
 
         if (addToInventoryOnConfirm)

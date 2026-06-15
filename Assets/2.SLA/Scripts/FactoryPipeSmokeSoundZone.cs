@@ -18,9 +18,9 @@ public class FactoryPipeSmokeSoundZone : MonoBehaviour
     [Tooltip("벽 콜라이더와 이 거리 안이면 근접으로 판정합니다.")]
     [SerializeField] private float proximityRadius = 2.5f;
 
-    [Header("Playback")]
-    [SerializeField] [Range(0f, 1f)] private float volume = 0.22f;
-    [SerializeField] [Range(0f, 1f)] private float playChance = 0.35f;
+    [Header("Playback (BGM 대비 비율)")]
+    [SerializeField] [Range(0f, 1f)] private float volume = 0.28f;
+    [SerializeField] [Range(0f, 1f)] private float playChance = 0.3f;
     [SerializeField] private float checkIntervalMinSeconds = 2f;
     [SerializeField] private float checkIntervalMaxSeconds = 4.5f;
     [SerializeField] private float cooldownAfterPlaySeconds = 5f;
@@ -40,7 +40,7 @@ public class FactoryPipeSmokeSoundZone : MonoBehaviour
         sfxSource.playOnAwake = false;
         sfxSource.loop = false;
         sfxSource.spatialBlend = 0f;
-        sfxSource.volume = volume;
+        sfxSource.volume = ResolveSmokeVolume(volume);
     }
 
     private void OnEnable()
@@ -180,9 +180,17 @@ public class FactoryPipeSmokeSoundZone : MonoBehaviour
         if (clip == null || sfxSource == null)
             return;
 
-        sfxSource.volume = volume;
+        sfxSource.volume = ResolveSmokeVolume(volume);
         sfxSource.PlayOneShot(clip);
         cooldownUntil = Time.time + Mathf.Max(0.5f, cooldownAfterPlaySeconds);
+    }
+
+    private static float ResolveSmokeVolume(float bgmRatio)
+    {
+        if (GameManager.Instance != null)
+            return GameManager.Instance.GetFactorySfxVolume(bgmRatio);
+
+        return Mathf.Clamp01(0.5f * bgmRatio);
     }
 
     private AudioClip ResolveRandomClip()
