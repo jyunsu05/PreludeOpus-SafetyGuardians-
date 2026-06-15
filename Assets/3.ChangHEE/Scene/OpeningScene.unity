@@ -376,7 +376,6 @@ GameObject:
   - component: {fileID: 1025444231}
   - component: {fileID: 1025444230}
   - component: {fileID: 1025444234}
-  - component: {fileID: 1025444235}
   - component: {fileID: 1025444236}
   m_Layer: 5
   m_Name: Canvas
@@ -495,7 +494,7 @@ MonoBehaviour:
   storyFont: {fileID: 11400000, guid: 4e08b296a37287a41ba922096a350d28, type: 2}
   fontSize: 72.3
   fontWeight: 800
-  textColor: {r: 1, g: 0.82, b: 0.12, a: 1}
+  textColor: {r: 0.7294118, g: 1, b: 1, a: 1}
   lineSpacing: 10
   textBoxWidth: 1200
   creditsMask: {fileID: 0}
@@ -517,28 +516,6 @@ MonoBehaviour:
   entryFadeInSeconds: 1.5
   exitFadeOutSeconds: 1.5
   exitFadeColor: {r: 0, g: 0, b: 0, a: 1}
---- !u!114 &1025444235
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1025444229}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d3ead968b42a36b43b0c524910aca4da, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  targetPrefix: StarGlow
-  visibleCount: 8
-  minSize: 40
-  maxSize: 90
-  randomizeEveryFrame: 1
-  randomizeInterval: 0.15
-  twinkleMinAlpha: 0.05
-  twinkleMaxAlpha: 1
-  twinkleMinSpeed: 1.5
-  twinkleMaxSpeed: 4
 --- !u!114 &1025444236
 MonoBehaviour:
   m_ObjectHideFlags: 0
