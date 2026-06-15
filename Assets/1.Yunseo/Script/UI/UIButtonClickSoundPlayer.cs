@@ -9,8 +9,12 @@ public class UIButtonClickSoundPlayer : MonoBehaviour
     public static UIButtonClickSoundPlayer Instance { get; private set; }
 
     [SerializeField] private AudioClip clickClip;
+    [SerializeField] [Range(0f, 1f)] private float clickVolume = 1f;
     [SerializeField] private AudioClip factoryItemAcquireClip;
     [SerializeField] private AudioClip battleItemPopupClip;
+
+    public AudioClip ClickClip => clickClip;
+    public float ClickVolume => clickVolume;
 
     private AudioSource audioSource;
     private AudioSource trackedAudioSource;
@@ -185,24 +189,35 @@ public class UIButtonClickSoundPlayer : MonoBehaviour
     public void PlayClickSound()
     {
         // 게임오버 등으로 GameplayAudioGuard가 막혀 있어도 UI 버튼 클릭음은 재생합니다.
-        PlayOneShotClip(clickClip, allowWhenBlocked: GameplayAudioGuard.IsBlocked);
+        PlayOneShotClip(clickClip, clickVolume, allowWhenBlocked: GameplayAudioGuard.IsBlocked);
     }
 
     public void PlayClickSound(bool allowWhenBlocked)
     {
-        PlayOneShotClip(clickClip, allowWhenBlocked: allowWhenBlocked);
+        PlayOneShotClip(clickClip, clickVolume, allowWhenBlocked: allowWhenBlocked);
+    }
+
+    public static float ResolveClickVolume(float volumeOverride = -1f)
+    {
+        if (volumeOverride >= 0f)
+            return Mathf.Clamp01(volumeOverride);
+
+        return Instance != null ? Instance.clickVolume : 1f;
     }
 
     /// <summary>
     /// 씬 전환 직후에도 들리도록 DontDestroyOnLoad 오브젝트에서 원샷을 재생합니다.
+    /// volumeOverride를 지정하지 않으면 UIButtonClickSoundPlayer의 clickVolume을 사용합니다.
     /// </summary>
-    public static void PlaySurvivingOneShot(AudioClip clip, float volume = 1f)
+    public static void PlaySurvivingOneShot(AudioClip clip, float volumeOverride = -1f)
     {
         if (clip == null)
             return;
 
         if (!clip.preloadAudioData && clip.loadState == AudioDataLoadState.Unloaded)
             clip.LoadAudioData();
+
+        float volume = ResolveClickVolume(volumeOverride);
 
         GameObject host = new GameObject("UiClickOneShot");
         DontDestroyOnLoad(host);
@@ -211,8 +226,8 @@ public class UIButtonClickSoundPlayer : MonoBehaviour
         source.playOnAwake = false;
         source.loop = false;
         source.spatialBlend = 0f;
-        source.volume = Mathf.Max(0f, volume);
-        source.PlayOneShot(clip);
+        source.volume = 1f;
+        source.PlayOneShot(clip, volume);
 
         Object.Destroy(host, clip.length + 0.25f);
     }
@@ -231,7 +246,11 @@ public class UIButtonClickSoundPlayer : MonoBehaviour
         if (button.GetComponentInParent<OpeningStarWarsCrawl>(true) != null)
             return true;
 
-        return button.GetComponentInParent<UILoading>(true) != null;
+        if (button.GetComponentInParent<UILoading>(true) != null)
+            return true;
+
+        // UIGameStartScreen이 직접 클릭음을 재생합니다.
+        return button.GetComponentInParent<UIGameStartScreen>(true) != null;
     }
 
     public void PlayFactoryItemAcquireSound()
