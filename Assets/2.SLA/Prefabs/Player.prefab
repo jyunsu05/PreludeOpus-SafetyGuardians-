@@ -232,7 +232,7 @@ MonoBehaviour:
   sirenPitchAtHigh: 0.85
   sirenPitchAtMid: 1.15
   sirenPitchAtLow: 1.5
-  sirenVolume: 0.7
+  sirenVolume: 0.55
   gameOverUI: {fileID: 0}
   mainHUD: {fileID: 0}
 --- !u!114 &8351533337805257606

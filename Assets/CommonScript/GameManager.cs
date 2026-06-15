@@ -48,6 +48,14 @@ public class GameManager : MonoBehaviour
     [Tooltip("체크포인트가 없을 때 챕터 재시작에 적용할 기본 오염도")]
     [SerializeField] private float defaultChapterPollutionOnRestart = 30f;
 
+    [Header("--- 공장 탐험 BGM ---")]
+    [SerializeField] private AudioClip factoryExplorationBgmClip;
+    [SerializeField] [Range(0f, 1f)] private float factoryExplorationBgmVolume = 0.5f;
+
+    [Header("--- 배틀 BGM (UIBattlescene) ---")]
+    [SerializeField] private AudioClip battleSceneBgmClip;
+    [SerializeField] [Range(0f, 1f)] private float battleSceneBgmVolume = 0.5f;
+
     private const string FactoryCheckpointPollutionKey = "SG_FactoryCheckpoint_Pollution";
     private const string FactoryCheckpointExistsKey = "SG_FactoryCheckpoint_Exists";
 
@@ -62,6 +70,14 @@ public class GameManager : MonoBehaviour
     private bool isFieldMovementFrozen;
     private bool isInventoryPaused;
     private float timeScaleBeforeInventoryPause = 1f;
+    private AudioSource factoryExplorationBgmSource;
+    private bool factoryExplorationBgmActive;
+    private bool factoryExplorationBgmPausedForBattle;
+    private Coroutine factoryExplorationBgmPlayRoutine;
+    private bool chapterManagerSubscribedForBgm;
+    private AudioSource battleSceneBgmSource;
+    private bool wasBattleSceneUiVisible;
+    private Coroutine battleSceneBgmPlayRoutine;
 
     /// <summary>오프닝 직후 StartNewGameAfterOpening에서 BeginNewPlaySession을 호출할 예정이면 true.</summary>
     public bool IsAwaitingPostOpeningPlaySession => isFullResetOpeningInProgress;
@@ -72,12 +88,32 @@ public class GameManager : MonoBehaviour
     /// <summary>필드에서 가방 인벤토리를 연 동안 게임이 일시정지된 상태입니다.</summary>
     public bool IsInventoryPaused => isInventoryPaused;
 
+    public float BattleSceneBgmVolume => battleSceneBgmVolume;
+
+    public float FactoryExplorationBgmVolume => factoryExplorationBgmVolume;
+
+    public bool IsBattleSceneUiOpen => IsBattleSceneUiVisible();
+
+    /// <summary>배틀 BGM 볼륨에 비례한 효과음 볼륨입니다. ratio는 BGM 대비 상대 비율(0~1)입니다.</summary>
+    public float GetBattleSfxVolume(float ratio)
+    {
+        return Mathf.Clamp01(battleSceneBgmVolume * Mathf.Max(0f, ratio));
+    }
+
+    /// <summary>공장 탐험 BGM 볼륨에 비례한 효과음 볼륨입니다. ratio는 BGM 대비 상대 비율(0~1)입니다.</summary>
+    public float GetFactorySfxVolume(float ratio)
+    {
+        return Mathf.Clamp01(factoryExplorationBgmVolume * Mathf.Max(0f, ratio));
+    }
+
     private void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            ConfigureFactoryExplorationBgmSource();
+            ConfigureBattleSceneBgmSource();
             SubscribeSceneLoaded();
         }
         else
@@ -89,6 +125,35 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         CacheOpeningPlayerSpawnPosition();
+        TrySubscribeChapterManagerForBgm();
+        TryStartFactoryExplorationBgmOnSceneEntry();
+    }
+
+    private void LateUpdate()
+    {
+        if (!chapterManagerSubscribedForBgm)
+            TrySubscribeChapterManagerForBgm();
+
+        SyncFactoryExplorationBgmBattleState();
+        SyncBattleSceneBgmState();
+    }
+
+    private void OnValidate()
+    {
+        if (factoryExplorationBgmSource != null)
+            factoryExplorationBgmSource.volume = factoryExplorationBgmVolume;
+
+        if (battleSceneBgmSource != null)
+            battleSceneBgmSource.volume = battleSceneBgmVolume;
+    }
+
+    private void TryStartFactoryExplorationBgmOnSceneEntry()
+    {
+        Scene scene = SceneManager.GetActiveScene();
+        if (!scene.IsValid() || scene.name != defaultChapterSceneName || IsAwaitingPostOpeningPlaySession)
+            return;
+
+        StartFactoryExplorationBgm();
     }
 
     private void OnDestroy()
@@ -96,16 +161,20 @@ public class GameManager : MonoBehaviour
         if (Instance == this)
         {
             UnsubscribeSceneLoaded();
+            UnsubscribeChapterManagerForBgm();
             Instance = null;
         }
     }
 
     public void EnterBattle()
     {
-        if (CurrentState == GameState.Battle)
+        bool isNewBattle = CurrentState != GameState.Battle;
+        CurrentState = GameState.Battle;
+        PauseFactoryExplorationBgmForBattle();
+
+        if (!isNewBattle)
             return;
 
-        CurrentState = GameState.Battle;
         Debug.Log("[GameManager] 배틀 시작!");
         OnBattleStarted?.Invoke();
     }
@@ -135,6 +204,10 @@ public class GameManager : MonoBehaviour
         {
             isPublishingBattleEnded = false;
         }
+
+        ResumeFactoryExplorationBgmAfterBattle();
+        StopBattleSceneBgm();
+        wasBattleSceneUiVisible = false;
     }
 
     public void ResetToField()
@@ -166,6 +239,9 @@ public class GameManager : MonoBehaviour
 
         isFieldMovementFrozen = true;
         StopAllFieldMovementImmediate();
+        StopFactoryExplorationBgm();
+        StopBattleSceneBgm();
+        wasBattleSceneUiVisible = false;
         GameplayAudioGuard.BlockAndStopAll();
         Debug.Log("[GameManager] 게임오버 — 필드 이동 정지");
     }
@@ -211,6 +287,8 @@ public class GameManager : MonoBehaviour
         ClearFieldMovementFreeze();
         ResetToField();
         BattleEncounterContext.ClearFleeExit();
+        StopBattleSceneBgm();
+        wasBattleSceneUiVisible = false;
 
         UIBattleManager.ResetAllRuntimeBattleState();
         UIButtonContainer.ResetAllRuntimeButtonState();
@@ -365,6 +443,9 @@ public class GameManager : MonoBehaviour
 
         try
         {
+            StopFactoryExplorationBgm();
+            StopBattleSceneBgm();
+            wasBattleSceneUiVisible = false;
             GameplayAudioGuard.Unblock();
             CloseGameplayOverlays();
             HidePersistentGameplayUiForOpeningScene();
@@ -380,6 +461,9 @@ public class GameManager : MonoBehaviour
 
     private void PrepareSessionDataForOpeningSceneTransition()
     {
+        StopFactoryExplorationBgm();
+        StopBattleSceneBgm();
+        wasBattleSceneUiVisible = false;
         ResetToField();
         ApplyInitialSessionData();
         CloseGameplayOverlays();
@@ -475,6 +559,8 @@ public class GameManager : MonoBehaviour
         UIResult[] resultPanels = FindObjectsByType<UIResult>(FindObjectsInactive.Include);
         for (int i = 0; i < resultPanels.Length; i++)
             resultPanels[i]?.ResetStageResultState();
+
+        StartFactoryExplorationBgm();
     }
 
     private void PerformReset(bool isFullReset)
@@ -540,6 +626,7 @@ public class GameManager : MonoBehaviour
         CloseGameplayOverlays();
         StartCoroutine(FinalizeNewGameAfterOpeningRoutine());
         GameManager.ActivateChapterMapsHierarchy();
+        StartFactoryExplorationBgm();
 
         Debug.Log("[GameManager] 새 게임 세션 준비 완료 (Managers·Player·챕터1·몬스터·아이템)");
     }
@@ -1133,6 +1220,8 @@ public class GameManager : MonoBehaviour
         UIResult[] resultPanels = FindObjectsByType<UIResult>(FindObjectsInactive.Include);
         for (int i = 0; i < resultPanels.Length; i++)
             resultPanels[i]?.ResetStageResultState();
+
+        StartFactoryExplorationBgm();
     }
 
     private string ResolveRestartSceneName(bool isFullReset)
@@ -1211,5 +1300,286 @@ public class GameManager : MonoBehaviour
     {
         stageClearPending = false;
         OnStageMonstersSpawned?.Invoke();
+    }
+
+    private void ConfigureFactoryExplorationBgmSource()
+    {
+        if (factoryExplorationBgmSource != null)
+            return;
+
+        factoryExplorationBgmSource = gameObject.AddComponent<AudioSource>();
+        factoryExplorationBgmSource.playOnAwake = false;
+        factoryExplorationBgmSource.loop = true;
+        factoryExplorationBgmSource.spatialBlend = 0f;
+        factoryExplorationBgmSource.volume = factoryExplorationBgmVolume;
+        factoryExplorationBgmSource.priority = 128;
+    }
+
+    private void TrySubscribeChapterManagerForBgm()
+    {
+        if (chapterManagerSubscribedForBgm || ChapterManager.Instance == null)
+            return;
+
+        ChapterManager.Instance.OnChapterLoaded += HandleChapterLoadedForBgm;
+        chapterManagerSubscribedForBgm = true;
+    }
+
+    private void UnsubscribeChapterManagerForBgm()
+    {
+        if (!chapterManagerSubscribedForBgm || ChapterManager.Instance == null)
+            return;
+
+        ChapterManager.Instance.OnChapterLoaded -= HandleChapterLoadedForBgm;
+        chapterManagerSubscribedForBgm = false;
+    }
+
+    private void HandleChapterLoadedForBgm(ChapterLoadedEventArgs args)
+    {
+        if (args.ChapterIndex < 1)
+            return;
+
+        StartFactoryExplorationBgm();
+    }
+
+    private void StartFactoryExplorationBgm()
+    {
+        if (factoryExplorationBgmClip == null)
+            return;
+
+        ConfigureFactoryExplorationBgmSource();
+        factoryExplorationBgmActive = true;
+        factoryExplorationBgmPausedForBattle = false;
+        SyncFactoryExplorationBgmPlayback();
+    }
+
+    private void StopFactoryExplorationBgm()
+    {
+        factoryExplorationBgmActive = false;
+        factoryExplorationBgmPausedForBattle = false;
+
+        if (factoryExplorationBgmPlayRoutine != null)
+        {
+            StopCoroutine(factoryExplorationBgmPlayRoutine);
+            factoryExplorationBgmPlayRoutine = null;
+        }
+
+        if (factoryExplorationBgmSource != null && factoryExplorationBgmSource.isPlaying)
+            factoryExplorationBgmSource.Stop();
+    }
+
+    private void PauseFactoryExplorationBgmForBattle()
+    {
+        if (!factoryExplorationBgmActive || factoryExplorationBgmSource == null)
+            return;
+
+        if (factoryExplorationBgmSource.isPlaying)
+            factoryExplorationBgmSource.Pause();
+
+        factoryExplorationBgmPausedForBattle = true;
+    }
+
+    private void ResumeFactoryExplorationBgmAfterBattle()
+    {
+        if (!factoryExplorationBgmActive || factoryExplorationBgmSource == null || !factoryExplorationBgmPausedForBattle)
+            return;
+
+        if (IsInBattle || IsBattlePresentationVisible() || GameplayAudioGuard.IsBlocked)
+            return;
+
+        factoryExplorationBgmSource.UnPause();
+        factoryExplorationBgmPausedForBattle = false;
+    }
+
+    private void SyncFactoryExplorationBgmBattleState()
+    {
+        if (!factoryExplorationBgmActive || factoryExplorationBgmClip == null)
+            return;
+
+        if (factoryExplorationBgmSource != null)
+            factoryExplorationBgmSource.volume = factoryExplorationBgmVolume;
+
+        if (GameplayAudioGuard.IsBlocked)
+        {
+            if (factoryExplorationBgmSource != null && factoryExplorationBgmSource.isPlaying)
+                factoryExplorationBgmSource.Pause();
+            return;
+        }
+
+        if (IsInBattle || IsBattlePresentationVisible())
+            PauseFactoryExplorationBgmForBattle();
+        else if (factoryExplorationBgmPausedForBattle)
+            ResumeFactoryExplorationBgmAfterBattle();
+        else
+            SyncFactoryExplorationBgmPlayback();
+    }
+
+    private void SyncFactoryExplorationBgmPlayback()
+    {
+        if (!factoryExplorationBgmActive || factoryExplorationBgmClip == null)
+            return;
+
+        if (IsInBattle || IsBattlePresentationVisible() || GameplayAudioGuard.IsBlocked)
+            return;
+
+        ConfigureFactoryExplorationBgmSource();
+        factoryExplorationBgmSource.volume = factoryExplorationBgmVolume;
+
+        if (factoryExplorationBgmSource.isPlaying)
+            return;
+
+        if (factoryExplorationBgmPlayRoutine != null)
+            return;
+
+        factoryExplorationBgmPlayRoutine = StartCoroutine(PlayFactoryExplorationBgmWhenReady());
+    }
+
+    private IEnumerator PlayFactoryExplorationBgmWhenReady()
+    {
+        EnsureFactoryExplorationBgmClipLoaded();
+
+        float timeoutAt = Time.unscaledTime + 5f;
+        while (factoryExplorationBgmClip.loadState == AudioDataLoadState.Loading && Time.unscaledTime < timeoutAt)
+            yield return null;
+
+        if (factoryExplorationBgmClip.loadState != AudioDataLoadState.Loaded)
+        {
+            Debug.LogWarning(
+                $"[GameManager] 공장 탐험 BGM 로드 실패: {factoryExplorationBgmClip.loadState}");
+            factoryExplorationBgmPlayRoutine = null;
+            yield break;
+        }
+
+        if (!factoryExplorationBgmActive || IsInBattle || IsBattlePresentationVisible())
+        {
+            factoryExplorationBgmPlayRoutine = null;
+            yield break;
+        }
+
+        factoryExplorationBgmSource.clip = factoryExplorationBgmClip;
+        factoryExplorationBgmSource.volume = factoryExplorationBgmVolume;
+        factoryExplorationBgmSource.loop = true;
+        factoryExplorationBgmSource.Play();
+        factoryExplorationBgmPausedForBattle = false;
+        factoryExplorationBgmPlayRoutine = null;
+    }
+
+    private static bool IsBattlePresentationVisible()
+    {
+        GameObject battleRoot = GameObject.Find("UIBattlescene");
+        if (battleRoot != null && battleRoot.activeInHierarchy)
+            return true;
+
+        return UIManager.Instance != null && UIManager.Instance.IsBattleUiVisible();
+    }
+
+    private void EnsureFactoryExplorationBgmClipLoaded()
+    {
+        if (factoryExplorationBgmClip == null)
+            return;
+
+        if (factoryExplorationBgmClip.loadState == AudioDataLoadState.Unloaded)
+            factoryExplorationBgmClip.LoadAudioData();
+    }
+
+    private void ConfigureBattleSceneBgmSource()
+    {
+        if (battleSceneBgmSource != null)
+            return;
+
+        battleSceneBgmSource = gameObject.AddComponent<AudioSource>();
+        battleSceneBgmSource.playOnAwake = false;
+        battleSceneBgmSource.loop = true;
+        battleSceneBgmSource.spatialBlend = 0f;
+        battleSceneBgmSource.volume = battleSceneBgmVolume;
+        battleSceneBgmSource.priority = 96;
+    }
+
+    private void SyncBattleSceneBgmState()
+    {
+        bool battleUiVisible = IsBattleSceneUiVisible() && !GameplayAudioGuard.IsBlocked;
+
+        if (battleUiVisible && !wasBattleSceneUiVisible)
+            StartBattleSceneBgmFromBeginning();
+        else if (!battleUiVisible && wasBattleSceneUiVisible)
+            StopBattleSceneBgm();
+        else if (battleUiVisible && battleSceneBgmSource != null)
+            battleSceneBgmSource.volume = battleSceneBgmVolume;
+
+        wasBattleSceneUiVisible = battleUiVisible;
+    }
+
+    private void StartBattleSceneBgmFromBeginning()
+    {
+        if (battleSceneBgmClip == null)
+            return;
+
+        if (battleSceneBgmPlayRoutine != null)
+        {
+            StopCoroutine(battleSceneBgmPlayRoutine);
+            battleSceneBgmPlayRoutine = null;
+        }
+
+        if (battleSceneBgmSource != null && battleSceneBgmSource.isPlaying)
+            battleSceneBgmSource.Stop();
+
+        battleSceneBgmPlayRoutine = StartCoroutine(PlayBattleSceneBgmFromBeginningRoutine());
+    }
+
+    private void StopBattleSceneBgm()
+    {
+        if (battleSceneBgmPlayRoutine != null)
+        {
+            StopCoroutine(battleSceneBgmPlayRoutine);
+            battleSceneBgmPlayRoutine = null;
+        }
+
+        if (battleSceneBgmSource != null && battleSceneBgmSource.isPlaying)
+            battleSceneBgmSource.Stop();
+    }
+
+    private IEnumerator PlayBattleSceneBgmFromBeginningRoutine()
+    {
+        EnsureBattleSceneBgmClipLoaded();
+
+        float timeoutAt = Time.unscaledTime + 5f;
+        while (battleSceneBgmClip.loadState == AudioDataLoadState.Loading && Time.unscaledTime < timeoutAt)
+            yield return null;
+
+        if (battleSceneBgmClip.loadState != AudioDataLoadState.Loaded)
+        {
+            Debug.LogWarning(
+                $"[GameManager] 배틀 BGM 로드 실패: {battleSceneBgmClip.loadState}");
+            battleSceneBgmPlayRoutine = null;
+            yield break;
+        }
+
+        if (!IsBattleSceneUiVisible() || GameplayAudioGuard.IsBlocked)
+        {
+            battleSceneBgmPlayRoutine = null;
+            yield break;
+        }
+
+        ConfigureBattleSceneBgmSource();
+        battleSceneBgmSource.clip = battleSceneBgmClip;
+        battleSceneBgmSource.volume = battleSceneBgmVolume;
+        battleSceneBgmSource.loop = true;
+        battleSceneBgmSource.time = 0f;
+        battleSceneBgmSource.Play();
+        battleSceneBgmPlayRoutine = null;
+    }
+
+    private static bool IsBattleSceneUiVisible()
+    {
+        GameObject battleRoot = GameObject.Find("UIBattlescene");
+        return battleRoot != null && battleRoot.activeInHierarchy;
+    }
+
+    private void EnsureBattleSceneBgmClipLoaded()
+    {
+        if (battleSceneBgmClip == null)
+            return;
+
+        if (battleSceneBgmClip.loadState == AudioDataLoadState.Unloaded)
+            battleSceneBgmClip.LoadAudioData();
     }
 }

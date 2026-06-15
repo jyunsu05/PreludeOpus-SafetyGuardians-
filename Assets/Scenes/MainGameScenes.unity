@@ -6378,9 +6378,25 @@ PrefabInstance:
       value: OpeningScene
       objectReference: {fileID: 0}
     - target: {fileID: 7262544662682241796, guid: 438d90f48b866c24c8518ace47b74683, type: 3}
+      propertyPath: battleSceneBgmClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 047e9d7a07b379f48aee3ee35384d6fc, type: 3}
+    - target: {fileID: 7262544662682241796, guid: 438d90f48b866c24c8518ace47b74683, type: 3}
       propertyPath: openingPlayerSpawn
       value: 
       objectReference: {fileID: 199398968}
+    - target: {fileID: 7262544662682241796, guid: 438d90f48b866c24c8518ace47b74683, type: 3}
+      propertyPath: battleSceneBgmVolume
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7262544662682241796, guid: 438d90f48b866c24c8518ace47b74683, type: 3}
+      propertyPath: factoryExplorationBgmClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 8621c12dce3705a4984ef596d09fdff3, type: 3}
+    - target: {fileID: 7262544662682241796, guid: 438d90f48b866c24c8518ace47b74683, type: 3}
+      propertyPath: factoryExplorationBgmVolume
+      value: 0.5
+      objectReference: {fileID: 0}
     - target: {fileID: 7749337337835635184, guid: 438d90f48b866c24c8518ace47b74683, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -6420,6 +6436,10 @@ PrefabInstance:
     - target: {fileID: 7749337337835635184, guid: 438d90f48b866c24c8518ace47b74683, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8812345678901234567, guid: 438d90f48b866c24c8518ace47b74683, type: 3}
+      propertyPath: clickVolume
+      value: 0.55
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -6881,10 +6901,6 @@ PrefabInstance:
       propertyPath: playerController
       value: 
       objectReference: {fileID: 1289618979}
-    - target: {fileID: 2834499891191813395, guid: 670e2a2f4876d9b43af120ca18810067, type: 3}
-      propertyPath: searchSoundVolume
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 2834499891191813395, guid: 670e2a2f4876d9b43af120ca18810067, type: 3}
       propertyPath: purificationCircleAnimator
       value: 

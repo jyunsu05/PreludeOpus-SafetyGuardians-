@@ -29,7 +29,7 @@ public class PlayerOxygen : MonoBehaviour
     [SerializeField] private float sirenPitchAtHigh = 0.85f;
     [SerializeField] private float sirenPitchAtMid = 1.15f;
     [SerializeField] private float sirenPitchAtLow = 1.5f;
-    [SerializeField] [Range(0f, 1f)] private float sirenVolume = 0.7f;
+    [SerializeField] [Range(0f, 1f)] private float sirenVolume = 0.55f;
 
     [SerializeField] private GameObject gameOverUI;
     [SerializeField] private GameObject mainHUD;
@@ -309,7 +309,7 @@ public class PlayerOxygen : MonoBehaviour
         oxygenSirenSource.playOnAwake = false;
         oxygenSirenSource.loop = true;
         oxygenSirenSource.spatialBlend = 0f;
-        oxygenSirenSource.volume = sirenVolume;
+        oxygenSirenSource.volume = ResolveSirenVolume();
     }
 
     public void PauseFieldAudioForInventory()
@@ -344,7 +344,7 @@ public class PlayerOxygen : MonoBehaviour
             activeSirenTier = tier;
             oxygenSirenSource.clip = oxygenSirenClip;
             oxygenSirenSource.pitch = pitch;
-            oxygenSirenSource.volume = sirenVolume;
+            oxygenSirenSource.volume = ResolveSirenVolume();
             if (!oxygenSirenSource.isPlaying)
                 oxygenSirenSource.Play();
             return;
@@ -389,6 +389,14 @@ public class PlayerOxygen : MonoBehaviour
             default:
                 return 1f;
         }
+    }
+
+    private float ResolveSirenVolume()
+    {
+        if (GameManager.Instance != null)
+            return GameManager.Instance.GetFactorySfxVolume(sirenVolume);
+
+        return Mathf.Clamp01(0.5f * sirenVolume);
     }
 
     private void StopOxygenSiren()

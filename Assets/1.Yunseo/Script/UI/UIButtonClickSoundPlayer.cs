@@ -9,7 +9,9 @@ public class UIButtonClickSoundPlayer : MonoBehaviour
     public static UIButtonClickSoundPlayer Instance { get; private set; }
 
     [SerializeField] private AudioClip clickClip;
-    [SerializeField] [Range(0f, 1f)] private float clickVolume = 1f;
+    [Tooltip("현재 씬 BGM(공장/배틀) 대비 클릭음 비율입니다.")]
+    [SerializeField] [Range(0f, 1f)] private float clickVolume = 0.55f;
+    private const float BattleClickSfxBgmRatio = 0.45f;
     [SerializeField] private AudioClip factoryItemAcquireClip;
     [SerializeField] private AudioClip battleItemPopupClip;
 
@@ -189,12 +191,48 @@ public class UIButtonClickSoundPlayer : MonoBehaviour
     public void PlayClickSound()
     {
         // 게임오버 등으로 GameplayAudioGuard가 막혀 있어도 UI 버튼 클릭음은 재생합니다.
-        PlayOneShotClip(clickClip, clickVolume, allowWhenBlocked: GameplayAudioGuard.IsBlocked);
+        PlayOneShotClip(clickClip, ResolveActiveClickVolume(), allowWhenBlocked: GameplayAudioGuard.IsBlocked);
     }
 
     public void PlayClickSound(bool allowWhenBlocked)
     {
-        PlayOneShotClip(clickClip, clickVolume, allowWhenBlocked: allowWhenBlocked);
+        PlayOneShotClip(clickClip, ResolveActiveClickVolume(), allowWhenBlocked: allowWhenBlocked);
+    }
+
+    private float ResolveActiveClickVolume()
+    {
+        if (IsAcquisitionPopupVisible())
+            return ResolveAcquisitionPopupClickVolume();
+
+        if (GameManager.Instance != null && GameManager.Instance.IsBattleSceneUiOpen)
+            return GameManager.Instance.GetBattleSfxVolume(BattleClickSfxBgmRatio);
+
+        if (GameManager.Instance != null)
+            return GameManager.Instance.GetFactorySfxVolume(clickVolume);
+
+        return Mathf.Clamp01(0.5f * clickVolume);
+    }
+
+    private float ResolveAcquisitionPopupClickVolume()
+    {
+        if (GameManager.Instance != null)
+            return GameManager.Instance.GetBattleSfxVolume(0.62f);
+
+        return Mathf.Clamp01(0.5f * 0.62f);
+    }
+
+    private static bool IsAcquisitionPopupVisible()
+    {
+        UIAcquisitionPopup[] popups =
+            Object.FindObjectsByType<UIAcquisitionPopup>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+
+        for (int i = 0; i < popups.Length; i++)
+        {
+            if (popups[i] != null && popups[i].isActiveAndEnabled)
+                return true;
+        }
+
+        return false;
     }
 
     public static float ResolveClickVolume(float volumeOverride = -1f)
@@ -255,11 +293,22 @@ public class UIButtonClickSoundPlayer : MonoBehaviour
 
     public void PlayFactoryItemAcquireSound()
     {
-        PlayOneShotClip(factoryItemAcquireClip);
+        float volume = GameManager.Instance != null
+            ? GameManager.Instance.GetFactorySfxVolume(0.55f)
+            : Mathf.Clamp01(0.5f * 0.55f);
+        PlayOneShotClip(factoryItemAcquireClip, volume);
     }
 
     public void PlayBattleItemPopupSound()
     {
-        PlayOneShotClip(battleItemPopupClip);
+        float volume = GameManager.Instance != null
+            ? GameManager.Instance.GetBattleSfxVolume(0.55f)
+            : Mathf.Clamp01(0.5f * 0.55f);
+        PlayOneShotClip(battleItemPopupClip, volume, allowWhenBlocked: true);
+    }
+
+    public void PlayAcquisitionPopupClickSound()
+    {
+        PlayOneShotClip(clickClip, ResolveAcquisitionPopupClickVolume(), allowWhenBlocked: true);
     }
 }

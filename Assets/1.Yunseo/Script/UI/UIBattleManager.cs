@@ -74,9 +74,15 @@ public class UIBattleManager : MonoBehaviour
 
     [Header("--- 배틀 UI 버튼 사운드 ---")]
     [SerializeField] private AudioClip searchSoundClip;
-    [SerializeField] [Range(0f, 5f)] private float searchSoundVolume = 5f;
     [SerializeField] private AudioClip purificationUiSoundClip;
     [SerializeField] private AudioClip escapeSoundClip;
+
+    private const float SearchSfxBgmRatio = 0.7f;
+    private const float PurifyLoopSfxBgmRatio = 0.47f;
+    private const float EscapeSfxBgmRatio = 0.68f;
+    private const float HitClothSfxBgmRatio = 0.62f;
+    private const float HitImpactSfxBgmRatio = 0.72f;
+    private const float FireAttackSfxBgmRatio = 0.72f;
 
     private const string DefaultPurifyItemId = "MI-101";
     private const string FireMonsterId = "M-003";
@@ -703,7 +709,7 @@ public class UIBattleManager : MonoBehaviour
         if (searchSoundClip == null)
             return;
 
-        ResolveUiSoundPlayer()?.PlayOneShotClip(searchSoundClip, searchSoundVolume);
+        ResolveUiSoundPlayer()?.PlayOneShotClip(searchSoundClip, ResolveBattleSfxVolume(SearchSfxBgmRatio));
     }
 
     private void PlayPurificationUiSound()
@@ -711,7 +717,10 @@ public class UIBattleManager : MonoBehaviour
         if (purificationUiSoundClip == null)
             return;
 
-        ResolveUiSoundPlayer()?.PlayTrackedClip(purificationUiSoundClip, loop: true);
+        ResolveUiSoundPlayer()?.PlayTrackedClip(
+            purificationUiSoundClip,
+            ResolveBattleSfxVolume(PurifyLoopSfxBgmRatio),
+            loop: true);
     }
 
     private void StopPurificationUiSound()
@@ -724,7 +733,7 @@ public class UIBattleManager : MonoBehaviour
         if (escapeSoundClip == null)
             return;
 
-        ResolveUiSoundPlayer()?.PlayOneShotClip(escapeSoundClip);
+        ResolveUiSoundPlayer()?.PlayOneShotClip(escapeSoundClip, ResolveBattleSfxVolume(EscapeSfxBgmRatio));
     }
 
     private void PlayPlayerHitClothSound()
@@ -736,7 +745,7 @@ public class UIBattleManager : MonoBehaviour
         if (clip == null || playerHitAudioSource == null)
             return;
 
-        playerHitAudioSource.PlayOneShot(clip);
+        playerHitAudioSource.PlayOneShot(clip, ResolveBattleSfxVolume(HitClothSfxBgmRatio));
     }
 
     private void PlayPlayerHitImpactSound()
@@ -748,7 +757,7 @@ public class UIBattleManager : MonoBehaviour
         if (clip == null || playerHitAudioSource == null)
             return;
 
-        playerHitAudioSource.PlayOneShot(clip);
+        playerHitAudioSource.PlayOneShot(clip, ResolveBattleSfxVolume(HitImpactSfxBgmRatio));
     }
 
     private bool IsCurrentMonsterFire()
@@ -766,8 +775,16 @@ public class UIBattleManager : MonoBehaviour
         if (!GameplayAudioGuard.CanPlay || fireMonsterAttackClip == null || playerHitAudioSource == null)
             yield break;
 
-        playerHitAudioSource.PlayOneShot(fireMonsterAttackClip);
+        playerHitAudioSource.PlayOneShot(fireMonsterAttackClip, ResolveBattleSfxVolume(FireAttackSfxBgmRatio));
         yield return new WaitForSecondsRealtime(fireMonsterAttackClip.length);
+    }
+
+    private static float ResolveBattleSfxVolume(float bgmRatio)
+    {
+        if (GameManager.Instance != null)
+            return GameManager.Instance.GetBattleSfxVolume(bgmRatio);
+
+        return Mathf.Clamp01(0.5f * bgmRatio);
     }
 
     private IEnumerator PlayMonsterAttackLeadInRoutine()

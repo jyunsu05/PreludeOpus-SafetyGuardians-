@@ -45,6 +45,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eaa8b59b8735fd14694c6cbb8cdb740b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
+  factoryExplorationBgmClip: {fileID: 8300000, guid: 8621c12dce3705a4984ef596d09fdff3, type: 3}
+  factoryExplorationBgmVolume: 0.5
+  battleSceneBgmClip: {fileID: 8300000, guid: 047e9d7a07b379f48aee3ee35384d6fc, type: 3}
+  battleSceneBgmVolume: 0.5
 --- !u!114 &8812345678901234567
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -58,5 +62,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIButtonClickSoundPlayer
   clickClip: {fileID: 8300000, guid: 4ea285d9fa9ae3244bfb3c5ac58b49ec, type: 3}
+  clickVolume: 0.55
   factoryItemAcquireClip: {fileID: 8300000, guid: e56b0f4d1a3e63244b469142ea60c116, type: 3}
   battleItemPopupClip: {fileID: 8300000, guid: 7f9a2d43390c59a4b9f591c5bfcb795c, type: 3}
