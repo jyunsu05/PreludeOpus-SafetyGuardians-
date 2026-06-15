@@ -15,9 +15,24 @@ public class MonsterSpawner : MonoBehaviour
     [SerializeField] private int[] spawnCountsByStage = { 3, 4, 5, 6, 7, 9, 0 };
 
     private readonly List<GameObject> spawnedMonsters = new List<GameObject>();
+    private readonly int[] lastSpawnedTypeCounts = new int[MonsterTypeCount];
 
     public event System.Action OnAllMonstersCleared;
     public event System.Action OnMonstersSpawned;
+
+    public int LastSpawnedTotal { get; private set; }
+
+    public bool TryGetLastSpawnedTypeCounts(out int[] typeCounts)
+    {
+        typeCounts = new int[MonsterTypeCount];
+        if (LastSpawnedTotal <= 0)
+            return false;
+
+        for (int i = 0; i < MonsterTypeCount; i++)
+            typeCounts[i] = lastSpawnedTypeCounts[i];
+
+        return true;
+    }
 
     public int RemainingMonsterCount
     {
@@ -132,6 +147,8 @@ public class MonsterSpawner : MonoBehaviour
         int spawnCount = GetSpawnCountForStage();
         if (spawnCount <= 0)
         {
+            ResetLastSpawnSnapshot();
+
             if (logResult)
                 Debug.Log($"Factory Stage {stageLevel} : Cleared factory, spawned 0 monsters");
 
@@ -161,43 +178,39 @@ public class MonsterSpawner : MonoBehaviour
         }
 
         int count = Mathf.Min(spawnCount, eligibleSpawnPoints.Count);
-        List<Transform> spawnPoints = GetShuffledSpawnPoints(eligibleSpawnPoints);
-        List<int> monsterTypeOrder = GetMonsterTypeOrder(count);
+        List<Transform> availableSpawnPoints = GetShuffledSpawnPoints(eligibleSpawnPoints);
+        List<int> monsterTypeOrder = FactoryStageSpawnConfig.BuildShuffledTypeOrder(count);
         int[] monsterTypeCounts = new int[MonsterTypeCount];
         List<Vector2> usedSpawnPositions = new List<Vector2>(count);
         int spawnedCount = 0;
 
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < monsterTypeOrder.Count; i++)
         {
             int monsterType = monsterTypeOrder[i];
-            Transform spawnPoint = spawnPoints[i];
-            if (spawnPoint == null)
-                continue;
-
             GameObject prefab = GetMonsterPrefab(monsterType);
             if (prefab == null)
                 continue;
 
-            float bodyRadius = FieldSpawnSafety.GetMonsterBodyRadius(prefab);
-            Vector3 spawnPosition = FieldSpawnSafety.ResolveSpawnPosition(
-                spawnPoint.position,
-                bodyRadius,
-                usedSpawnPositions);
-
-            if (FieldSpawnSafety.IsTooCloseToPlayerSpawn(spawnPosition))
+            if (TrySpawnMonsterAtPoint(
+                    prefab,
+                    monsterType,
+                    availableSpawnPoints,
+                    usedSpawnPositions,
+                    monsterTypeCounts,
+                    ref spawnedCount))
+            {
                 continue;
+            }
 
-            GameObject monster = Instantiate(prefab, spawnPosition, spawnPoint.rotation);
-            usedSpawnPositions.Add(spawnPosition);
-            if (monster == null)
-                continue;
-
-            GameManager.EnsureFieldEntityVisible(monster);
-            EnsureBattleRegistration(monster);
-            spawnedMonsters.Add(monster);
-            monsterTypeCounts[monsterType]++;
-            spawnedCount++;
+            if (logResult)
+            {
+                Debug.LogWarning(
+                    $"[MonsterSpawner] {name}: 몬스터 타입 {monsterType} 스폰 실패 " +
+                    $"(Stage {stageLevel}, 사용 가능 위치 {availableSpawnPoints.Count}개).");
+            }
         }
+
+        StoreLastSpawnSnapshot(monsterTypeCounts, spawnedCount);
 
         if (logResult)
             LogSpawnResult(spawnedCount, monsterTypeCounts);
@@ -211,9 +224,7 @@ public class MonsterSpawner : MonoBehaviour
     private int GetSpawnCountForStage()
     {
         EnsureSpawnCountsByStage();
-
-        int index = Mathf.Clamp(stageLevel, 1, 7) - 1;
-        return spawnCountsByStage[index];
+        return FactoryStageSpawnConfig.GetSpawnCountForStage(stageLevel);
     }
 
     private List<Transform> GetEligibleSpawnPoints()
@@ -243,29 +254,61 @@ public class MonsterSpawner : MonoBehaviour
         return spawnPoints;
     }
 
-    private List<int> GetMonsterTypeOrder(int spawnCount)
+    private bool TrySpawnMonsterAtPoint(
+        GameObject prefab,
+        int monsterType,
+        List<Transform> availableSpawnPoints,
+        List<Vector2> usedSpawnPositions,
+        int[] monsterTypeCounts,
+        ref int spawnedCount)
     {
-        List<int> monsterTypes = new List<int>();
+        float bodyRadius = FieldSpawnSafety.GetMonsterBodyRadius(prefab);
 
-        for (int i = 0; i < MonsterTypeCount && monsterTypes.Count < spawnCount; i++)
-            monsterTypes.Add(i);
-
-        int nextType = 0;
-        while (monsterTypes.Count < spawnCount)
+        for (int pointIndex = 0; pointIndex < availableSpawnPoints.Count; pointIndex++)
         {
-            monsterTypes.Add(nextType);
-            nextType = (nextType + 1) % MonsterTypeCount;
+            Transform spawnPoint = availableSpawnPoints[pointIndex];
+            if (spawnPoint == null)
+                continue;
+
+            Vector3 spawnPosition = FieldSpawnSafety.ResolveSpawnPosition(
+                spawnPoint.position,
+                bodyRadius,
+                usedSpawnPositions);
+
+            if (FieldSpawnSafety.IsTooCloseToPlayerSpawn(spawnPosition))
+                continue;
+
+            GameObject monster = Instantiate(prefab, spawnPosition, spawnPoint.rotation);
+            if (monster == null)
+                continue;
+
+            usedSpawnPositions.Add(spawnPosition);
+            availableSpawnPoints.RemoveAt(pointIndex);
+            GameManager.EnsureFieldEntityVisible(monster);
+            EnsureBattleRegistration(monster);
+            spawnedMonsters.Add(monster);
+            monsterTypeCounts[monsterType]++;
+            spawnedCount++;
+            return true;
         }
 
-        for (int i = 0; i < monsterTypes.Count; i++)
-        {
-            int randomIndex = Random.Range(i, monsterTypes.Count);
-            int temp = monsterTypes[i];
-            monsterTypes[i] = monsterTypes[randomIndex];
-            monsterTypes[randomIndex] = temp;
-        }
+        return false;
+    }
 
-        return monsterTypes;
+    private void StoreLastSpawnSnapshot(int[] monsterTypeCounts, int spawnedCount)
+    {
+        LastSpawnedTotal = spawnedCount;
+
+        for (int i = 0; i < MonsterTypeCount; i++)
+            lastSpawnedTypeCounts[i] = monsterTypeCounts[i];
+    }
+
+    private void ResetLastSpawnSnapshot()
+    {
+        LastSpawnedTotal = 0;
+
+        for (int i = 0; i < MonsterTypeCount; i++)
+            lastSpawnedTypeCounts[i] = 0;
     }
 
     private GameObject GetMonsterPrefab(int monsterType)
@@ -362,6 +405,7 @@ public class MonsterSpawner : MonoBehaviour
         }
 
         spawnedMonsters.Clear();
+        ResetLastSpawnSnapshot();
     }
 
     private void OnValidate()
@@ -393,12 +437,6 @@ public class MonsterSpawner : MonoBehaviour
 
     private void EnsureSpawnCountsByStage()
     {
-        int[] fixedCounts = { 3, 5, 7, 0, 0, 0, 0 };
-
-        if (spawnCountsByStage == null || spawnCountsByStage.Length != fixedCounts.Length)
-            spawnCountsByStage = new int[fixedCounts.Length];
-
-        for (int i = 0; i < fixedCounts.Length; i++)
-            spawnCountsByStage[i] = fixedCounts[i];
+        FactoryStageSpawnConfig.EnsureSpawnCountsByStage(ref spawnCountsByStage);
     }
 }

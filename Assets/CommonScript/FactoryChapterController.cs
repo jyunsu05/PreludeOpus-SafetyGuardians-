@@ -165,17 +165,41 @@ public class FactoryChapterController : MonoBehaviour
         TryRepositionPlayerToActiveMap();
     }
 
-    private static void RespawnSpawnersInScene()
+    private void RespawnSpawnersInScene()
     {
+        int stageLevel = ResolveCurrentStageLevel();
+
         MonsterSpawner[] monsterSpawners =
             FindObjectsByType<MonsterSpawner>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
         for (int i = 0; i < monsterSpawners.Length; i++)
-            monsterSpawners[i]?.RespawnCurrentStage();
+        {
+            MonsterSpawner spawner = monsterSpawners[i];
+            if (spawner == null)
+                continue;
+
+            spawner.SetStageLevel(stageLevel);
+            spawner.RespawnCurrentStage();
+        }
 
         ItemSpawner[] itemSpawners =
             FindObjectsByType<ItemSpawner>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
         for (int i = 0; i < itemSpawners.Length; i++)
-            itemSpawners[i]?.RespawnCurrentStage();
+        {
+            ItemSpawner spawner = itemSpawners[i];
+            if (spawner == null)
+                continue;
+
+            spawner.SetStageLevel(stageLevel);
+            spawner.RespawnCurrentStage();
+        }
+    }
+
+    private int ResolveCurrentStageLevel()
+    {
+        if (chapterManager != null)
+            return Mathf.Max(1, chapterManager.CurrentChapterIndex);
+
+        return Mathf.Max(1, currentChapter);
     }
 
     private void TryRepositionPlayerToActiveMap()
