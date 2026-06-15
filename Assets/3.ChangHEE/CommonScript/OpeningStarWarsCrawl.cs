@@ -63,6 +63,11 @@ public class OpeningStarWarsCrawl : MonoBehaviour
 
     [Header("UI Sound")]
     [SerializeField] AudioClip buttonClickClip;
+    [SerializeField] [Range(0f, 1f)] float buttonClickVolume = 1f;
+
+    [Header("BGM")]
+    [SerializeField] AudioClip openingBgmClip;
+    [SerializeField] [Range(0f, 1f)] float openingBgmVolume = 0.7f;
 
     [Header("Transition")]
     [SerializeField] TransitionMode transitionMode = TransitionMode.LoadScene;
@@ -119,6 +124,7 @@ public class OpeningStarWarsCrawl : MonoBehaviour
     bool isDraggingManualScroll;
     float manualDragStartPointerY;
     float manualDragStartScrollOffset;
+    AudioSource openingBgmSource;
 
     const string StoryText =
         "인류는 끊임없는 발전과 풍요라는 달콤한 과실을 따기 위해, 매일같이 과학의 한계를 시험대 위에 올렸다. " +
@@ -172,22 +178,59 @@ public class OpeningStarWarsCrawl : MonoBehaviour
         BindGameStartButton();
         ResetCrawl();
         BeginEntryFade();
+        StartOpeningBgm();
+    }
+
+    void OnDestroy()
+    {
+        StopOpeningBgm();
     }
 
     void PreloadButtonClickClip()
     {
-        if (buttonClickClip == null || buttonClickClip.preloadAudioData)
+        EnsureClipLoaded(buttonClickClip);
+    }
+
+    void StartOpeningBgm()
+    {
+        if (openingBgmClip == null)
             return;
 
-        if (buttonClickClip.loadState == AudioDataLoadState.Unloaded)
-            buttonClickClip.LoadAudioData();
+        EnsureClipLoaded(openingBgmClip);
+
+        openingBgmSource = gameObject.AddComponent<AudioSource>();
+        openingBgmSource.playOnAwake = false;
+        openingBgmSource.loop = true;
+        openingBgmSource.spatialBlend = 0f;
+        openingBgmSource.volume = openingBgmVolume;
+        openingBgmSource.clip = openingBgmClip;
+        openingBgmSource.Play();
+    }
+
+    void StopOpeningBgm()
+    {
+        if (openingBgmSource == null)
+            return;
+
+        if (openingBgmSource.isPlaying)
+            openingBgmSource.Stop();
+    }
+
+    static void EnsureClipLoaded(AudioClip clip)
+    {
+        if (clip == null || clip.preloadAudioData)
+            return;
+
+        if (clip.loadState == AudioDataLoadState.Unloaded)
+            clip.LoadAudioData();
     }
 
     void PlayGameStartClickSound()
     {
-        if (buttonClickClip != null)
+        AudioClip clip = buttonClickClip ?? UIButtonClickSoundPlayer.Instance?.ClickClip;
+        if (clip != null)
         {
-            UIButtonClickSoundPlayer.PlaySurvivingOneShot(buttonClickClip);
+            UIButtonClickSoundPlayer.PlaySurvivingOneShot(clip, buttonClickVolume);
             return;
         }
 

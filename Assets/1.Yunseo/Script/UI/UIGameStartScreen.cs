@@ -13,16 +13,26 @@ public class UIGameStartScreen : MonoBehaviour
     [SerializeField] private Button startButton;
     [SerializeField] private Button endButton;
     [SerializeField] private AudioClip clickClip;
+    [SerializeField] private AudioClip menuBgmClip;
+    [SerializeField] [Range(0f, 1f)] private float menuBgmVolume = 0.7f;
+
+    private AudioSource menuBgmSource;
 
     private void Awake()
     {
         GameplayAudioGuard.Unblock();
-        EnsureClickClipLoaded();
+        EnsureClipLoaded(clickClip);
         startButton ??= FindButton("StartButton");
         endButton ??= FindButton("End button");
         WireAllButtonClickSounds();
         WireStartButton();
         WireEndButton();
+        StartMenuBgm();
+    }
+
+    private void OnDestroy()
+    {
+        StopMenuBgm();
     }
 
     public void OnStartClick()
@@ -90,22 +100,48 @@ public class UIGameStartScreen : MonoBehaviour
 
     private void PlayButtonClickSound()
     {
-        if (clickClip != null)
+        AudioClip clip = clickClip ?? UIButtonClickSoundPlayer.Instance?.ClickClip;
+        if (clip != null)
         {
-            UIButtonClickSoundPlayer.PlaySurvivingOneShot(clickClip);
+            UIButtonClickSoundPlayer.PlaySurvivingOneShot(clip);
             return;
         }
 
         UIButtonClickSoundPlayer.Instance?.PlayClickSound(allowWhenBlocked: true);
     }
 
-    private void EnsureClickClipLoaded()
+    private void StartMenuBgm()
     {
-        if (clickClip == null)
+        if (menuBgmClip == null)
             return;
 
-        if (!clickClip.preloadAudioData && clickClip.loadState == AudioDataLoadState.Unloaded)
-            clickClip.LoadAudioData();
+        EnsureClipLoaded(menuBgmClip);
+
+        menuBgmSource = gameObject.AddComponent<AudioSource>();
+        menuBgmSource.playOnAwake = false;
+        menuBgmSource.loop = true;
+        menuBgmSource.spatialBlend = 0f;
+        menuBgmSource.volume = menuBgmVolume;
+        menuBgmSource.clip = menuBgmClip;
+        menuBgmSource.Play();
+    }
+
+    private void StopMenuBgm()
+    {
+        if (menuBgmSource == null)
+            return;
+
+        if (menuBgmSource.isPlaying)
+            menuBgmSource.Stop();
+    }
+
+    private static void EnsureClipLoaded(AudioClip clip)
+    {
+        if (clip == null)
+            return;
+
+        if (!clip.preloadAudioData && clip.loadState == AudioDataLoadState.Unloaded)
+            clip.LoadAudioData();
     }
 
     private float GetClickSoundDelay()

@@ -634,6 +634,9 @@ MonoBehaviour:
   manualScrollDragScale: 1
   gameStartButton: {fileID: 1593333649}
   buttonClickClip: {fileID: 8300000, guid: 4ea285d9fa9ae3244bfb3c5ac58b49ec, type: 3}
+  buttonClickVolume: 0.2
+  openingBgmClip: {fileID: 8300000, guid: c76793fde4e2c6e4b9220a51b1683a4d, type: 3}
+  openingBgmVolume: 0.5
   transitionMode: 0
   nextSceneName: MainGameScenes
   pressAnyKeyMessage: "\uC544\uBB34 \uD0A4\uB098 \uB204\uB974\uC138\uC694"
@@ -1210,6 +1213,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIButtonClickSoundPlayer
   clickClip: {fileID: 8300000, guid: 4ea285d9fa9ae3244bfb3c5ac58b49ec, type: 3}
+  clickVolume: 1
   factoryItemAcquireClip: {fileID: 0}
   battleItemPopupClip: {fileID: 0}
 --- !u!1660057539 &9223372036854775807

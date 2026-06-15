@@ -208,6 +208,7 @@ MonoBehaviour:
   fadeAtTop: 1
   topFadeRange: 220
   buttonClickClip: {fileID: 8300000, guid: 4ea285d9fa9ae3244bfb3c5ac58b49ec, type: 3}
+  buttonClickVolume: 1
   transitionMode: 1
   nextSceneName: MainGameScenes
   pressAnyKeyMessage: "\uC544\uBB34 \uD0A4\uB098 \uB204\uB974\uC138\uC694"

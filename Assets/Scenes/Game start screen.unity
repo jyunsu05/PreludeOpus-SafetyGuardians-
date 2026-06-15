@@ -683,21 +683,6 @@ MonoBehaviour:
   m_DefaultSpriteDPI: 96
   m_DynamicPixelsPerUnit: 1
   m_PresetInfoIsWorld: 0
---- !u!114 &1419114813
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1419114808}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c8f4a2e19b3d4f648a0e7c5d1b9f6e32, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::UIGameStartScreen
-  startButton: {fileID: 388051125}
-  endButton: {fileID: 1779035807}
-  clickClip: {fileID: 8300000, guid: 4ea285d9fa9ae3244bfb3c5ac58b49ec, type: 3}
 --- !u!223 &1419114811
 Canvas:
   m_ObjectHideFlags: 0
@@ -742,6 +727,23 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &1419114813
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1419114808}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8f4a2e19b3d4f648a0e7c5d1b9f6e32, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIGameStartScreen
+  startButton: {fileID: 388051125}
+  endButton: {fileID: 1779035807}
+  clickClip: {fileID: 8300000, guid: 4ea285d9fa9ae3244bfb3c5ac58b49ec, type: 3}
+  menuBgmClip: {fileID: 8300000, guid: 9e0605638d77bcf4285bd668c12835d5, type: 3}
+  menuBgmVolume: 0.7
 --- !u!1 &1586248441
 GameObject:
   m_ObjectHideFlags: 0
@@ -807,21 +809,6 @@ MonoBehaviour:
   m_FirstSelected: {fileID: 0}
   m_sendNavigationEvents: 1
   m_DragThreshold: 10
---- !u!114 &1586248445
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1586248441}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b7c8d9e0f1a24365869708b9c0d1e2f3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::UIButtonClickSoundPlayer
-  clickClip: {fileID: 8300000, guid: 4ea285d9fa9ae3244bfb3c5ac58b49ec, type: 3}
-  factoryItemAcquireClip: {fileID: 0}
-  battleItemPopupClip: {fileID: 0}
 --- !u!4 &1586248444
 Transform:
   m_ObjectHideFlags: 0
@@ -837,6 +824,22 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1586248445
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1586248441}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b7c8d9e0f1a24365869708b9c0d1e2f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIButtonClickSoundPlayer
+  clickClip: {fileID: 8300000, guid: 4ea285d9fa9ae3244bfb3c5ac58b49ec, type: 3}
+  clickVolume: 0.2
+  factoryItemAcquireClip: {fileID: 0}
+  battleItemPopupClip: {fileID: 0}
 --- !u!1 &1779035805
 GameObject:
   m_ObjectHideFlags: 0
