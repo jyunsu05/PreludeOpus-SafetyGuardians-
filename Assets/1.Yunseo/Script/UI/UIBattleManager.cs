@@ -949,12 +949,15 @@ public class UIBattleManager : MonoBehaviour
 
     public bool CanPurifyWithInventory(string itemId = null)
     {
-        if (BattleEncounterContext.WasFieldEntryPrepaid)
-            return true;
-
         string requiredItemId = GetRequiredPurifyItemId();
         if (InventoryManager.Instance == null || string.IsNullOrEmpty(requiredItemId))
             return false;
+
+        if (BattleEncounterContext.WasFieldEntryPrepaid)
+        {
+            string prepaidRequiredItemId = BattleEncounterContext.GetFieldEntryRequiredItemId();
+            return string.Equals(prepaidRequiredItemId, requiredItemId, StringComparison.Ordinal);
+        }
 
         if (string.IsNullOrEmpty(itemId) ||
             string.Equals(itemId, requiredItemId, StringComparison.Ordinal))

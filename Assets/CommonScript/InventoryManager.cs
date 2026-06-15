@@ -186,10 +186,17 @@ public class InventoryManager : MonoBehaviour
         if (string.IsNullOrEmpty(consumableItemId) || string.IsNullOrEmpty(requiredMonsterItemId))
             return false;
 
-        if (!IsSameInventoryItemGroup(consumableItemId, requiredMonsterItemId))
+        if (DataManager.Instance == null ||
+            !DataManager.Instance.IsMonsterPurificationItem(consumableItemId) ||
+            !DataManager.Instance.IsMonsterPurificationItem(requiredMonsterItemId))
+        {
+            return false;
+        }
+
+        if (!string.Equals(consumableItemId, requiredMonsterItemId, StringComparison.Ordinal))
             return false;
 
-        return GetEquivalentInventoryCount(requiredMonsterItemId) > 0;
+        return GetItemCount(requiredMonsterItemId) > 0;
     }
 
     /// <summary>
@@ -276,13 +283,20 @@ public class InventoryManager : MonoBehaviour
 
     private int FindBattleConsumableIndex(string requiredMonsterItemId)
     {
-        if (string.IsNullOrEmpty(requiredMonsterItemId))
+        if (string.IsNullOrEmpty(requiredMonsterItemId) ||
+            DataManager.Instance == null ||
+            !DataManager.Instance.IsMonsterPurificationItem(requiredMonsterItemId))
+        {
             return -1;
+        }
 
         for (int i = 0; i < items.Count; i++)
         {
-            if (IsSameInventoryItemGroup(items[i].id, requiredMonsterItemId))
+            if (string.Equals(items[i].id, requiredMonsterItemId, StringComparison.Ordinal) &&
+                DataManager.Instance.IsMonsterPurificationItem(items[i].id))
+            {
                 return i;
+            }
         }
 
         return -1;
