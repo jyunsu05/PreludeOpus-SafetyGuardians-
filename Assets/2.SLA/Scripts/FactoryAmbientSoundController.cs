@@ -13,8 +13,8 @@ public class FactoryAmbientSoundController : MonoBehaviour
     [SerializeField] private AudioClip abandonedFactoryLoopClip;
 
     [Header("Mix (BGM 대비 비율)")]
-    [SerializeField] [Range(0f, 1f)] private float machineVolume = 0.4f;
-    [SerializeField] [Range(0f, 1f)] private float abandonedVolume = 0.82f;
+    [SerializeField] [Range(0f, 1f)] private float machineVolume = 0.35f;
+    [SerializeField] [Range(0f, 1f)] private float abandonedVolume = 0.74f;
     [SerializeField] private bool pauseDuringBattle = true;
 
     [Header("Pipe Ambience")]
@@ -56,7 +56,7 @@ public class FactoryAmbientSoundController : MonoBehaviour
     {
         TrySubscribeGameManager();
 
-        if (!GameplayAudioGuard.IsBlocked)
+        if (!GameplayAudioGuard.IsGameplaySuppressed)
             ambienceStoppedForGameplayBlock = false;
 
         if (ShouldPlayAmbience())
@@ -77,10 +77,18 @@ public class FactoryAmbientSoundController : MonoBehaviour
         if (!gameManagerSubscribed)
             TrySubscribeGameManager();
 
-        if (GameplayAudioGuard.IsBlocked)
+        if (GameplayAudioGuard.IsGameplaySuppressed)
         {
             if (!ambienceStoppedForGameplayBlock)
                 StopForGameplayAudioBlock();
+            return;
+        }
+
+        if (ambienceStoppedForGameplayBlock)
+        {
+            ambienceStoppedForGameplayBlock = false;
+            if (ShouldPlayAmbience())
+                StartAllAmbience();
             return;
         }
 
@@ -154,7 +162,7 @@ public class FactoryAmbientSoundController : MonoBehaviour
 
     private bool ShouldPlayAmbience()
     {
-        if (GameplayAudioGuard.IsBlocked || ambienceStoppedForGameplayBlock)
+        if (GameplayAudioGuard.IsGameplaySuppressed || ambienceStoppedForGameplayBlock)
             return false;
 
         return !pauseDuringBattle || !IsBattleActive();

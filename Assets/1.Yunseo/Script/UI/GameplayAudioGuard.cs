@@ -6,13 +6,16 @@ using UnityEngine;
 public static class GameplayAudioGuard
 {
     public static bool IsBlocked { get; private set; }
+    public static bool IsLoadingSuppressed { get; private set; }
     public static bool IsInventoryFieldSoundsSuppressed { get; private set; }
 
-    public static bool CanPlay => !IsBlocked;
+    public static bool IsGameplaySuppressed => IsBlocked || IsLoadingSuppressed;
+
+    public static bool CanPlay => !IsGameplaySuppressed;
 
     /// <summary>몬스터·플레이어 등 필드 캐릭터 사운드 재생 가능 여부. 공장 배경음은 별도로 재생됩니다.</summary>
     public static bool CanPlayFieldCharacterSounds =>
-        !IsBlocked && !IsInventoryFieldSoundsSuppressed;
+        CanPlay && !IsInventoryFieldSoundsSuppressed;
 
     public static void SuppressFieldSoundsForInventory()
     {
@@ -26,6 +29,20 @@ public static class GameplayAudioGuard
     public static void ResumeFieldSoundsFromInventory()
     {
         IsInventoryFieldSoundsSuppressed = false;
+    }
+
+    public static void SuppressForLoading()
+    {
+        if (IsLoadingSuppressed)
+            return;
+
+        IsLoadingSuppressed = true;
+        StopGameplayAudioExceptLoading();
+    }
+
+    public static void ResumeFromLoading()
+    {
+        IsLoadingSuppressed = false;
     }
 
     public static void BlockAndStopAll()
@@ -74,6 +91,43 @@ public static class GameplayAudioGuard
 
         for (int i = 0; i < pipeZones.Length; i++)
             pipeZones[i]?.StopForInventoryPause();
+    }
+
+    private static void StopGameplayAudioExceptLoading()
+    {
+        StopInventorySuppressedAudio();
+
+        UIButtonClickSoundPlayer uiSoundPlayer = UIButtonClickSoundPlayer.Instance;
+        if (uiSoundPlayer != null)
+            uiSoundPlayer.ForceStopAll();
+
+        FactoryAmbientSoundController[] ambientControllers =
+            Object.FindObjectsByType<FactoryAmbientSoundController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+        for (int i = 0; i < ambientControllers.Length; i++)
+        {
+            if (ambientControllers[i] != null)
+                ambientControllers[i].StopForGameplayAudioBlock();
+        }
+
+        AudioSource[] sources = Object.FindObjectsByType<AudioSource>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+
+        for (int i = 0; i < sources.Length; i++)
+        {
+            AudioSource source = sources[i];
+            if (source == null || IsLoadingUiAudioSource(source))
+                continue;
+
+            source.Stop();
+            source.loop = false;
+        }
+    }
+
+    private static bool IsLoadingUiAudioSource(AudioSource source)
+    {
+        return source.GetComponentInParent<UILoading>(true) != null;
     }
 
     private static void StopAllAudioSources()
