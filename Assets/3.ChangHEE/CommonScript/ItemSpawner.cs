@@ -110,7 +110,8 @@ public class ItemSpawner : MonoBehaviour
             return;
         }
 
-        int spawnCount = GetSpawnCountForStage();
+        int[] targetTypeCounts = ResolveTargetTypeCounts();
+        int spawnCount = FactoryStageSpawnConfig.SumTypeCounts(targetTypeCounts);
         if (spawnCount <= 0)
         {
             SpawnTotalForCurrentStage = 0;
@@ -138,12 +139,12 @@ public class ItemSpawner : MonoBehaviour
 
         int count = Mathf.Min(spawnCount, pointCount);
         List<Transform> spawnPoints = GetShuffledSpawnPoints();
-        List<int> itemTypeOrder = GetItemTypeOrder(count);
+        List<int> itemTypeOrder = BuildItemTypeOrder(targetTypeCounts, count);
         int[] itemTypeCounts = new int[ItemTypeCount];
         List<Vector2> usedSpawnPositions = new List<Vector2>(count);
         int spawnedCount = 0;
 
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < itemTypeOrder.Count; i++)
         {
             Transform spawnPoint = spawnPoints[i];
             if (spawnPoint == null)
@@ -180,12 +181,57 @@ public class ItemSpawner : MonoBehaviour
             UIMainHUD.RefreshTargetProgressGlobal();
     }
 
+    private int[] ResolveTargetTypeCounts()
+    {
+        MonsterSpawner partnerSpawner = FindPartnerMonsterSpawner();
+        if (partnerSpawner != null &&
+            partnerSpawner.TryGetLastSpawnedTypeCounts(out int[] monsterTypeCounts))
+        {
+            return monsterTypeCounts;
+        }
+
+        int plannedSpawnCount = GetSpawnCountForStage();
+        List<int> plannedTypeOrder = FactoryStageSpawnConfig.BuildShuffledTypeOrder(plannedSpawnCount);
+        return FactoryStageSpawnConfig.BuildTypeCountsFromOrder(plannedTypeOrder);
+    }
+
+    private static List<int> BuildItemTypeOrder(int[] targetTypeCounts, int maxCount)
+    {
+        var itemTypes = new List<int>();
+
+        for (int type = 0; type < ItemTypeCount; type++)
+        {
+            for (int i = 0; i < targetTypeCounts[type]; i++)
+                itemTypes.Add(type);
+        }
+
+        if (itemTypes.Count > maxCount)
+            itemTypes.RemoveRange(maxCount, itemTypes.Count - maxCount);
+
+        for (int i = 0; i < itemTypes.Count; i++)
+        {
+            int randomIndex = Random.Range(i, itemTypes.Count);
+            int temp = itemTypes[i];
+            itemTypes[i] = itemTypes[randomIndex];
+            itemTypes[randomIndex] = temp;
+        }
+
+        return itemTypes;
+    }
+
+    private MonsterSpawner FindPartnerMonsterSpawner()
+    {
+        Transform searchRoot = transform.parent;
+        if (searchRoot == null)
+            return null;
+
+        return searchRoot.GetComponentInChildren<MonsterSpawner>(true);
+    }
+
     private int GetSpawnCountForStage()
     {
         EnsureSpawnCountsByStage();
-
-        int index = Mathf.Clamp(stageLevel, 1, 7) - 1;
-        return spawnCountsByStage[index];
+        return FactoryStageSpawnConfig.GetSpawnCountForStage(stageLevel);
     }
 
     private List<Transform> GetShuffledSpawnPoints()
@@ -204,31 +250,6 @@ public class ItemSpawner : MonoBehaviour
         }
 
         return spawnPoints;
-    }
-
-    private List<int> GetItemTypeOrder(int spawnCount)
-    {
-        List<int> itemTypes = new List<int>();
-
-        for (int i = 0; i < ItemTypeCount && itemTypes.Count < spawnCount; i++)
-            itemTypes.Add(i);
-
-        int nextType = 0;
-        while (itemTypes.Count < spawnCount)
-        {
-            itemTypes.Add(nextType);
-            nextType = (nextType + 1) % ItemTypeCount;
-        }
-
-        for (int i = 0; i < itemTypes.Count; i++)
-        {
-            int randomIndex = Random.Range(i, itemTypes.Count);
-            int temp = itemTypes[i];
-            itemTypes[i] = itemTypes[randomIndex];
-            itemTypes[randomIndex] = temp;
-        }
-
-        return itemTypes;
     }
 
     private GameObject GetItemPrefab(int itemType)
@@ -302,12 +323,6 @@ public class ItemSpawner : MonoBehaviour
 
     private void EnsureSpawnCountsByStage()
     {
-        int[] fixedCounts = { 3, 5, 9, 0, 0, 0, 0 };
-
-        if (spawnCountsByStage == null || spawnCountsByStage.Length != fixedCounts.Length)
-            spawnCountsByStage = new int[fixedCounts.Length];
-
-        for (int i = 0; i < fixedCounts.Length; i++)
-            spawnCountsByStage[i] = fixedCounts[i];
+        FactoryStageSpawnConfig.EnsureSpawnCountsByStage(ref spawnCountsByStage);
     }
 }
