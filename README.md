@@ -1,5 +1,13 @@
 # PreludeOpus-SafetyGuardians-
 
+## 에셋 출처 · 라이선스
+
+| 문서 | 용도 |
+|------|------|
+| [**사용 에셋 및 라이선스**](Docs/ASSETS-CREDITS.md) | 폰트·그래픽·오디오 출처 (평가표 P5) |
+
+**Font:** [Silver by Poppy Works](https://poppyworks.itch.io/silver) (CC BY 4.0)
+
 ## 문서
 
 | 문서 | 용도 |
