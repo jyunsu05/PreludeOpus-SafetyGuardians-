@@ -1353,6 +1353,7 @@ public class ChapterManager : MonoBehaviour
     {
         var args = new ChapterLoadedEventArgs(CurrentChapterIndex, GetActiveChapterRoot(), isRestart);
         OnChapterLoaded?.Invoke(args);
+        UIMainHUD.RefreshTargetProgressGlobal();
     }
 }
 

@@ -42,6 +42,7 @@ public class MonsterFieldSoundController : MonoBehaviour
     private bool purificationPlaying;
     private Coroutine purificationRoutine;
     private bool gameManagerSubscribed;
+    private Coroutine preloadRoutine;
 
     private void Awake()
     {
@@ -49,6 +50,27 @@ public class MonsterFieldSoundController : MonoBehaviour
         animator = GetComponent<Animator>();
         animationController = GetComponent<MonsterAnimationController>();
         ConfigureAudioSources();
+    }
+
+    private void Start()
+    {
+        TryFindPlayer();
+        preloadRoutine = StartCoroutine(PreloadMonsterAudioClipsRoutine());
+
+        if (!IsBattleActive())
+            UpdateLoopSound();
+    }
+
+    private IEnumerator PreloadMonsterAudioClipsRoutine()
+    {
+        yield return AudioClipLoadUtility.WaitUntilLoaded(idleClip);
+        yield return AudioClipLoadUtility.WaitUntilLoaded(runClip);
+        yield return AudioClipLoadUtility.WaitUntilLoaded(attackClip);
+        yield return AudioClipLoadUtility.WaitUntilLoaded(purificationCompleteClip);
+        preloadRoutine = null;
+
+        if (isActiveAndEnabled && !IsBattleActive())
+            UpdateLoopSound();
     }
 
     private void ConfigureAudioSources()
@@ -75,16 +97,14 @@ public class MonsterFieldSoundController : MonoBehaviour
         TrySubscribeGameManager();
     }
 
-    private void Start()
-    {
-        TryFindPlayer();
-
-        if (!IsBattleActive())
-            UpdateLoopSound();
-    }
-
     private void OnDisable()
     {
+        if (preloadRoutine != null)
+        {
+            StopCoroutine(preloadRoutine);
+            preloadRoutine = null;
+        }
+
         UnsubscribeGameManager();
         CancelPurificationPlayback();
         StopLoop();
@@ -148,7 +168,7 @@ public class MonsterFieldSoundController : MonoBehaviour
             return;
 
         AudioClip expectedClip = currentLoop == LoopKind.Run ? runClip : idleClip;
-        if (expectedClip == null)
+        if (expectedClip == null || !TryPrepareClipForPlayback(expectedClip))
             return;
 
         fieldLoopSource.loop = true;
@@ -260,6 +280,9 @@ public class MonsterFieldSoundController : MonoBehaviour
         if (purificationPlaying || clip == null || fieldLoopSource == null)
             return;
 
+        if (!TryPrepareClipForPlayback(clip))
+            return;
+
         bool kindChanged = currentLoop != kind;
         bool clipChanged = fieldLoopSource.clip != clip;
 
@@ -288,6 +311,18 @@ public class MonsterFieldSoundController : MonoBehaviour
         }
 
         currentLoop = kind;
+    }
+
+    private static bool TryPrepareClipForPlayback(AudioClip clip)
+    {
+        if (clip == null)
+            return false;
+
+        if (AudioClipLoadUtility.IsReadyToPlay(clip))
+            return true;
+
+        AudioClipLoadUtility.RequestLoad(clip);
+        return false;
     }
 
     private void StopLoop()
@@ -335,7 +370,7 @@ public class MonsterFieldSoundController : MonoBehaviour
             return;
 
         AudioClip clip = currentLoop == LoopKind.Run ? runClip : idleClip;
-        if (clip == null)
+        if (clip == null || !TryPrepareClipForPlayback(clip))
             return;
 
         fieldLoopSource.loop = true;
@@ -398,6 +433,10 @@ public class MonsterFieldSoundController : MonoBehaviour
     public IEnumerator PlayBattleAttackSoundRoutine()
     {
         if (!GameplayAudioGuard.CanPlayFieldCharacterSounds || !IsBattleActive() || attackClip == null || sfxSource == null)
+            yield break;
+
+        yield return AudioClipLoadUtility.WaitUntilLoaded(attackClip);
+        if (!AudioClipLoadUtility.IsReadyToPlay(attackClip))
             yield break;
 
         bool resumeLoopAfterAttack = currentLoop != LoopKind.None;
@@ -463,6 +502,14 @@ public class MonsterFieldSoundController : MonoBehaviour
     {
         purificationPlaying = true;
         SuppressLoopForPurification();
+
+        yield return AudioClipLoadUtility.WaitUntilLoaded(purificationCompleteClip);
+        if (!AudioClipLoadUtility.IsReadyToPlay(purificationCompleteClip))
+        {
+            purificationPlaying = false;
+            purificationRoutine = null;
+            yield break;
+        }
 
         if (sfxSource.isPlaying)
             sfxSource.Stop();

@@ -83,6 +83,17 @@ public class PlayerController : MonoBehaviour
     {
         TrySubscribeGameManager();
         EnsurePhysicsSimulated();
+        StartCoroutine(PreloadFieldAudioClipsRoutine());
+    }
+
+    private IEnumerator PreloadFieldAudioClipsRoutine()
+    {
+        yield return AudioClipLoadUtility.WaitUntilLoaded(walkingClip1);
+        yield return AudioClipLoadUtility.WaitUntilLoaded(walkingClip2);
+        yield return AudioClipLoadUtility.WaitUntilLoaded(walkingOxygenClip);
+        yield return AudioClipLoadUtility.WaitUntilLoaded(idleCoughClip1);
+        yield return AudioClipLoadUtility.WaitUntilLoaded(idleCoughClip2);
+        yield return AudioClipLoadUtility.WaitUntilLoaded(idleLoopClip);
     }
 
     private void OnDisable()

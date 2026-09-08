@@ -17,6 +17,7 @@ public class UIGameStartScreen : MonoBehaviour
     [SerializeField] [Range(0f, 1f)] private float menuBgmVolume = 0.7f;
 
     private AudioSource menuBgmSource;
+    private Coroutine menuBgmPlayRoutine;
 
     private void Awake()
     {
@@ -27,6 +28,10 @@ public class UIGameStartScreen : MonoBehaviour
         WireAllButtonClickSounds();
         WireStartButton();
         WireEndButton();
+    }
+
+    private void Start()
+    {
         StartMenuBgm();
     }
 
@@ -113,21 +118,64 @@ public class UIGameStartScreen : MonoBehaviour
     private void StartMenuBgm()
     {
         if (menuBgmClip == null)
+        {
+            Debug.LogWarning("[UIGameStartScreen] menuBgmClip이 비어 있습니다. BGM 파일 연결을 확인하세요.");
+            return;
+        }
+
+        if (menuBgmPlayRoutine != null)
             return;
 
-        EnsureClipLoaded(menuBgmClip);
+        menuBgmPlayRoutine = StartCoroutine(PlayMenuBgmWhenReady());
+    }
 
-        menuBgmSource = gameObject.AddComponent<AudioSource>();
+    private IEnumerator PlayMenuBgmWhenReady()
+    {
+        yield return AudioClipLoadUtility.WaitUntilLoaded(menuBgmClip);
+
+        if (!AudioClipLoadUtility.IsReadyToPlay(menuBgmClip))
+        {
+            Debug.LogWarning(
+                $"[UIGameStartScreen] 메뉴 BGM 로드 실패: {menuBgmClip.loadState}");
+            menuBgmPlayRoutine = null;
+            yield break;
+        }
+
+        GameObject audioHost = ResolveMenuBgmHost();
+        menuBgmSource = audioHost.GetComponent<AudioSource>();
+        if (menuBgmSource == null)
+            menuBgmSource = audioHost.AddComponent<AudioSource>();
+
         menuBgmSource.playOnAwake = false;
         menuBgmSource.loop = true;
         menuBgmSource.spatialBlend = 0f;
         menuBgmSource.volume = menuBgmVolume;
         menuBgmSource.clip = menuBgmClip;
         menuBgmSource.Play();
+        menuBgmPlayRoutine = null;
+    }
+
+    private static GameObject ResolveMenuBgmHost()
+    {
+        Camera mainCamera = Camera.main;
+        if (mainCamera != null)
+            return mainCamera.gameObject;
+
+        AudioListener listener = Object.FindFirstObjectByType<AudioListener>();
+        if (listener != null)
+            return listener.gameObject;
+
+        return new GameObject("MenuBgmAudio");
     }
 
     private void StopMenuBgm()
     {
+        if (menuBgmPlayRoutine != null)
+        {
+            StopCoroutine(menuBgmPlayRoutine);
+            menuBgmPlayRoutine = null;
+        }
+
         if (menuBgmSource == null)
             return;
 

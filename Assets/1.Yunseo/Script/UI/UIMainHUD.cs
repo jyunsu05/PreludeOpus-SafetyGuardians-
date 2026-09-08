@@ -24,6 +24,8 @@ public class UIMainHUD : MonoBehaviour
     private bool chapterSubscribed;
     private bool pollutionSubscribed;
     private bool inventorySubscribed;
+    private bool targetProgressBound;
+    private int targetProgressResolveAttempts;
     private Coroutine bagPulseRoutine;
 
     private void Awake()
@@ -35,6 +37,8 @@ public class UIMainHUD : MonoBehaviour
 
     private void OnEnable()
     {
+        targetProgressBound = false;
+        targetProgressResolveAttempts = 0;
         TryBindBattleEvents();
         TrySubscribeProgressSources();
         RefreshTargetProgressTexts();
@@ -62,7 +66,22 @@ public class UIMainHUD : MonoBehaviour
             TryBindBattleEvents();
 
         if (!chapterSubscribed || !pollutionSubscribed || !inventorySubscribed)
+        {
+            bool beforeChapter = chapterSubscribed;
+            bool beforePollution = pollutionSubscribed;
+            bool beforeInventory = inventorySubscribed;
             TrySubscribeProgressSources();
+            if (chapterSubscribed != beforeChapter
+                || pollutionSubscribed != beforePollution
+                || inventorySubscribed != beforeInventory)
+            {
+                RefreshTargetProgressTexts();
+            }
+        }
+
+        // 챕터 매니저/스포너가 늦게 준비되거나 참조가 늦게 잡히는 경우 대비
+        if (!targetProgressBound && targetProgressResolveAttempts < 120)
+            RefreshTargetProgressTexts();
     }
 
     private void OnDestroy()
@@ -113,20 +132,29 @@ public class UIMainHUD : MonoBehaviour
 
     public void RefreshTargetProgressTexts()
     {
+        TryResolveTargetProgressTextReferences();
+
         if (currentChapterText != null)
-            currentChapterText.text = $"현재 챕터 : {ResolveCurrentChapterIndex()}";
+            currentChapterText.SetText("현재 챕터 : {0}", ResolveCurrentChapterIndex());
 
         if (currentPurificationText != null)
         {
             ResolveMonsterPurificationProgress(out int purified, out int total);
-            currentPurificationText.text = $"현재 몬스터 정화 : {purified}/{total}";
+            currentPurificationText.SetText("현재 몬스터 정화 : {0}/{1}", purified, total);
         }
 
         if (currentItemText != null)
         {
             ResolveFactoryItemProgress(out int acquired, out int max);
-            currentItemText.text = $"현재 공장 정화 아이템 갯수 : {acquired}/{max}";
+            currentItemText.SetText("현재 공장 정화 아이템 갯수 : {0}/{1}", acquired, max);
         }
+
+        targetProgressBound = currentChapterText != null
+            && currentPurificationText != null
+            && currentItemText != null;
+
+        if (!targetProgressBound)
+            targetProgressResolveAttempts++;
     }
 
     public static void RefreshTargetProgressGlobal()
@@ -198,18 +226,34 @@ public class UIMainHUD : MonoBehaviour
 
     private void TryResolveTargetProgressTextReferences()
     {
-        Transform targetRoot = transform.Find("target");
-        if (targetRoot == null)
+        if (currentChapterText != null
+            && currentPurificationText != null
+            && currentItemText != null)
             return;
 
+        Transform searchRoot = transform.Find("target");
+        if (searchRoot == null)
+            searchRoot = transform;
+
+        TextMeshProUGUI[] texts = searchRoot.GetComponentsInChildren<TextMeshProUGUI>(true);
+
         if (currentChapterText == null)
-            currentChapterText = FindChildTextByName(targetRoot, "current chapter");
+        {
+            currentChapterText = FindProgressText(
+                texts, "current chapter", "현재 챕터");
+        }
 
         if (currentPurificationText == null)
-            currentPurificationText = FindChildTextByName(targetRoot, "current purification");
+        {
+            currentPurificationText = FindProgressText(
+                texts, "current purification", "현재 몬스터 정화");
+        }
 
         if (currentItemText == null)
-            currentItemText = FindChildTextByName(targetRoot, "current item");
+        {
+            currentItemText = FindProgressText(
+                texts, "current item", "현재 공장 정화");
+        }
     }
 
     private TextMeshProUGUI FindGaugeTextUnderBar(string barObjectName)
@@ -220,19 +264,34 @@ public class UIMainHUD : MonoBehaviour
             : null;
     }
 
-    private static TextMeshProUGUI FindChildTextByName(Transform root, string objectName)
+    private static TextMeshProUGUI FindProgressText(
+        TextMeshProUGUI[] texts,
+        string objectName,
+        string textHint)
     {
-        if (root == null)
+        if (texts == null)
             return null;
 
-        for (int i = 0; i < root.childCount; i++)
+        for (int i = 0; i < texts.Length; i++)
         {
-            Transform child = root.GetChild(i);
-            if (!child.name.Equals(objectName, StringComparison.OrdinalIgnoreCase))
+            TextMeshProUGUI text = texts[i];
+            if (text == null)
                 continue;
 
-            TextMeshProUGUI text = child.GetComponent<TextMeshProUGUI>();
-            if (text != null)
+            if (text.gameObject.name.Equals(objectName, StringComparison.OrdinalIgnoreCase))
+                return text;
+        }
+
+        if (string.IsNullOrEmpty(textHint))
+            return null;
+
+        for (int i = 0; i < texts.Length; i++)
+        {
+            TextMeshProUGUI text = texts[i];
+            if (text == null || string.IsNullOrEmpty(text.text))
+                continue;
+
+            if (text.text.IndexOf(textHint, StringComparison.Ordinal) >= 0)
                 return text;
         }
 
@@ -274,6 +333,12 @@ public class UIMainHUD : MonoBehaviour
 
         if (InventoryManager.Instance != null)
             acquired = InventoryManager.Instance.GetFactoryPurificationItemCount();
+
+        if (ItemSpawner.TryGetChapterFactoryItemProgress(out _, out int spawnMax) && spawnMax > 0)
+        {
+            max = Mathf.Max(spawnMax, acquired);
+            return;
+        }
 
         PollutionManager manager = PollutionManager.EnsureInstance();
         if (manager != null)
