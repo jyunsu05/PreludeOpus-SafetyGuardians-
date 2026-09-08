@@ -358,6 +358,8 @@ public class UIBattleManager : MonoBehaviour
         return true;
     }
 
+    private static readonly float[] SearchBeatNormalizedTimes = { 0f, 0.33333334f, 0.6666667f };
+
     private IEnumerator ExecuteSearchAnimationRoutine(System.Action onCompleted)
     {
         IsSearching = true;
@@ -365,24 +367,19 @@ public class UIBattleManager : MonoBehaviour
         try
         {
             ResolveSearchLensPresenter();
+            float duration = ResolveSearchAnimationDuration();
+            Coroutine beatRoutine = StartCoroutine(PlaySearchBeatSequenceRoutine(duration));
+
             if (searchLensPresenter != null)
-            {
-                searchLensPresenter.OnMovementBeat += HandleSearchMovementBeat;
-                try
-                {
-                    yield return searchLensPresenter.RunSearchSequence();
-                }
-                finally
-                {
-                    searchLensPresenter.OnMovementBeat -= HandleSearchMovementBeat;
-                }
-            }
+                yield return searchLensPresenter.RunSearchSequence();
             else
             {
                 Debug.LogWarning("[UIBattleManager] SearchLens presenter를 찾지 못했습니다.");
-                PlaySearchBeatSound();
-                yield return new WaitForSecondsRealtime(ResolveSearchAnimationDuration());
+                yield return new WaitForSecondsRealtime(duration);
             }
+
+            if (beatRoutine != null)
+                StopCoroutine(beatRoutine);
         }
         finally
         {
@@ -393,9 +390,21 @@ public class UIBattleManager : MonoBehaviour
         onCompleted?.Invoke();
     }
 
-    private void HandleSearchMovementBeat()
+    private IEnumerator PlaySearchBeatSequenceRoutine(float duration)
     {
-        PlaySearchBeatSound();
+        duration = Mathf.Max(0.01f, duration);
+
+        for (int i = 0; i < SearchBeatNormalizedTimes.Length; i++)
+        {
+            if (i > 0)
+            {
+                float waitSeconds = duration * (SearchBeatNormalizedTimes[i] - SearchBeatNormalizedTimes[i - 1]);
+                if (waitSeconds > 0f)
+                    yield return new WaitForSecondsRealtime(waitSeconds);
+            }
+
+            PlaySearchBeatSound();
+        }
     }
 
     /// <summary>탐색 성공 — 정화 버튼을 켤 수 있는 상태로 전환합니다.</summary>
@@ -709,7 +718,15 @@ public class UIBattleManager : MonoBehaviour
         if (searchSoundClip == null)
             return;
 
-        ResolveUiSoundPlayer()?.PlayOneShotClip(searchSoundClip, ResolveBattleSfxVolume(SearchSfxBgmRatio));
+        UIButtonClickSoundPlayer player = ResolveUiSoundPlayer();
+        float volume = ResolveBattleSfxVolume(SearchSfxBgmRatio);
+        if (player != null)
+        {
+            player.PlayOneShotClip(searchSoundClip, volume);
+            return;
+        }
+
+        UIButtonClickSoundPlayer.PlaySurvivingOneShot(searchSoundClip, volume);
     }
 
     private void PlayPurificationUiSound()

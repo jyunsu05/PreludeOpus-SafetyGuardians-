@@ -50,6 +50,15 @@ public class FactoryAmbientSoundController : MonoBehaviour
     private void Awake()
     {
         ConfigureAudioSources();
+        StartCoroutine(PreloadAmbienceClipsRoutine());
+    }
+
+    private IEnumerator PreloadAmbienceClipsRoutine()
+    {
+        yield return AudioClipLoadUtility.WaitUntilLoaded(machineLoopClip);
+        yield return AudioClipLoadUtility.WaitUntilLoaded(abandonedFactoryLoopClip);
+        yield return AudioClipLoadUtility.WaitUntilLoaded(pipeAmbienceClip);
+        yield return AudioClipLoadUtility.WaitUntilLoaded(waterDropAmbienceClip);
     }
 
     private void OnEnable()
@@ -150,8 +159,8 @@ public class FactoryAmbientSoundController : MonoBehaviour
 
     private void StartAmbientLoops()
     {
-        PlayLoop(machineSource, machineLoopClip, ResolveAmbientVolume(machineVolume));
-        PlayLoop(abandonedSource, abandonedFactoryLoopClip, ResolveAmbientVolume(abandonedVolume));
+        StartCoroutine(PlayLoopWhenReady(machineSource, machineLoopClip, ResolveAmbientVolume(machineVolume)));
+        StartCoroutine(PlayLoopWhenReady(abandonedSource, abandonedFactoryLoopClip, ResolveAmbientVolume(abandonedVolume)));
     }
 
     private void StopAmbientLoops()
@@ -178,6 +187,10 @@ public class FactoryAmbientSoundController : MonoBehaviour
         if (source == null || clip == null)
             return;
 
+        AudioClipLoadUtility.RequestLoad(clip);
+        if (clip.loadState != AudioDataLoadState.Loaded)
+            return;
+
         source.clip = clip;
         source.volume = volume;
         source.loop = true;
@@ -186,6 +199,12 @@ public class FactoryAmbientSoundController : MonoBehaviour
             source.Play();
         else
             source.UnPause();
+    }
+
+    private IEnumerator PlayLoopWhenReady(AudioSource source, AudioClip clip, float volume)
+    {
+        yield return AudioClipLoadUtility.WaitUntilLoaded(clip);
+        PlayLoop(source, clip, volume);
     }
 
     private static void StopLoop(AudioSource source)
@@ -225,17 +244,21 @@ public class FactoryAmbientSoundController : MonoBehaviour
 
         while (enabled)
         {
-            PlayPipeAmbienceOnce();
+            yield return PlayPipeAmbienceOnce();
 
             float waitSeconds = Random.Range(minInterval, maxInterval);
             yield return new WaitForSeconds(waitSeconds);
         }
     }
 
-    private void PlayPipeAmbienceOnce()
+    private IEnumerator PlayPipeAmbienceOnce()
     {
         if (pipeAmbienceClip == null || pipeSource == null)
-            return;
+            yield break;
+
+        yield return AudioClipLoadUtility.WaitUntilLoaded(pipeAmbienceClip);
+        if (!AudioClipLoadUtility.IsReadyToPlay(pipeAmbienceClip))
+            yield break;
 
         pipeSource.volume = ResolveAmbientVolume(pipeVolume);
         pipeSource.PlayOneShot(pipeAmbienceClip);
@@ -282,6 +305,10 @@ public class FactoryAmbientSoundController : MonoBehaviour
     private IEnumerator PlayWaterDropAmbienceOnce()
     {
         if (waterDropAmbienceClip == null || waterDropSource == null)
+            yield break;
+
+        yield return AudioClipLoadUtility.WaitUntilLoaded(waterDropAmbienceClip);
+        if (!AudioClipLoadUtility.IsReadyToPlay(waterDropAmbienceClip))
             yield break;
 
         waterDropSource.volume = ResolveAmbientVolume(waterDropVolume);

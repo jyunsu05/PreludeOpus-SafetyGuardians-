@@ -58,12 +58,54 @@ public class UIButtonClickSoundPlayer : MonoBehaviour
 
     private void EnsureAudioSources()
     {
-        AudioSource[] sources = GetComponents<AudioSource>();
-        audioSource = sources.Length > 0 ? sources[0] : gameObject.AddComponent<AudioSource>();
-        trackedAudioSource = sources.Length > 1 ? sources[1] : gameObject.AddComponent<AudioSource>();
+        audioSource ??= FindOrCreateUiAudioSource("UiOneShotAudio");
+        trackedAudioSource ??= FindOrCreateUiAudioSource("UiTrackedAudio");
+    }
 
-        ConfigureUiAudioSource(audioSource);
-        ConfigureUiAudioSource(trackedAudioSource);
+    private AudioSource FindOrCreateUiAudioSource(string childName)
+    {
+        Transform child = transform.Find(childName);
+        if (child != null && child.TryGetComponent(out AudioSource existing))
+            return existing;
+
+        GameObject host = new GameObject(childName);
+        host.transform.SetParent(transform, false);
+        AudioSource source = host.AddComponent<AudioSource>();
+        ConfigureUiAudioSource(source);
+        return source;
+    }
+
+    private IEnumerator PlayOneShotClipWhenReady(AudioClip clip, float volume, bool allowWhenBlocked)
+    {
+        yield return AudioClipLoadUtility.WaitUntilLoaded(clip);
+        if (!AudioClipLoadUtility.IsReadyToPlay(clip))
+            yield break;
+
+        if (!allowWhenBlocked && !GameplayAudioGuard.CanPlay)
+            yield break;
+
+        EnsureAudioSources();
+        if (audioSource == null)
+            yield break;
+
+        audioSource.PlayOneShot(clip, Mathf.Max(0f, volume));
+    }
+
+    private IEnumerator PlayTrackedClipWhenReady(AudioClip clip, float volume, bool loop)
+    {
+        yield return AudioClipLoadUtility.WaitUntilLoaded(clip);
+        if (!AudioClipLoadUtility.IsReadyToPlay(clip) || !GameplayAudioGuard.CanPlay)
+            yield break;
+
+        EnsureAudioSources();
+        if (trackedAudioSource == null)
+            yield break;
+
+        StopTrackedClip();
+        trackedAudioSource.clip = clip;
+        trackedAudioSource.loop = loop;
+        trackedAudioSource.volume = Mathf.Max(0f, volume);
+        trackedAudioSource.Play();
     }
 
     private static void ConfigureUiAudioSource(AudioSource source)
@@ -90,12 +132,7 @@ public class UIButtonClickSoundPlayer : MonoBehaviour
         if (clip == null || (!allowWhenBlocked && !GameplayAudioGuard.CanPlay))
             return;
 
-        EnsureClipLoaded(clip);
-        EnsureAudioSources();
-        if (audioSource == null)
-            return;
-
-        audioSource.PlayOneShot(clip, Mathf.Max(0f, volume));
+        StartCoroutine(PlayOneShotClipWhenReady(clip, volume, allowWhenBlocked));
     }
 
     public void PlayTrackedClip(AudioClip clip, float volume = 1f, bool loop = false)
@@ -103,15 +140,7 @@ public class UIButtonClickSoundPlayer : MonoBehaviour
         if (clip == null || !GameplayAudioGuard.CanPlay)
             return;
 
-        EnsureAudioSources();
-        if (trackedAudioSource == null)
-            return;
-
-        StopTrackedClip();
-        trackedAudioSource.clip = clip;
-        trackedAudioSource.loop = loop;
-        trackedAudioSource.volume = Mathf.Max(0f, volume);
-        trackedAudioSource.Play();
+        StartCoroutine(PlayTrackedClipWhenReady(clip, volume, loop));
     }
 
     public void PlayTrackedClipForDuration(AudioClip clip, float duration, float volume = 1f)
@@ -252,8 +281,22 @@ public class UIButtonClickSoundPlayer : MonoBehaviour
         if (clip == null)
             return;
 
-        if (!clip.preloadAudioData && clip.loadState == AudioDataLoadState.Unloaded)
-            clip.LoadAudioData();
+        if (Instance != null)
+        {
+            Instance.StartCoroutine(Instance.PlaySurvivingOneShotRoutine(clip, volumeOverride));
+            return;
+        }
+
+        GameObject host = new GameObject("UiClickOneShot");
+        DontDestroyOnLoad(host);
+        host.AddComponent<SurvivingOneShotAudioPlayer>().Play(clip, ResolveClickVolume(volumeOverride));
+    }
+
+    private IEnumerator PlaySurvivingOneShotRoutine(AudioClip clip, float volumeOverride)
+    {
+        yield return AudioClipLoadUtility.WaitUntilLoaded(clip);
+        if (!AudioClipLoadUtility.IsReadyToPlay(clip))
+            yield break;
 
         float volume = ResolveClickVolume(volumeOverride);
 
@@ -268,6 +311,36 @@ public class UIButtonClickSoundPlayer : MonoBehaviour
         source.PlayOneShot(clip, volume);
 
         Object.Destroy(host, clip.length + 0.25f);
+    }
+
+    private sealed class SurvivingOneShotAudioPlayer : MonoBehaviour
+    {
+        public void Play(AudioClip clip, float volume)
+        {
+            StartCoroutine(PlayRoutine(clip, volume));
+        }
+
+        private IEnumerator PlayRoutine(AudioClip clip, float volume)
+        {
+            yield return AudioClipLoadUtility.WaitUntilLoaded(clip);
+            if (!AudioClipLoadUtility.IsReadyToPlay(clip))
+            {
+                Destroy(gameObject);
+                yield break;
+            }
+
+            AudioSource source = GetComponent<AudioSource>();
+            if (source == null)
+                source = gameObject.AddComponent<AudioSource>();
+
+            source.playOnAwake = false;
+            source.loop = false;
+            source.spatialBlend = 0f;
+            source.volume = 1f;
+            source.PlayOneShot(clip, volume);
+
+            Destroy(gameObject, clip.length + 0.25f);
+        }
     }
 
     private static void EnsureClipLoaded(AudioClip clip)

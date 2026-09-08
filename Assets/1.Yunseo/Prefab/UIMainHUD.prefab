@@ -829,6 +829,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UIMainHUD
   bagButton: {fileID: 1773787843545143485}
   oxygenBarSlider: {fileID: 3128215848636961073}
+  oxygenValueText: {fileID: 0}
+  pollutionValueText: {fileID: 0}
+  currentChapterText: {fileID: 0}
+  currentPurificationText: {fileID: 0}
+  currentItemText: {fileID: 0}
   inventory: {fileID: 915269216227031219, guid: d1dabda33c6689b42987b9f0c25cd6de, type: 3}
 --- !u!1 &8725415895482692787
 GameObject:

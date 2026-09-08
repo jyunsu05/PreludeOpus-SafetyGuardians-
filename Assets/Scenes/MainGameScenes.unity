@@ -372,7 +372,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uD604\uC7AC \uCC55\uD130 : {0}"
+  m_text: "\uD604\uC7AC \uCC55\uD130 : 1"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 4e08b296a37287a41ba922096a350d28, type: 2}
   m_sharedMaterial: {fileID: 3628071395974493410, guid: 4e08b296a37287a41ba922096a350d28, type: 2}
@@ -1301,6 +1301,14 @@ PrefabInstance:
     - target: {fileID: 5579739555085918879, guid: 20ab8a9a0ac13814d9f85886eb5642d1, type: 3}
       propertyPath: m_IsActive
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7228718784329864392, guid: 20ab8a9a0ac13814d9f85886eb5642d1, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: -8992714346610923092, guid: 2370440162a50674f8b2e7891f4651c2, type: 3}
+    - target: {fileID: 7228718784329864392, guid: 20ab8a9a0ac13814d9f85886eb5642d1, type: 3}
+      propertyPath: m_WasSpriteAssigned
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2677,7 +2685,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_text: "\uD604\uC7AC \uACF5\uC7A5 \uC815\uD654 \uC544\uC774\uD15C \uAC2F\uC218
-    : {0/0}"
+    : 0/0"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 4e08b296a37287a41ba922096a350d28, type: 2}
   m_sharedMaterial: {fileID: 3628071395974493410, guid: 4e08b296a37287a41ba922096a350d28, type: 2}
@@ -3944,6 +3952,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1280278367}
     m_Modifications:
+    - target: {fileID: 96591042572328780, guid: 10b6c9d0ab79eef46902a14c08c490e8, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 4717885346690970535, guid: 0a4603cf5e10f9c45bdec585620518c5, type: 3}
+    - target: {fileID: 96591042572328780, guid: 10b6c9d0ab79eef46902a14c08c490e8, type: 3}
+      propertyPath: m_WasSpriteAssigned
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1700169115278361720, guid: 10b6c9d0ab79eef46902a14c08c490e8, type: 3}
       propertyPath: m_ColliderPaths.Array.size
       value: 1
@@ -5910,6 +5926,14 @@ PrefabInstance:
       propertyPath: m_ColliderPaths.Array.data[0].m_ColliderPaths.Array.data[0].Array.data[83].Y
       value: 50000000
       objectReference: {fileID: 0}
+    - target: {fileID: 5217588229284830479, guid: e9d7621dc14ad7340a5822258d4ab26c, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 4646617267779419791, guid: 0c147af38b90bb64d8d5de4b7d1ccff9, type: 3}
+    - target: {fileID: 5217588229284830479, guid: e9d7621dc14ad7340a5822258d4ab26c, type: 3}
+      propertyPath: m_WasSpriteAssigned
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5316797283445800946, guid: e9d7621dc14ad7340a5822258d4ab26c, type: 3}
       propertyPath: m_Name
       value: FactoryMap_Chapter1
@@ -6126,7 +6150,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uD604\uC7AC \uBAAC\uC2A4\uD130 \uC815\uD654 : {0/0}"
+  m_text: "\uD604\uC7AC \uBAAC\uC2A4\uD130 \uC815\uD654 : 0/0"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 4e08b296a37287a41ba922096a350d28, type: 2}
   m_sharedMaterial: {fileID: 3628071395974493410, guid: 4e08b296a37287a41ba922096a350d28, type: 2}

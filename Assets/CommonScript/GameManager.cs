@@ -1484,11 +1484,7 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator PlayFactoryExplorationBgmWhenReady()
     {
-        EnsureFactoryExplorationBgmClipLoaded();
-
-        float timeoutAt = Time.unscaledTime + 5f;
-        while (factoryExplorationBgmClip.loadState == AudioDataLoadState.Loading && Time.unscaledTime < timeoutAt)
-            yield return null;
+        yield return AudioClipLoadUtility.WaitUntilLoaded(factoryExplorationBgmClip, 5f);
 
         if (factoryExplorationBgmClip.loadState != AudioDataLoadState.Loaded)
         {
@@ -1514,11 +1510,7 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator PlayFactoryExplorationBgmFromBeginningRoutine()
     {
-        EnsureFactoryExplorationBgmClipLoaded();
-
-        float timeoutAt = Time.unscaledTime + 5f;
-        while (factoryExplorationBgmClip.loadState == AudioDataLoadState.Loading && Time.unscaledTime < timeoutAt)
-            yield return null;
+        yield return AudioClipLoadUtility.WaitUntilLoaded(factoryExplorationBgmClip, 5f);
 
         if (factoryExplorationBgmClip.loadState != AudioDataLoadState.Loaded)
         {
